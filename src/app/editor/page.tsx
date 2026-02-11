@@ -21,10 +21,12 @@ interface Metadata {
     prompts: Record<string, Prompt[]>;
     subtitle_styles: string[];
     subtitle_colors: string[];
+    subtitle_positions: string[];
 }
 
 const DEFAULT_SUBTITLE_STYLES = ["Clásico", "Dinámico (Efusivo)", "Moderno", "Impacto", "Limpio (Caja)"];
 const DEFAULT_SUBTITLE_COLORS = ["Blanco", "Amarillo", "Rojo", "Azul", "Verde", "Cian", "Magenta", "Naranja", "Gris"];
+const DEFAULT_SUBTITLE_POSITIONS = ["Abajo", "Centro", "Arriba"];
 
 export default function VideoEditor() {
     const [metadata, setMetadata] = useState<Metadata | null>(null);
@@ -50,6 +52,7 @@ export default function VideoEditor() {
     });
     const [selectedSubtitleStyle, setSelectedSubtitleStyle] = useState('Clásico');
     const [selectedSubtitleColor, setSelectedSubtitleColor] = useState('Blanco');
+    const [selectedSubtitlePosition, setSelectedSubtitlePosition] = useState('Abajo');
 
     // UI States
     const [isProcessing, setIsProcessing] = useState(false);
@@ -110,6 +113,7 @@ export default function VideoEditor() {
                     if (metaData.prompts[initialLang]) setSelectedPrompt(metaData.prompts[initialLang][0].name);
                     if (metaData.subtitle_styles) setSelectedSubtitleStyle(metaData.subtitle_styles[0]);
                     if (metaData.subtitle_colors) setSelectedSubtitleColor(metaData.subtitle_colors[0]);
+                    if (metaData.subtitle_positions) setSelectedSubtitlePosition(metaData.subtitle_positions[0]);
                 }
             } catch (err: any) {
                 console.error('Error de Carga:', err);
@@ -279,7 +283,8 @@ export default function VideoEditor() {
                     request_id: requestId,
                     user_id: userEmail,
                     subtitle_style: selectedSubtitleStyle,
-                    subtitle_color: selectedSubtitleColor
+                    subtitle_color: selectedSubtitleColor,
+                    subtitle_position: selectedSubtitlePosition
                 })
             });
 
@@ -572,6 +577,24 @@ export default function VideoEditor() {
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Posición de Subtítulos</label>
+                                                    <div className="grid grid-cols-3 gap-3">
+                                                        {(metadata?.subtitle_positions || DEFAULT_SUBTITLE_POSITIONS).map(pos => (
+                                                            <button
+                                                                key={pos}
+                                                                onClick={() => setSelectedSubtitlePosition(pos)}
+                                                                className={`px-4 py-4 text-[10px] font-black uppercase tracking-widest transition-all text-center border rounded ${selectedSubtitlePosition === pos
+                                                                    ? 'bg-primary text-white border-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]'
+                                                                    : 'bg-zinc-900/50 text-zinc-500 border-white/5 hover:border-white/20'
+                                                                    }`}
+                                                            >
+                                                                {pos === "Arriba" ? "↑ Arriba" : pos === "Centro" ? "⊹ Centro" : "↓ Abajo"}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             {/* Script Strategy Section */}
@@ -661,7 +684,7 @@ export default function VideoEditor() {
                                         <div className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold border transition-colors ${selectedVoice ? 'border-primary text-primary bg-primary/10' : 'border-zinc-800 text-zinc-700'}`}>03</div>
                                         <div className="flex-1">
                                             <div className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1">Configuración</div>
-                                            <div className="text-xs font-bold text-white uppercase">{selectedIdioma} • {selectedSubtitleStyle} • {selectedSubtitleColor}</div>
+                                            <div className="text-xs font-bold text-white uppercase">{selectedIdioma} • {selectedSubtitleStyle} • {selectedSubtitleColor} • {selectedSubtitlePosition}</div>
                                         </div>
                                     </div>
 
