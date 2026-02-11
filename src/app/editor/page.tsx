@@ -74,7 +74,8 @@ export default function VideoEditor() {
     const getSecurityHeaders = (isJson = true) => {
         const headers: Record<string, string> = {
             'X-API-Key': process.env.NEXT_PUBLIC_API_SECRET_KEY || 'wolfmessi10',
-            'bypass-tunnel-reminders': 'true',
+            'bypass-tunnel-reminder': 'true',
+            'Bypass-Tunnel-Reminder': 'true',
         };
         if (isJson) headers['Content-Type'] = 'application/json';
         return headers;
