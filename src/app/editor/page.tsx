@@ -57,6 +57,16 @@ export default function VideoEditor() {
         return `${baseUrl}${path}`;
     };
 
+    // Helper para headers de seguridad
+    const getSecurityHeaders = (isJson = true) => {
+        const headers: Record<string, string> = {
+            'X-API-Key': process.env.NEXT_PUBLIC_API_SECRET_KEY || 'version_master_key_2026',
+            'bypass-tunnel-reminders': 'true', // Opcional: para localtunnel
+        };
+        if (isJson) headers['Content-Type'] = 'application/json';
+        return headers;
+    };
+
     useEffect(() => {
         const role = localStorage.getItem('version_user_role');
         const userCredits = localStorage.getItem('version_user_credits');
@@ -74,7 +84,9 @@ export default function VideoEditor() {
             setIsLoadingConfig(true);
             setConfigError('');
             try {
-                const metaRes = await fetch(getApiUrl('/metadata'));
+                const metaRes = await fetch(getApiUrl('/metadata'), {
+                    headers: getSecurityHeaders(false)
+                });
                 if (!metaRes.ok) throw new Error('Error al conectar con el servidor backend');
 
                 const metaData = await metaRes.json();
@@ -113,6 +125,7 @@ export default function VideoEditor() {
         try {
             const res = await fetch(getApiUrl('/upload-background'), {
                 method: 'POST',
+                headers: getSecurityHeaders(false),
                 body: uploadFormData
             });
             const data = await res.json();
@@ -158,7 +171,7 @@ export default function VideoEditor() {
 
             const response = await fetch(getApiUrl('/process'), {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getSecurityHeaders(),
                 body: JSON.stringify({
                     url: formData.url,
                     idioma: selectedIdioma,
@@ -176,7 +189,9 @@ export default function VideoEditor() {
             const data = await response.json();
             const interval = setInterval(async () => {
                 try {
-                    const statusRes = await fetch(getApiUrl(`/status/${data.task_id}`));
+                    const statusRes = await fetch(getApiUrl(`/status/${data.task_id}`), {
+                        headers: getSecurityHeaders(false)
+                    });
                     const status = await statusRes.json();
                     setProgress(status.progress);
                     setStatusMessage(status.message);
