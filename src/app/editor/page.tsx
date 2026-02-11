@@ -63,6 +63,9 @@ export default function VideoEditor() {
     const [isLoadingConfig, setIsLoadingConfig] = useState(true);
     const [resultData, setResultData] = useState<{ video_path: string, script_path?: string } | null>(null);
     const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
+    const [isAwaitingScript, setIsAwaitingScript] = useState(false);
+    const [editedScript, setEditedScript] = useState('');
+    const [isConfirmingScript, setIsConfirmingScript] = useState(false);
 
     // Helper para URL dinámica
     const getApiUrl = (path: string) => {
@@ -251,6 +254,85 @@ export default function VideoEditor() {
         }
     };
 
+    const handleConfirmScript = async () => {
+        if (!currentTaskId) return;
+        setIsConfirmingScript(true);
+        setStatusMessage('Confirmando guion...');
+
+        try {
+            const res = await fetch(getApiUrl(`/confirm-script/${currentTaskId}`), {
+                method: 'POST',
+                headers: getSecurityHeaders(),
+                body: JSON.stringify({ script: editedScript })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                setIsAwaitingScript(false);
+                setIsProcessing(true);
+                // Reiniciar el polling
+                startStatusPolling(currentTaskId);
+            } else {
+                alert('Error al confirmar: ' + data.detail);
+            }
+        } catch (error) {
+            alert('Error de conexión.');
+        } finally {
+            setIsConfirmingScript(false);
+        }
+    };
+
+    const startStatusPolling = (taskId: string) => {
+        const interval = setInterval(async () => {
+            try {
+                const statusRes = await fetch(getApiUrl(`/status/${taskId}`), {
+                    headers: getSecurityHeaders(false)
+                });
+                const status = await statusRes.json();
+                setProgress(status.progress);
+                setStatusMessage(status.message);
+
+                if (status.status === 'completed' || status.status === 'failed' || status.status === 'cancelled' || status.status === 'awaiting_review') {
+                    clearInterval(interval);
+                    setIsProcessing(false);
+
+                    if (status.status === 'completed') {
+                        if (!isAdmin) {
+                            const newCredits = Math.max(0, credits - 10);
+                            setCredits(newCredits);
+                            localStorage.setItem('version_user_credits', newCredits.toString());
+                        }
+                        const videoRelPath = status.result.video_rel_path || status.result.video_path.split(/[\\/]/).pop();
+                        const scriptRelPath = status.result.script_rel_path || videoRelPath.replace('.mp4', '_GUION.txt');
+
+                        setResultData({
+                            video_path: getApiUrl(`/downloads/${encodeURI(videoRelPath)}`),
+                            script_path: getApiUrl(`/downloads/${encodeURI(scriptRelPath)}`)
+                        });
+                        setCurrentTaskId(null);
+                    } else if (status.status === 'failed') {
+                        clearInterval(interval);
+                        setIsProcessing(false);
+                        alert('❌ Error: ' + status.message);
+                        setCurrentTaskId(null);
+                    } else if (status.status === 'cancelled') {
+                        clearInterval(interval);
+                        setIsProcessing(false);
+                        setCurrentTaskId(null);
+                    } else if (status.status === 'awaiting_review') {
+                        clearInterval(interval);
+                        setIsProcessing(false);
+                        setEditedScript(status.script_content || '');
+                        setIsAwaitingScript(true);
+                    }
+                }
+            } catch {
+                clearInterval(interval);
+                setIsProcessing(false);
+            }
+        }, 2500);
+    };
+
     const handleSubmit = async () => {
         if (!isAdmin && credits < 10) {
             return alert('❌ No tienes créditos suficientes (Costo: 10 tokens). Por favor, recarga tu cuenta.');
@@ -285,7 +367,8 @@ export default function VideoEditor() {
                     user_id: userEmail,
                     subtitle_style: selectedSubtitleStyle,
                     subtitle_color: selectedSubtitleColor,
-                    subtitle_position: selectedSubtitlePosition
+                    subtitle_position: selectedSubtitlePosition,
+                    pause_at_script: true
                 })
             });
 
@@ -296,43 +379,7 @@ export default function VideoEditor() {
             }
 
             setCurrentTaskId(data.task_id);
-
-            const interval = setInterval(async () => {
-                try {
-                    const statusRes = await fetch(getApiUrl(`/status/${data.task_id}`), {
-                        headers: getSecurityHeaders(false)
-                    });
-                    const status = await statusRes.json();
-                    setProgress(status.progress);
-                    setStatusMessage(status.message);
-
-                    if (status.status === 'completed' || status.status === 'failed' || status.status === 'cancelled') {
-                        clearInterval(interval);
-                        setIsProcessing(false);
-                        setCurrentTaskId(null);
-
-                        if (status.status === 'completed') {
-                            if (!isAdmin) {
-                                const newCredits = Math.max(0, credits - 10);
-                                setCredits(newCredits);
-                                localStorage.setItem('version_user_credits', newCredits.toString());
-                            }
-                            const videoRelPath = status.result.video_rel_path || status.result.video_path.split(/[\\/]/).pop();
-                            const scriptRelPath = status.result.script_rel_path || videoRelPath.replace('.mp4', '_GUION.txt');
-
-                            setResultData({
-                                video_path: getApiUrl(`/downloads/${encodeURI(videoRelPath)}`),
-                                script_path: getApiUrl(`/downloads/${encodeURI(scriptRelPath)}`)
-                            });
-                        } else if (status.status === 'failed') {
-                            alert('❌ Error: ' + status.message);
-                        }
-                    }
-                } catch {
-                    clearInterval(interval);
-                    setIsProcessing(false);
-                }
-            }, 2500);
+            startStatusPolling(data.task_id);
         } catch {
             setIsProcessing(false);
             alert('Error de conexión con el backend.');
@@ -739,6 +786,60 @@ export default function VideoEditor() {
                     </div>
                 </div >
             </main >
+            {/* Modal de Edición de Guion */}
+            {isAwaitingScript && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
+                    <div className="glass-card w-full max-w-4xl max-h-[90vh] flex flex-col border border-primary/30 shadow-[0_0_50px_rgba(var(--primary-rgb),0.2)]">
+                        <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/5">
+                            <div>
+                                <h2 className="text-2xl font-black uppercase tracking-tighter">
+                                    REVISIÓN DE <span className="text-primary italic">GUION</span>
+                                </h2>
+                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">
+                                    Edita el texto generado por la IA antes de la producción
+                                </p>
+                            </div>
+                            <div className="bg-primary/10 border border-primary/20 px-3 py-1 rounded">
+                                <span className="text-[10px] font-black text-primary uppercase">Fase 2 de 3</span>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto mb-6 custom-scrollbar pr-4">
+                            <textarea
+                                value={editedScript}
+                                onChange={(e) => setEditedScript(e.target.value)}
+                                className="w-full h-[400px] bg-zinc-950/50 border border-white/10 rounded-xl p-6 text-sm text-zinc-300 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-medium leading-relaxed resize-none custom-scrollbar"
+                                placeholder="Escribe o edita tu guion aquí..."
+                            />
+                        </div>
+
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-4 border-t border-white/5">
+                            <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(234,179,8,0.5)]"></div>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">
+                                    El audio se basará exactamente en este texto
+                                </span>
+                            </div>
+
+                            <div className="flex gap-4 w-full md:w-auto">
+                                <button
+                                    onClick={() => { setIsAwaitingScript(false); handleCancel(); }}
+                                    className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-red-500 transition-colors"
+                                >
+                                    Cancelar Proyecto
+                                </button>
+                                <button
+                                    onClick={handleConfirmScript}
+                                    disabled={isConfirmingScript}
+                                    className="btn-primary !px-10 !py-4 !text-[10px] flex-1 md:flex-none shadow-[0_0_20px_var(--primary-glow)] hover:scale-105"
+                                >
+                                    {isConfirmingScript ? 'REANUDANDO...' : '🚀 CONFIRMAR Y GENERAR'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }
