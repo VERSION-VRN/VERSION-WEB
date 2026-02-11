@@ -23,6 +23,9 @@ interface Metadata {
     subtitle_colors: string[];
 }
 
+const DEFAULT_SUBTITLE_STYLES = ["Clásico", "Dinámico (Efusivo)", "Moderno", "Impacto", "Limpio (Caja)"];
+const DEFAULT_SUBTITLE_COLORS = ["Blanco", "Amarillo", "Rojo", "Azul", "Verde", "Cian", "Magenta", "Naranja", "Gris"];
+
 export default function VideoEditor() {
     const [metadata, setMetadata] = useState<Metadata | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -97,6 +100,7 @@ export default function VideoEditor() {
                 if (!metaRes.ok) throw new Error('Error al conectar con el servidor backend');
 
                 const metaData = await metaRes.json();
+                console.log("DEBUG Metadata:", metaData);
                 if (metaData.success) {
                     setMetadata(metaData);
                     const defaultLang = "Español";
@@ -529,45 +533,49 @@ export default function VideoEditor() {
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-3">
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Estilo de Subtítulos</label>
-                                                    <div className="flex flex-col gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
-                                                        {metadata?.subtitle_styles?.map(style => (
-                                                            <button
-                                                                key={style}
-                                                                onClick={() => setSelectedSubtitleStyle(style)}
-                                                                className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all text-left border rounded ${selectedSubtitleStyle === style
-                                                                    ? 'bg-primary text-white border-primary'
-                                                                    : 'bg-zinc-900 text-zinc-500 border-white/5 hover:border-white/20'
-                                                                    }`}
-                                                            >
-                                                                {style}
-                                                            </button>
-                                                        ))}
+                                            {/* Subtitle Style & Color Section */}
+                                            <div className="pt-6 border-t border-white/5 space-y-6">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Estilo de Subtítulos</label>
+                                                        <div className="flex flex-col gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
+                                                            {(metadata?.subtitle_styles || DEFAULT_SUBTITLE_STYLES).map(style => (
+                                                                <button
+                                                                    key={style}
+                                                                    onClick={() => setSelectedSubtitleStyle(style)}
+                                                                    className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all text-left border rounded ${selectedSubtitleStyle === style
+                                                                        ? 'bg-primary text-white border-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]'
+                                                                        : 'bg-zinc-900/50 text-zinc-500 border-white/5 hover:border-white/20'
+                                                                        }`}
+                                                                >
+                                                                    {style}
+                                                                </button>
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                <div className="space-y-3">
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Color de Subtítulos</label>
-                                                    <div className="flex flex-col gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
-                                                        {metadata?.subtitle_colors?.map(color => (
-                                                            <button
-                                                                key={color}
-                                                                onClick={() => setSelectedSubtitleColor(color)}
-                                                                className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all text-left border rounded ${selectedSubtitleColor === color
-                                                                    ? 'bg-white text-black border-white'
-                                                                    : 'bg-zinc-900 text-zinc-500 border-white/5 hover:border-white/20'
-                                                                    }`}
-                                                            >
-                                                                {color}
-                                                            </button>
-                                                        ))}
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Color de Texto</label>
+                                                        <div className="flex flex-col gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
+                                                            {(metadata?.subtitle_colors || DEFAULT_SUBTITLE_COLORS).map(color => (
+                                                                <button
+                                                                    key={color}
+                                                                    onClick={() => setSelectedSubtitleColor(color)}
+                                                                    className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all text-left border rounded ${selectedSubtitleColor === color
+                                                                        ? 'bg-white text-black border-white'
+                                                                        : 'bg-zinc-900/50 text-zinc-500 border-white/5 hover:border-white/20'
+                                                                        }`}
+                                                                >
+                                                                    {color}
+                                                                </button>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-3">
+                                            {/* Script Strategy Section */}
+                                            <div className="pt-6 border-t border-white/5 space-y-3">
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Estrategia de Guion</label>
                                                 <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
                                                     {metadata?.prompts[selectedIdioma]?.map(p => (
@@ -705,8 +713,8 @@ export default function VideoEditor() {
                             )}
                         </div>
                     </div>
-                </div>
-            </main>
-        </div>
+                </div >
+            </main >
+        </div >
     );
 }
