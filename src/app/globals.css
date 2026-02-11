@@ -11,7 +11,11 @@
   --muted: #a1a1aa;
   --border: #ffffff1a;
   --glass: #ffffff08;
-  --card-bg: #09090b;
+  --card-bg: #0a0a0b;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
 }
 
 @theme {
@@ -30,8 +34,8 @@ body {
 
 /* Scrollbar Custom */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -40,34 +44,41 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-full);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
 }
 
-/* Premium Components */
+/* Premium Components — Rounded Modern */
 @layer components {
   .btn-primary {
-    @apply bg-primary text-white font-black tracking-widest px-8 py-4 uppercase transition-all duration-300 hover:bg-primary-hover hover:scale-105 active:scale-95 shadow-[0_0_20px_var(--primary-glow)] cursor-pointer inline-block;
+    @apply bg-primary text-white font-bold tracking-wider px-8 py-4 uppercase transition-all duration-300 hover:bg-primary-hover hover:scale-[1.02] active:scale-95 cursor-pointer inline-block text-xs;
+    border-radius: var(--radius-full);
+    box-shadow: 0 0 20px var(--primary-glow), 0 4px 15px rgba(0,0,0,0.3);
   }
 
   .btn-outline {
-    @apply border border-white text-white font-black tracking-widest px-8 py-4 uppercase transition-all duration-300 hover:bg-white hover:text-black hover:scale-105 active:scale-95 cursor-pointer inline-block;
+    @apply border border-white/15 text-white font-bold tracking-wider px-8 py-4 uppercase transition-all duration-300 hover:bg-white hover:text-black hover:scale-[1.02] active:scale-95 cursor-pointer inline-block text-xs;
+    border-radius: var(--radius-full);
   }
 
   .glass-card {
-    @apply bg-zinc-950/50 backdrop-blur-xl border border-white/10 p-8 transition-all duration-500 hover:border-primary/50;
-    box-shadow: none;
+    @apply bg-zinc-950/60 backdrop-blur-2xl border border-white/[0.06] p-8 transition-all duration-500;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 8px 40px rgba(0,0,0,0.4);
   }
 
   .glass-card:hover {
-    box-shadow: 0 0 40px #dc26261a;
+    border-color: rgba(220, 38, 38, 0.15);
+    box-shadow: 0 0 0 1px rgba(220,38,38,0.08), 0 8px 50px rgba(0,0,0,0.5);
   }
 
   .badge {
-    @apply text-[10px] font-black tracking-[0.2em] px-3 py-1 border border-primary/30 text-primary uppercase inline-block;
+    @apply text-[10px] font-bold tracking-[0.15em] px-4 py-1.5 border border-primary/20 text-primary uppercase inline-block;
+    border-radius: var(--radius-full);
+    background: rgba(220, 38, 38, 0.06);
   }
 
   .nav-link {
@@ -75,7 +86,12 @@ body {
   }
 
   .input-field {
-    @apply w-full bg-black border border-white/10 p-4 text-white focus:outline-none focus:border-primary transition-all duration-300 font-mono text-sm;
+    @apply w-full bg-white/[0.03] border border-white/[0.08] p-4 text-white focus:outline-none focus:border-primary/40 transition-all duration-300 text-sm;
+    border-radius: var(--radius);
+  }
+
+  .input-field:focus {
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
   }
 }
 
@@ -83,7 +99,7 @@ body {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
 
   to {
@@ -92,12 +108,28 @@ body {
   }
 }
 
+@keyframes fadeScale {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .animate-fade {
-  animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-scale {
+  animation: fadeScale 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .text-gradient {
-  @apply text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-red-400 to-white;
+  @apply text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-red-400 to-orange-300;
 }
 
 .container {

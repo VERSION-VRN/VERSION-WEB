@@ -36,7 +36,6 @@ export default function AIChat() {
     const getAIResponse = (userInput: string) => {
         const lowerInput = userInput.toLowerCase();
 
-        // Respuestas basadas estrictamente en la base de conocimiento cargada
         if (lowerInput.includes('gancho') || lowerInput.includes('hook')) {
             return "Para un ganar la atención en los primeros 5 segundos (Hook), el Master recomienda: \n\n1. Una pregunta impactante.\n2. Un dato sorprendente o contradictorio.\n3. Mostrar el resultado final de inmediato.\n\nEjemplo: '¿Sabías que el 90% de los canales fallan por no aplicar esta métrica?' o 'He probado [estrategia] por 30 días y este es el resultado inesperado'.";
         }
@@ -87,30 +86,30 @@ export default function AIChat() {
     return (
         <div className="flex h-screen bg-black text-white selection:bg-primary/30">
             {/* Sidebar */}
-            <aside className="w-20 hidden md:flex flex-col items-center py-12 border-r border-white/5 bg-zinc-950/20 backdrop-blur-xl shrink-0">
+            <aside className="w-20 hidden md:flex flex-col items-center py-12 border-r border-white/[0.04] bg-zinc-950/20 backdrop-blur-xl shrink-0">
                 <Link href="/dashboard" className="text-2xl font-black text-primary mb-12 hover:scale-110 transition-transform">V.</Link>
-                <div className="flex flex-col gap-10">
-                    <Link href="/dashboard" title="Dashboard" className="text-xl opacity-40 hover:opacity-100 transition-opacity">📊</Link>
-                    <span title="AI Chat" className="text-xl cursor-pointer text-primary">🤖</span>
-                    <Link href="/editor" title="Video Editor" className="text-xl opacity-40 hover:opacity-100 transition-opacity">🎬</Link>
-                    <Link href="/" title="Home" className="text-xl opacity-40 hover:opacity-100 transition-opacity">🌐</Link>
+                <div className="flex flex-col gap-6">
+                    <Link href="/dashboard" title="Dashboard" className="w-10 h-10 rounded-xl flex items-center justify-center text-lg opacity-40 hover:opacity-100 hover:bg-white/[0.04] transition-all">📊</Link>
+                    <span title="AI Chat" className="w-10 h-10 rounded-xl flex items-center justify-center text-lg cursor-pointer bg-primary/10 border border-primary/15 text-primary">🤖</span>
+                    <Link href="/editor" title="Video Editor" className="w-10 h-10 rounded-xl flex items-center justify-center text-lg opacity-40 hover:opacity-100 hover:bg-white/[0.04] transition-all">🎬</Link>
+                    <Link href="/" title="Home" className="w-10 h-10 rounded-xl flex items-center justify-center text-lg opacity-40 hover:opacity-100 hover:bg-white/[0.04] transition-all">🌐</Link>
                 </div>
             </aside>
 
             {/* Chat Container */}
             <main className="flex-1 flex flex-col h-full relative overflow-hidden">
-                <header className="p-6 md:px-12 border-b border-white/5 flex justify-between items-center bg-black/40 backdrop-blur-md z-10">
+                <header className="p-6 md:px-12 border-b border-white/[0.04] flex justify-between items-center bg-black/40 backdrop-blur-md z-10">
                     <div className="flex items-center gap-6">
                         <div>
                             <h1 className="text-sm font-black tracking-[0.3em] uppercase">VERSION <span className="text-primary">AI</span></h1>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
-                                <span className="text-[9px] text-primary font-black uppercase tracking-widest">Estratega Activo</span>
+                                <span className="text-[9px] text-primary font-bold uppercase tracking-widest">Estratega Activo</span>
                             </div>
                         </div>
-                        <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-primary/5 border border-primary/10 rounded-sm">
-                            <span className="text-[8px] font-black uppercase text-primary/70 tracking-tighter">Database:</span>
-                            <span className="text-[9px] font-black uppercase text-white tracking-widest">YouTube_Master_Data</span>
+                        <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-primary/5 border border-primary/10 rounded-full">
+                            <span className="text-[8px] font-bold uppercase text-primary/70 tracking-tighter">Database:</span>
+                            <span className="text-[9px] font-bold uppercase text-white tracking-widest">YouTube_Master_Data</span>
                         </div>
                     </div>
                 </header>
@@ -121,19 +120,20 @@ export default function AIChat() {
                 >
                     {messages.map((m, i) => (
                         <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full`}>
-                            <div className={`${m.role === 'ai' ? 'glass-card !p-6 border-white/5' : 'bg-primary text-white p-6 shadow-xl'} 
-                                            max-w-[90%] md:max-w-[80%] text-sm font-medium leading-relaxed whitespace-pre-wrap
-                                            ${m.role === 'user' ? 'rounded-2xl rounded-tr-none' : 'rounded-2xl rounded-tl-none'}`}>
+                            <div className={`${m.role === 'ai'
+                                ? 'bg-zinc-950/60 backdrop-blur-xl border border-white/[0.06] !p-6 rounded-3xl rounded-tl-lg'
+                                : 'bg-primary text-white p-6 rounded-3xl rounded-tr-lg shadow-[0_4px_20px_rgba(220,38,38,0.2)]'
+                                } max-w-[90%] md:max-w-[80%] text-sm font-medium leading-relaxed whitespace-pre-wrap`}>
                                 {m.content}
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mt-3 px-1">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mt-3 px-2">
                                 {m.role === 'ai' ? 'Version_Strategist' : 'Authorized_User'}
                             </span>
                         </div>
                     ))}
                     {isTyping && (
                         <div className="max-w-4xl mx-auto w-full">
-                            <div className="text-[10px] text-primary font-black uppercase tracking-[0.2em] animate-pulse">
+                            <div className="text-[10px] text-primary font-bold uppercase tracking-[0.2em] animate-pulse">
                                 Extrayendo datos técnicos...
                             </div>
                         </div>
@@ -148,11 +148,11 @@ export default function AIChat() {
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                             placeholder="Pregunta por ganchos, nichos, SEO o miniaturas..."
-                            className="w-full bg-zinc-900/50 border border-white/10 rounded-xl p-5 pr-16 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-zinc-600 font-mono"
+                            className="w-full bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5 pr-28 text-sm focus:outline-none focus:border-primary/30 focus:shadow-[0_0_0_3px_rgba(220,38,38,0.06)] transition-all placeholder:text-zinc-600 font-medium"
                         />
                         <button
                             onClick={handleSend}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 px-5 bg-primary text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-primary-hover transition-colors shadow-lg active:scale-95"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-primary text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-primary-hover transition-colors shadow-lg active:scale-95"
                         >
                             Enviar
                         </button>

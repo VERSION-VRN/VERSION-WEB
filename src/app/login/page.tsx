@@ -12,13 +12,17 @@ export default function Login() {
     const [success, setSuccess] = useState('');
     const router = useRouter();
 
-    const handleAction = (e: React.FormEvent) => {
+    const getApiUrl = (path: string) => {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+        return `${baseUrl}${path}`;
+    };
+
+    const handleAction = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setSuccess('');
 
         if (isLogin) {
-            // Mock Login: admin / admin o rebel / rebel
             if (credentials.email === 'admin' && credentials.password === 'admin') {
                 localStorage.setItem('version_user_role', 'admin');
                 localStorage.setItem('version_user_credits', '999999');
@@ -30,28 +34,52 @@ export default function Login() {
                 localStorage.setItem('version_user_name', 'REBEL_GUEST');
                 router.push('/dashboard');
             } else {
-                // Check for registered users in localstorage (demo only)
                 const storedUser = localStorage.getItem(`user_${credentials.email}`);
+                let role = 'guest';
+                let credits = '30';
+                let name = 'REBEL_GUEST';
+
                 if (storedUser) {
                     const userData = JSON.parse(storedUser);
                     if (userData.password === credentials.password) {
-                        localStorage.setItem('version_user_role', 'guest');
-                        localStorage.setItem('version_user_credits', userData.credits.toString());
-                        localStorage.setItem('version_user_name', userData.name);
-                        router.push('/dashboard');
-                        return;
+                        role = 'guest';
+                        credits = userData.credits.toString();
+                        name = userData.name;
+                    } else {
+                        return setError('Código de acceso incorrecto.');
                     }
+                } else if (!(credentials.email === 'admin' || credentials.email === 'rebel')) {
+                    return setError('Usuario no encontrado.');
                 }
-                setError('Credenciales incorrectas o usuario no encontrado.');
+
+                // Obtener JWT del backend
+                try {
+                    const res = await fetch(getApiUrl('/login'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: credentials.email, role: role })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        localStorage.setItem('version_user_token', data.token);
+                        localStorage.setItem('version_user_role', role);
+                        localStorage.setItem('version_user_credits', credits);
+                        localStorage.setItem('version_user_name', name);
+                        localStorage.setItem('version_user_email', credentials.email);
+                        router.push('/dashboard');
+                    } else {
+                        setError('Error de autenticación con el servidor.');
+                    }
+                } catch (err) {
+                    setError('Servidor no disponible. Verifica la API.');
+                }
             }
         } else {
-            // Mock Register
             if (!credentials.email || !credentials.password || !credentials.name) {
                 setError('Por favor, completa todos los campos.');
                 return;
             }
 
-            // Create user with 30 credits (Welcome bonus)
             const newUser = {
                 email: credentials.email,
                 password: credentials.password,
@@ -70,23 +98,23 @@ export default function Login() {
             {/* Background Decor */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 blur-[150px] rounded-full -z-10"></div>
 
-            <div className="glass-card w-full max-w-md !p-12 animate-fade">
-                <div className="text-center mb-12">
+            <div className="glass-card w-full max-w-md !p-10 animate-fade">
+                <div className="text-center mb-10">
                     <Link href="/" className="text-3xl font-black tracking-tighter uppercase inline-block hover:scale-105 transition-transform">
                         VERSION<span className="text-primary">.</span>
                     </Link>
-                    <p className="text-[10px] text-zinc-500 font-black tracking-[0.3em] uppercase mt-4">
-                        {isLogin ? 'Acceso al Ecosistema Rebelde' : 'Crear Nueva Identidad Digital'}
+                    <p className="text-[10px] text-zinc-500 font-bold tracking-[0.3em] uppercase mt-4">
+                        {isLogin ? 'Acceso al Ecosistema' : 'Crear Nueva Identidad'}
                     </p>
                 </div>
 
-                <form onSubmit={handleAction} className="flex flex-col gap-6">
+                <form onSubmit={handleAction} className="flex flex-col gap-5">
                     {!isLogin && (
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Nombre Completo</label>
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Nombre Completo</label>
                             <input
                                 type="text"
-                                placeholder="TU NOMBRE"
+                                placeholder="Tu nombre"
                                 required
                                 value={credentials.name}
                                 onChange={(e) => setCredentials({ ...credentials, name: e.target.value })}
@@ -96,10 +124,10 @@ export default function Login() {
                     )}
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Email / Usuario</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Email / Usuario</label>
                         <input
                             type="text"
-                            placeholder="EMAIL"
+                            placeholder="email@ejemplo.com"
                             required
                             value={credentials.email}
                             onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
@@ -108,7 +136,7 @@ export default function Login() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Código de Acceso</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Código de Acceso</label>
                         <input
                             type="password"
                             placeholder="••••••••"
@@ -120,43 +148,43 @@ export default function Login() {
                     </div>
 
                     {error && (
-                        <div className="p-3 bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest text-center animate-pulse">
+                        <div className="p-4 bg-primary/5 border border-primary/15 text-primary text-[10px] font-bold uppercase tracking-widest text-center rounded-xl animate-pulse">
                             {error}
                         </div>
                     )}
 
                     {success && (
-                        <div className="p-3 bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-black uppercase tracking-widest text-center">
+                        <div className="p-4 bg-green-500/5 border border-green-500/15 text-green-500 text-[10px] font-bold uppercase tracking-widest text-center rounded-xl">
                             {success}
                         </div>
                     )}
 
-                    <button type="submit" className="btn-primary w-full mt-4 !py-4">
+                    <button type="submit" className="btn-primary w-full mt-2 !py-4">
                         {isLogin ? 'Iniciar Conexión' : 'Unirse a la Élite'}
                     </button>
 
                     <button
                         type="button"
                         onClick={() => setIsLogin(!isLogin)}
-                        className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                        className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors cursor-pointer"
                     >
-                        {isLogin ? '¿No tienes cuenta? Regístrate y obtén 30 tokens de regalo' : '¿Ya eres miembro? Inicia Sesión'}
+                        {isLogin ? '¿No tienes cuenta? Regístrate y obtén 30 tokens' : '¿Ya eres miembro? Inicia Sesión'}
                     </button>
                 </form>
 
-                <div className="text-center mt-12 space-y-4">
-                    <Link href="/" className="text-[9px] text-zinc-600 hover:text-white font-black uppercase tracking-[0.2em] transition-colors block">
+                <div className="text-center mt-10 space-y-4">
+                    <Link href="/" className="text-[9px] text-zinc-600 hover:text-white font-bold uppercase tracking-[0.2em] transition-colors block">
                         Al ingresar aceptas los términos de la red VERSION
                     </Link>
-                    <div className="h-[1px] w-12 bg-white/5 mx-auto"></div>
-                    <Link href="/" className="text-[9px] text-zinc-600 hover:text-primary font-black uppercase tracking-[0.2em] transition-colors block">
+                    <div className="h-[1px] w-12 bg-white/[0.04] mx-auto"></div>
+                    <Link href="/" className="text-[9px] text-zinc-600 hover:text-primary font-bold uppercase tracking-[0.2em] transition-colors block">
                         ← Regresar a la red pública
                     </Link>
                 </div>
             </div>
 
             {/* Footer Tag */}
-            <div className="absolute bottom-8 text-[8px] font-black tracking-[0.5em] text-white/10 uppercase italic">
+            <div className="absolute bottom-8 text-[8px] font-bold tracking-[0.5em] text-white/10 uppercase italic">
                 Secure Neural Link v2.0.26
             </div>
         </div>

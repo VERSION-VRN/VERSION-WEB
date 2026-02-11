@@ -59,13 +59,13 @@ export default function Pricing() {
         <PayPalScriptProvider options={{ clientId: PAYPAL_CLIENT_ID, currency: "USD" }}>
             <div className="min-h-screen bg-black text-white selection:bg-primary/30">
                 {/* Navbar */}
-                <nav className="container flex justify-between items-center py-8 border-b border-white/5">
+                <nav className="container flex justify-between items-center py-8 border-b border-white/[0.04]">
                     <Link href="/" className="text-2xl font-black tracking-tighter uppercase">
                         VERSION<span className="text-primary">.</span>
                     </Link>
-                    <div className="flex gap-8 items-center">
-                        <Link href="/dashboard" className="text-[10px] font-black uppercase tracking-widest hover:text-primary transition-all">Panel Control</Link>
-                        <Link href="/" className="btn-outline !py-2 !px-4 !text-[9px]">Salir</Link>
+                    <div className="flex gap-6 items-center">
+                        <Link href="/dashboard" className="text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-all">Panel Control</Link>
+                        <Link href="/" className="btn-outline !py-2.5 !px-5 !text-[9px]">Salir</Link>
                     </div>
                 </nav>
 
@@ -82,16 +82,16 @@ export default function Pricing() {
                                 {plans.map((plan) => (
                                     <div
                                         key={plan.id}
-                                        className={`glass-card flex flex-col items-center text-center group transition-all duration-500 hover:scale-[1.02] ${plan.popular ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : ''}`}
+                                        className={`glass-card flex flex-col items-center text-center group transition-all duration-500 hover:scale-[1.02] ${plan.popular ? 'border-primary ring-1 ring-primary/15 bg-primary/[0.03]' : ''}`}
                                     >
                                         {plan.popular && (
-                                            <div className="bg-primary text-white text-[8px] font-black px-4 py-1 tracking-[0.3em] uppercase mb-6 -mt-2">Recomendado</div>
+                                            <div className="bg-primary text-white text-[8px] font-bold px-5 py-1.5 tracking-[0.3em] uppercase mb-6 -mt-2 rounded-full shadow-[0_4px_15px_rgba(220,38,38,0.3)]">Recomendado</div>
                                         )}
                                         <h3 className={`text-sm font-bold uppercase tracking-[0.3em] mb-8 ${plan.popular ? 'text-primary' : 'text-zinc-500'}`}>{plan.name}</h3>
                                         <div className="text-6xl font-black mb-2">${plan.price}<span className="text-xs text-zinc-500 font-normal">.USD</span></div>
-                                        <div className="text-primary font-black text-[10px] tracking-widest uppercase mb-10">{plan.credits} TOKENS ({parseInt(plan.credits) / 10} VIDEOS)</div>
+                                        <div className="text-primary font-bold text-[10px] tracking-widest uppercase mb-10">{plan.credits} TOKENS ({parseInt(plan.credits) / 10} VIDEOS)</div>
 
-                                        <ul className="space-y-4 text-xs mb-12 text-left w-full border-t border-white/5 pt-8">
+                                        <ul className="space-y-4 text-xs mb-12 text-left w-full border-t border-white/[0.04] pt-8">
                                             {plan.features.map((feature, i) => (
                                                 <li key={i} className="flex items-center gap-3">
                                                     <span className="text-primary">✓</span> {feature}
@@ -101,7 +101,7 @@ export default function Pricing() {
 
                                         <button
                                             onClick={() => handlePurchase(plan)}
-                                            className={`${plan.popular ? 'btn-primary' : 'btn-outline'} w-full !py-4 !text-[10px] uppercase tracking-[0.2em] font-black`}
+                                            className={`${plan.popular ? 'btn-primary' : 'btn-outline'} w-full !py-4 !text-[10px] uppercase tracking-[0.2em] font-bold`}
                                         >
                                             Adquirir Tokens
                                         </button>
@@ -110,34 +110,34 @@ export default function Pricing() {
                             </div>
                         </div>
                     ) : (
-                        <div className="max-w-4xl mx-auto animate-fade-in">
+                        <div className="max-w-4xl mx-auto animate-fade">
                             <button
                                 onClick={() => setSelectedPlan(null)}
-                                className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white mb-12 transition-colors"
+                                className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white mb-12 transition-colors rounded-full px-4 py-2 hover:bg-white/[0.05]"
                             >
                                 ← Volver a Planes
                             </button>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                            <div className="space-y-6">
                                 {/* Order Summary */}
-                                <div className="lg:col-span-12 glass-card !p-8 border-primary/30 flex flex-col md:flex-row justify-between items-center gap-8 mb-8">
+                                <div className="glass-card !p-8 border-primary/20 flex flex-col md:flex-row justify-between items-center gap-8">
                                     <div>
-                                        <div className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Orden de Compra</div>
+                                        <div className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Orden de Compra</div>
                                         <h2 className="text-2xl font-black uppercase tracking-tighter">{selectedPlan.name} — {selectedPlan.credits} TOKENS</h2>
                                     </div>
                                     <div className="text-4xl font-black">${selectedPlan.price} USD</div>
                                 </div>
 
                                 {/* PayPal Integration */}
-                                <div className="lg:col-span-12 flex flex-col items-center justify-center py-12 glass-card bg-zinc-950/50">
+                                <div className="glass-card flex flex-col items-center justify-center py-12 bg-zinc-950/50">
                                     <div className="w-full max-w-md">
-                                        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-10 text-center">Finalizar Pago Seguro con PayPal</h3>
+                                        <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-zinc-500 mb-10 text-center">Finalizar Pago Seguro con PayPal</h3>
 
                                         <PayPalButtons
                                             style={{
                                                 layout: "vertical",
                                                 color: "gold",
-                                                shape: "rect",
+                                                shape: "pill",
                                                 label: "pay"
                                             }}
                                             createOrder={(data, actions) => {
