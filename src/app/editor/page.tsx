@@ -19,6 +19,8 @@ interface Metadata {
     idiomas: string[];
     voices: Record<string, Voice[]>;
     prompts: Record<string, Prompt[]>;
+    subtitle_styles: string[];
+    subtitle_colors: string[];
 }
 
 export default function VideoEditor() {
@@ -43,6 +45,8 @@ export default function VideoEditor() {
         backgroundVideo: null as File | null,
         backgroundVideoPath: ''
     });
+    const [selectedSubtitleStyle, setSelectedSubtitleStyle] = useState('Clásico');
+    const [selectedSubtitleColor, setSelectedSubtitleColor] = useState('Blanco');
 
     // UI States
     const [isProcessing, setIsProcessing] = useState(false);
@@ -100,6 +104,8 @@ export default function VideoEditor() {
                     setSelectedIdioma(initialLang);
                     if (metaData.voices[initialLang]) setSelectedVoice(metaData.voices[initialLang][0].id);
                     if (metaData.prompts[initialLang]) setSelectedPrompt(metaData.prompts[initialLang][0].name);
+                    if (metaData.subtitle_styles) setSelectedSubtitleStyle(metaData.subtitle_styles[0]);
+                    if (metaData.subtitle_colors) setSelectedSubtitleColor(metaData.subtitle_colors[0]);
                 }
             } catch (err: any) {
                 console.error('Error de Carga:', err);
@@ -149,12 +155,25 @@ export default function VideoEditor() {
                             headers: getSecurityHeaders(false),
                             body: chunkFormData
                         });
-                        if (res.ok) success = true;
-                        else throw new Error('Server error');
-                    } catch (e) {
+
+                        if (res.ok) {
+                            success = true;
+                        } else {
+                            const errorText = await res.text();
+                            let errorDetail = 'Server error';
+                            try {
+                                const errorJson = JSON.parse(errorText);
+                                errorDetail = errorJson.detail || errorJson.error || errorText;
+                            } catch {
+                                errorDetail = errorText || `Error ${res.status}`;
+                            }
+                            throw new Error(`[Chunk ${i}] ${res.status}: ${errorDetail}`);
+                        }
+                    } catch (e: any) {
                         retries--;
+                        console.error(`Error en chunk ${i} (Intento ${3 - retries}):`, e);
                         if (retries === 0) throw e;
-                        await new Promise(r => setTimeout(r, 1000));
+                        await new Promise(r => setTimeout(r, 1500));
                     }
                 }
 
@@ -251,10 +270,12 @@ export default function VideoEditor() {
                     prompt_name: selectedPrompt,
                     titulo: formData.titulo,
                     miniatura: formData.miniatura || formData.titulo,
-                    add_subtitles: false,
+                    add_subtitles: true,
                     background_video: formData.backgroundVideoPath,
                     request_id: requestId,
-                    user_id: userEmail
+                    user_id: userEmail,
+                    subtitle_style: selectedSubtitleStyle,
+                    subtitle_color: selectedSubtitleColor
                 })
             });
 
@@ -508,6 +529,44 @@ export default function VideoEditor() {
                                                 </div>
                                             </div>
 
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Estilo de Subtítulos</label>
+                                                    <div className="flex flex-col gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
+                                                        {metadata?.subtitle_styles?.map(style => (
+                                                            <button
+                                                                key={style}
+                                                                onClick={() => setSelectedSubtitleStyle(style)}
+                                                                className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all text-left border rounded ${selectedSubtitleStyle === style
+                                                                    ? 'bg-primary text-white border-primary'
+                                                                    : 'bg-zinc-900 text-zinc-500 border-white/5 hover:border-white/20'
+                                                                    }`}
+                                                            >
+                                                                {style}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Color de Subtítulos</label>
+                                                    <div className="flex flex-col gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
+                                                        {metadata?.subtitle_colors?.map(color => (
+                                                            <button
+                                                                key={color}
+                                                                onClick={() => setSelectedSubtitleColor(color)}
+                                                                className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all text-left border rounded ${selectedSubtitleColor === color
+                                                                    ? 'bg-white text-black border-white'
+                                                                    : 'bg-zinc-900 text-zinc-500 border-white/5 hover:border-white/20'
+                                                                    }`}
+                                                            >
+                                                                {color}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div className="space-y-3">
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Estrategia de Guion</label>
                                                 <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
@@ -594,7 +653,7 @@ export default function VideoEditor() {
                                         <div className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold border transition-colors ${selectedVoice ? 'border-primary text-primary bg-primary/10' : 'border-zinc-800 text-zinc-700'}`}>03</div>
                                         <div className="flex-1">
                                             <div className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1">Configuración</div>
-                                            <div className="text-xs font-bold text-white uppercase">{selectedIdioma}</div>
+                                            <div className="text-xs font-bold text-white uppercase">{selectedIdioma} • {selectedSubtitleStyle} • {selectedSubtitleColor}</div>
                                         </div>
                                     </div>
 
