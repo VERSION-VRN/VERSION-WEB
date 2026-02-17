@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import '../globals.css';
 import Toast, { ToastType } from '@/components/Toast';
+import { useCredits } from '@/context/CreditsContext';
 
 interface Voice {
     name: string;
@@ -46,9 +47,9 @@ const getYoutubeThumbnail = (url: string) => {
 const STEP_LABELS = ['Recursos', 'Datos', 'Estilo'];
 
 export default function VideoEditor() {
+    const { credits, deductLocal, refreshCredits } = useCredits();
     const [metadata, setMetadata] = useState<Metadata | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [credits, setCredits] = useState(0);
     const [isLoadingAuth, setIsLoadingAuth] = useState(true);
     const router = useRouter();
 
@@ -84,6 +85,7 @@ export default function VideoEditor() {
     const [isAwaitingScript, setIsAwaitingScript] = useState(false);
     const [editedScript, setEditedScript] = useState('');
     const [isConfirmingScript, setIsConfirmingScript] = useState(false);
+    const [targetLength, setTargetLength] = useState<'short' | 'medium' | 'long'>('medium');
 
     // Toast State
     const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
@@ -118,7 +120,6 @@ export default function VideoEditor() {
         }
 
         setIsAdmin(role === 'admin');
-        setCredits(parseInt(userCredits || '0'));
         setIsLoadingAuth(false);
 
         const loadConfig = async () => {
@@ -327,7 +328,8 @@ export default function VideoEditor() {
             if (data.success) {
                 setIsAwaitingScript(false);
                 setIsProcessing(true);
-                startStatusPolling(currentTaskId);
+                const currentCost = targetLength === 'short' ? 5 : targetLength === 'long' ? 20 : 10;
+                startStatusPolling(currentTaskId, currentCost);
             } else {
                 alert('Error: ' + data.detail);
             }
@@ -335,7 +337,7 @@ export default function VideoEditor() {
         finally { setIsConfirmingScript(false); }
     };
 
-    const startStatusPolling = (taskId: string) => {
+    const startStatusPolling = (taskId: string, cost: number) => {
         const interval = setInterval(async () => {
             try {
                 const statusRes = await fetch(getApiUrl(`/status/${taskId}`), { headers: getSecurityHeaders(false) });
@@ -348,10 +350,9 @@ export default function VideoEditor() {
                     setIsProcessing(false);
                     if (status.status === 'completed') {
                         if (!isAdmin) {
-                            const nc = Math.max(0, credits - 10);
-                            setCredits(nc);
-                            localStorage.setItem('version_user_credits', nc.toString());
+                            deductLocal(cost);
                         }
+                        refreshCredits();
                         const vp = status.result.video_rel_path || status.result.video_path.split(/[\\/]/).pop();
                         const sp = status.result.script_rel_path || vp.replace('.mp4', '_GUION.txt');
                         setResultData({ video_path: getApiUrl(`/downloads/${encodeURI(vp)}`), script_path: getApiUrl(`/downloads/${encodeURI(sp)}`) });
@@ -371,7 +372,9 @@ export default function VideoEditor() {
     };
 
     const handleSubmit = async () => {
-        if (!isAdmin && credits < 10) return showToast('Créditos insuficientes (10 tokens).', 'error');
+        const currentCost = targetLength === 'short' ? 5 : targetLength === 'long' ? 20 : 10;
+
+        if (!isAdmin && credits < currentCost) return showToast(`Créditos insuficientes (${currentCost} tokens requeridos).`, 'error');
         if (!formData.backgroundVideoPath || !formData.url || !formData.titulo || !selectedVoice || !selectedPrompt)
             return showToast('Completa todos los campos obligatorios.', 'warning');
 
@@ -394,6 +397,7 @@ export default function VideoEditor() {
                     user_id: userEmail, subtitle_style: selectedSubtitleStyle,
                     subtitle_color: selectedSubtitleColor, subtitle_position: selectedSubtitlePosition,
                     pause_at_script: true,
+                    target_length: targetLength,
                     bg_music: formData.musicPath || null,
                     bg_music_vol: formData.musicVolume
                 })
@@ -401,7 +405,7 @@ export default function VideoEditor() {
             const data = await response.json();
             if (!data.success) { setIsProcessing(false); return showToast('Error: ' + (data.detail || data.message), 'error'); }
             setCurrentTaskId(data.task_id);
-            startStatusPolling(data.task_id);
+            startStatusPolling(data.task_id, currentCost);
         } catch { setIsProcessing(false); showToast('Error de conexión con el servidor.', 'error'); }
     };
 
@@ -509,6 +513,10 @@ export default function VideoEditor() {
                             <a href={resultData.video_path} className="btn-primary !py-4 text-center block" target="_blank" download>
                                 Descargar Video
                             </a>
+                            <button onClick={() => router.push(`/editor/timeline?video=${encodeURIComponent(resultData.video_path)}&length=${targetLength}&style=${encodeURIComponent(selectedPrompt)}`)}
+                                className="btn-outline !py-3 text-center block !border-primary/20 hover:!border-primary/40 w-full">
+                                ✂️ Editar en Timeline
+                            </button>
                             <a href={resultData.script_path} className="btn-outline !py-3 text-center block !border-white/10" target="_blank" download>
                                 Ver Guion
                             </a>
@@ -717,6 +725,30 @@ export default function VideoEditor() {
                                                         </button>
                                                     ))}
                                                 </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Longitud del Guion */}
+                                        <div className="border-t border-white/[0.04] pt-6 space-y-3">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest text-primary/70 ml-1">Longitud del Guion</label>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {[
+                                                    { id: 'short', label: 'Corto', detail: '~5 min • 5 Tokens' },
+                                                    { id: 'medium', label: 'Medio', detail: '~15 min • 10 Tokens' },
+                                                    { id: 'long', label: 'Largo', detail: '30+ min • 20 Tokens' }
+                                                ].map(opt => (
+                                                    <button
+                                                        key={opt.id}
+                                                        onClick={() => setTargetLength(opt.id as any)}
+                                                        className={`p-3 flex flex-col items-center justify-center gap-1 transition-all rounded-xl border ${targetLength === opt.id
+                                                            ? 'bg-primary/10 border-primary text-primary shadow-[0_4_12px_rgba(220,38,38,0.1)]'
+                                                            : 'bg-white/[0.03] text-zinc-500 border-white/[0.06] hover:border-white/20'
+                                                            }`}
+                                                    >
+                                                        <span className="text-[10px] font-black uppercase tracking-tight">{opt.label}</span>
+                                                        <span className="text-[8px] font-medium opacity-60 tracking-wider whitespace-nowrap">{opt.detail}</span>
+                                                    </button>
+                                                ))}
                                             </div>
                                         </div>
 

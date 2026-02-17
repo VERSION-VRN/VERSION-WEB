@@ -49,32 +49,60 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
           {/* VERSION EDITOR */}
           <div className="glass-card group relative overflow-hidden">
             <div className="absolute top-0 right-0 p-5 text-3xl opacity-10 group-hover:opacity-100 transition-opacity">🎬</div>
-            <span className="badge border-primary text-primary mb-6">AI Video Engine</span>
+            <span className="badge border-primary text-primary mb-6">Video Engine</span>
             <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">VERSION Editor</h3>
             <p className="text-muted-custom text-sm mb-8 leading-relaxed">
-              Generación masiva de contenido corto para YouTube y TikTok. IA que orquesta guion, voz y edición en segundos.
+              Generación de guion, voz y edición en segundos.
             </p>
-            <div className="flex justify-between items-center pt-6 border-t border-white/[0.04]">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Web Application</span>
-              <Link href="/editor" className="text-primary font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">Abrir Terminal →</Link>
-            </div>
+            <Link href="/editor" className="text-primary font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">Abrir Terminal →</Link>
+          </div>
+
+          {/* VERSION THUMBNAILS */}
+          <div className="glass-card group relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-5 text-3xl opacity-10 group-hover:opacity-100 transition-opacity">🖼️</div>
+            <span className="badge border-purple-500 text-purple-500 mb-6">Visual Core</span>
+            <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">VERSION Thumbnails</h3>
+            <p className="text-muted-custom text-sm mb-8 leading-relaxed">
+              Diseño de miniaturas con análisis de CTR por IA y borrado de fondo.
+            </p>
+            <Link href="/thumbnails" className="text-purple-500 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">Diseñar Ahora →</Link>
+          </div>
+
+          {/* VERSION WRITER */}
+          <div className="glass-card group relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-5 text-3xl opacity-10 group-hover:opacity-100 transition-opacity">📝</div>
+            <span className="badge border-red-500 text-red-500 mb-6">Script Engine</span>
+            <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">VERSION Writer</h3>
+            <p className="text-muted-custom text-sm mb-8 leading-relaxed">
+              Guiones virales con estructura de retención y Modo Deep.
+            </p>
+            <Link href="/writer" className="text-red-500 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">Escribir Guion →</Link>
+          </div>
+
+          {/* VERSION SEO */}
+          <div className="glass-card group relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-5 text-3xl opacity-10 group-hover:opacity-100 transition-opacity">🚀</div>
+            <span className="badge border-green-500 text-green-500 mb-6">Growth Engine</span>
+            <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">VERSION SEO</h3>
+            <p className="text-muted-custom text-sm mb-8 leading-relaxed">
+              Dominación de palabras clave y optimización de metadatos.
+            </p>
+            <Link href="/seo" className="text-green-500 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">Optimizar →</Link>
           </div>
 
           {/* VERSION AI */}
-          <div className="glass-card group relative overflow-hidden ring-1 ring-primary/15">
+          <div className="glass-card group relative overflow-hidden ring-1 ring-primary/15 md:col-span-2 lg:col-span-1">
             <div className="absolute top-0 right-0 p-5 text-3xl opacity-10 group-hover:opacity-100 transition-opacity text-primary">🤖</div>
             <span className="badge bg-primary/5 border-primary text-primary mb-6 animate-pulse">Neural System</span>
             <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">VERSION AI</h3>
             <p className="text-muted-custom text-sm mb-8 leading-relaxed">
-              Tu cerebro digital residente. Consultoría estratégica, redacción y código optimizado por modelos de última generación.
+              Tu cerebro digital residente. Consultoría estratégica total.
             </p>
-            <div className="flex justify-between items-center pt-6 border-t border-white/[0.04]">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Neural Link</span>
-              <Link href="/ai" className="text-primary font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">Iniciar Conexión</Link>
-            </div>
+            <Link href="/ai" className="text-primary font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">Iniciar Conexión →</Link>
           </div>
         </div>
       </section>

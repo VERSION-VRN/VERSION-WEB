@@ -22,74 +22,60 @@ export default function Login() {
         setError('');
         setSuccess('');
 
-        if (isLogin) {
-            if (credentials.email === 'admin' && credentials.password === 'admin') {
-                localStorage.setItem('version_user_role', 'admin');
-                localStorage.setItem('version_user_credits', '999999');
-                localStorage.setItem('version_user_name', 'ADMIN_REBEL');
-                router.push('/dashboard');
-            } else if (credentials.email === 'rebel' && credentials.password === 'rebel') {
-                localStorage.setItem('version_user_role', 'guest');
-                localStorage.setItem('version_user_credits', '30');
-                localStorage.setItem('version_user_name', 'REBEL_GUEST');
-                router.push('/dashboard');
+        try {
+            if (isLogin) {
+                // --- LOGIN FLOW ---
+                const res = await fetch(getApiUrl('/login'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: credentials.email, password: credentials.password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    localStorage.setItem('version_user_token', data.token);
+                    localStorage.setItem('version_user_role', data.role);
+                    localStorage.setItem('version_user_credits', data.credits.toString());
+                    localStorage.setItem('version_user_name', data.name);
+                    localStorage.setItem('version_user_email', credentials.email);
+                    router.push('/dashboard');
+                } else {
+                    setError(data.message || 'Error de autenticación.');
+                }
             } else {
-                const storedUser = localStorage.getItem(`user_${credentials.email}`);
-                let role = 'guest';
-                let credits = '30';
-                let name = 'REBEL_GUEST';
-
-                if (storedUser) {
-                    const userData = JSON.parse(storedUser);
-                    if (userData.password === credentials.password) {
-                        role = 'guest';
-                        credits = userData.credits.toString();
-                        name = userData.name;
-                    } else {
-                        return setError('Código de acceso incorrecto.');
-                    }
-                } else if (!(credentials.email === 'admin' || credentials.email === 'rebel')) {
-                    return setError('Usuario no encontrado.');
+                // --- REGISTER FLOW ---
+                if (!credentials.email || !credentials.password || !credentials.name) {
+                    return setError('Por favor, completa todos los campos.');
                 }
 
-                // Obtener JWT del backend
-                try {
-                    const res = await fetch(getApiUrl('/login'), {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: credentials.email, role: role })
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                        localStorage.setItem('version_user_token', data.token);
-                        localStorage.setItem('version_user_role', role);
-                        localStorage.setItem('version_user_credits', credits);
-                        localStorage.setItem('version_user_name', name);
-                        localStorage.setItem('version_user_email', credentials.email);
-                        router.push('/dashboard');
-                    } else {
-                        setError('Error de autenticación con el servidor.');
-                    }
-                } catch (err) {
-                    setError('Servidor no disponible. Verifica la API.');
+                const res = await fetch(getApiUrl('/register'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: credentials.email,
+                        password: credentials.password,
+                        name: credentials.name.toUpperCase()
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Auto-login con los datos devueltos
+                    localStorage.setItem('version_user_token', data.token);
+                    localStorage.setItem('version_user_role', data.role);
+                    localStorage.setItem('version_user_credits', data.credits.toString());
+                    localStorage.setItem('version_user_name', data.name);
+                    localStorage.setItem('version_user_email', credentials.email);
+
+                    setSuccess(data.message);
+                    // Pequeña pausa para leer el mensaje de éxito antes de redirigir
+                    setTimeout(() => router.push('/dashboard'), 1500);
+                } else {
+                    setError(data.message || 'Error al crear cuenta.');
                 }
             }
-        } else {
-            if (!credentials.email || !credentials.password || !credentials.name) {
-                setError('Por favor, completa todos los campos.');
-                return;
-            }
-
-            const newUser = {
-                email: credentials.email,
-                password: credentials.password,
-                name: credentials.name.toUpperCase(),
-                credits: 30
-            };
-
-            localStorage.setItem(`user_${credentials.email}`, JSON.stringify(newUser));
-            setSuccess('CUENTA CREADA. AHORA PUEDES INICIAR SESIÓN.');
-            setIsLogin(true);
+        } catch (err) {
+            setError('No se pudo conectar con el servidor VERSION. Verifica tu conexión.');
         }
     };
 

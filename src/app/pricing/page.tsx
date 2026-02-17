@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { EliteButton } from '@/components/ui/EliteButton';
+import { EliteCard } from '@/components/ui/EliteCard';
+import { EliteBadge } from '@/components/ui/EliteBadge';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import '../globals.css';
 
@@ -21,20 +24,29 @@ export default function Pricing() {
     const plans = [
         {
             id: 'starter',
-            name: 'Basic Token Pack',
-            price: '15',
-            credits: '500',
-            description: 'Ideal para creadores que inician su automatización.',
-            features: ['500 Créditos de Generación', 'Soporte Estándar', 'Acceso al Ecosistema']
+            name: 'Starter Pack',
+            price: '25',
+            credits: '250',
+            description: 'Para probar y crear tus primeros videos virales.',
+            features: ['250 Créditos (~25 Videos Medios)', 'Soporte Básico', 'Generador Estándar']
         },
         {
-            id: 'elite',
-            name: 'Elite Access Pack',
-            price: '29',
-            credits: '1000',
-            description: 'Potencia total para dominar los algoritmos.',
-            features: ['1.000 Créditos (100 Videos)', 'Soporte Mastermind 24/7', 'Acceso Academia VIP', 'Discord Exclusivo'],
+            id: 'creator',
+            name: 'Pro Creator',
+            price: '49',
+            credits: '500',
+            description: 'El estándar para creadores de contenido consistentes.',
+            features: ['500 Créditos (~50 Videos Medios)', 'Soporte Prioritario', 'Acceso a Herramientas Beta', 'Sin Marcas de Agua'],
             popular: true
+        },
+        {
+            id: 'agency',
+            name: 'Agency Elite',
+            price: '99',
+            credits: '1000',
+            description: 'Poder masivo para agencias y automatización total.',
+            features: ['1000 Créditos (~100 Videos Medios)', 'Soporte VIP 24/7', 'Acceso API (Próximamente)', 'Licencia Comercial'],
+            popular: false
         }
     ];
 
@@ -80,32 +92,37 @@ export default function Pricing() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
                                 {plans.map((plan) => (
-                                    <div
+                                    <EliteCard
                                         key={plan.id}
-                                        className={`glass-card flex flex-col items-center text-center group transition-all duration-500 hover:scale-[1.02] ${plan.popular ? 'border-primary ring-1 ring-primary/15 bg-primary/[0.03]' : ''}`}
+                                        variant="glass"
+                                        title={plan.name}
+                                        subtitle={plan.popular ? "Recomendado" : "Depósito de Recursos"}
+                                        description={plan.description}
+                                        className={plan.popular ? 'border-primary/20 bg-primary/[0.02]' : ''}
+                                        headerAction={plan.popular ? <EliteBadge variant="primary">Más Popular</EliteBadge> : null}
                                     >
-                                        {plan.popular && (
-                                            <div className="bg-primary text-white text-[8px] font-bold px-5 py-1.5 tracking-[0.3em] uppercase mb-6 -mt-2 rounded-full shadow-[0_4px_15px_rgba(220,38,38,0.3)]">Recomendado</div>
-                                        )}
-                                        <h3 className={`text-sm font-bold uppercase tracking-[0.3em] mb-8 ${plan.popular ? 'text-primary' : 'text-zinc-500'}`}>{plan.name}</h3>
-                                        <div className="text-6xl font-black mb-2">${plan.price}<span className="text-xs text-zinc-500 font-normal">.USD</span></div>
-                                        <div className="text-primary font-bold text-[10px] tracking-widest uppercase mb-10">{plan.credits} TOKENS ({parseInt(plan.credits) / 10} VIDEOS)</div>
+                                        <div className="mb-10 mt-2">
+                                            <div className="text-6xl font-black mb-2">${plan.price}<span className="text-xs text-zinc-500 font-normal">.USD</span></div>
+                                            <div className="text-primary font-bold text-[10px] tracking-[0.3em] uppercase">{plan.credits} TOKENS</div>
+                                        </div>
 
                                         <ul className="space-y-4 text-xs mb-12 text-left w-full border-t border-white/[0.04] pt-8">
                                             {plan.features.map((feature, i) => (
-                                                <li key={i} className="flex items-center gap-3">
-                                                    <span className="text-primary">✓</span> {feature}
+                                                <li key={i} className="flex items-center gap-3 font-medium text-zinc-400">
+                                                    <span className="text-primary font-bold">✓</span> {feature}
                                                 </li>
                                             ))}
                                         </ul>
 
-                                        <button
+                                        <EliteButton
+                                            variant={plan.popular ? "primary" : "outline"}
+                                            fullWidth
+                                            size="lg"
                                             onClick={() => handlePurchase(plan)}
-                                            className={`${plan.popular ? 'btn-primary' : 'btn-outline'} w-full !py-4 !text-[10px] uppercase tracking-[0.2em] font-bold`}
                                         >
-                                            Adquirir Tokens
-                                        </button>
-                                    </div>
+                                            Adquirir Arsenal
+                                        </EliteButton>
+                                    </EliteCard>
                                 ))}
                             </div>
                         </div>

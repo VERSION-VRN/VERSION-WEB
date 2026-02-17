@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@config "../../tailwind.config.ts";
+/* @config "../../tailwind.config.ts"; */
 
 :root {
   --background: #000000;
@@ -56,7 +56,7 @@ body {
   .btn-primary {
     @apply bg-primary text-white font-bold tracking-wider px-8 py-4 uppercase transition-all duration-300 hover:bg-primary-hover hover:scale-[1.02] active:scale-95 cursor-pointer inline-block text-xs;
     border-radius: var(--radius-full);
-    box-shadow: 0 0 20px var(--primary-glow), 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 0 20px var(--primary-glow), 0 4px 15px rgba(0, 0, 0, 0.3);
   }
 
   .btn-outline {
@@ -67,12 +67,12 @@ body {
   .glass-card {
     @apply bg-zinc-950/60 backdrop-blur-2xl border border-white/[0.06] p-8 transition-all duration-500;
     border-radius: var(--radius-lg);
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 8px 40px rgba(0,0,0,0.4);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 8px 40px rgba(0, 0, 0, 0.4);
   }
 
   .glass-card:hover {
     border-color: rgba(220, 38, 38, 0.15);
-    box-shadow: 0 0 0 1px rgba(220,38,38,0.08), 0 8px 50px rgba(0,0,0,0.5);
+    box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.08), 0 8px 50px rgba(0, 0, 0, 0.5);
   }
 
   .badge {
@@ -134,4 +134,73 @@ body {
 
 .container {
   @apply max-w-7xl mx-auto px-6;
+}
+
+/* ─── Timeline Editor ─── */
+.timeline-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+
+.timeline-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.timeline-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+.timeline-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Range input styling for volume */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background: rgba(255, 255, 255, 0.08);
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  margin-top: -4px;
+  box-shadow: 0 0 6px rgba(220, 38, 38, 0.4);
+}
+
+input[type="range"]::-moz-range-track {
+  background: rgba(255, 255, 255, 0.08);
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 6px rgba(220, 38, 38, 0.4);
+}
+
+@keyframes playheadPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(220, 38, 38, 0.4); }
+  50% { box-shadow: 0 0 14px rgba(220, 38, 38, 0.7); }
+}
+
+.playhead-pulse {
+  animation: playheadPulse 2s ease-in-out infinite;
 }

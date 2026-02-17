@@ -4,10 +4,14 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import '../globals.css';
+import { useCredits } from '@/context/CreditsContext';
+import { EliteButton } from '@/components/ui/EliteButton';
+import { EliteCard } from '@/components/ui/EliteCard';
+import { EliteBadge } from '@/components/ui/EliteBadge';
 
 export default function Dashboard() {
+    const { credits, refreshCredits } = useCredits();
     const [isAdmin, setIsAdmin] = useState(false);
-    const [credits, setCredits] = useState(0);
     const [userName, setUserName] = useState('REBELDE');
     const [isLoading, setIsLoading] = useState(true);
     const [history, setHistory] = useState<any[]>([]);
@@ -33,7 +37,6 @@ export default function Dashboard() {
 
     useEffect(() => {
         const role = localStorage.getItem('version_user_role');
-        const userCredits = localStorage.getItem('version_user_credits');
         const name = localStorage.getItem('version_user_name');
 
         if (!role) {
@@ -42,10 +45,10 @@ export default function Dashboard() {
         }
 
         setIsAdmin(role === 'admin');
-        setCredits(parseInt(userCredits || '0'));
         setUserName(name || (role === 'admin' ? 'ADMIN' : 'REBELDE'));
         setIsLoading(false);
         fetchHistory();
+        refreshCredits(); // Mantener saldo actualizado al entrar
     }, [router]);
 
     const fetchHistory = async () => {
@@ -92,32 +95,48 @@ export default function Dashboard() {
                     <Link href="/editor" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
                         <span className="opacity-70">🎬</span> VERSION Editor
                     </Link>
+                    <Link href="/thumbnails" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
+                        <span className="opacity-70">🖼️</span> VERSION Thumbnails
+                    </Link>
+                    <Link href="/writer" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
+                        <span className="opacity-70">📝</span> VERSION Writer
+                    </Link>
+                    <Link href="/seo" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
+                        <span className="opacity-70">🚀</span> VERSION SEO
+                    </Link>
+                    <Link href="/ai" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
+                        <span className="opacity-70">🤖</span> VERSION AI Chat
+                    </Link>
                 </nav>
 
                 <nav className="mt-auto pt-8 border-t border-white/[0.04] space-y-4">
-                    <div className="glass-card !p-5 mb-4 border-primary/15 bg-primary/[0.03]">
+                    <EliteCard variant="glass" className="!p-5 mb-4 border-primary/15 bg-primary/[0.03]">
                         <div className="flex justify-between items-center mb-3">
                             <span className="text-[9px] font-bold uppercase text-zinc-500 tracking-widest">Saldo Actual</span>
                             <span className="text-xs font-black text-primary">{isAdmin ? '∞' : credits}</span>
                         </div>
-                        <Link href="/pricing" className="btn-primary !py-2.5 !text-[8px] w-full text-center block">Recargar Arsenal</Link>
-                    </div>
+                        <EliteButton variant="primary" size="sm" fullWidth onClick={() => router.push('/pricing')}>
+                            Recargar Arsenal
+                        </EliteButton>
+                    </EliteCard>
 
                     <Link href="/" className="text-[10px] text-zinc-500 hover:text-white font-bold tracking-widest uppercase transition-colors block pl-1">
                         ← Volver a la Web
                     </Link>
 
-                    <div className={`glass-card !p-5 ${isAdmin ? 'ring-1 ring-primary/20' : ''}`}>
+                    <EliteCard variant="glass" className="!p-5">
                         <div className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Identidad Digital</div>
                         <div className="text-xs font-black uppercase mb-1 truncate">{userName}</div>
-                        <div className="text-[9px] text-primary font-bold uppercase tracking-tighter mb-4">{isAdmin ? 'ULTIMATE_ACCESS' : 'REBEL_LEVEL_1'}</div>
+                        <EliteBadge variant="primary" className="mb-4">
+                            {isAdmin ? 'ULTIMATE_ACCESS' : 'REBEL_LEVEL_1'}
+                        </EliteBadge>
                         <button
                             onClick={handleLogout}
-                            className="text-[9px] text-white/50 hover:text-primary font-bold uppercase tracking-widest underline transition-colors cursor-pointer"
+                            className="text-[9px] text-white/50 hover:text-primary font-bold uppercase tracking-widest underline transition-colors cursor-pointer block"
                         >
                             Finalizar Sesión
                         </button>
-                    </div>
+                    </EliteCard>
                 </nav>
             </aside>
 
@@ -137,21 +156,23 @@ export default function Dashboard() {
                     )}
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
-                    <div className="glass-card bg-zinc-950/40 flex justify-between items-center p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 text-white">
+                    <EliteCard variant="glass" className="flex justify-between items-center p-8">
                         <div>
-                            <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Tokens Disponibles</div>
+                            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 block">Tokens de Combate</span>
                             <div className="text-5xl font-black tabular-nums">{isAdmin ? '∞' : credits}</div>
                         </div>
-                        <Link href="/pricing" className="btn-outline !py-3 !text-[10px]">Añadir Créditos</Link>
-                    </div>
-                    <div className="glass-card bg-zinc-950/40 flex justify-between items-center p-8">
+                        <EliteButton variant="outline" size="md" onClick={() => router.push('/pricing')}>
+                            Añadir Fondos
+                        </EliteButton>
+                    </EliteCard>
+                    <EliteCard variant="glass" className="flex justify-between items-center p-8">
                         <div>
-                            <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Consumo Promedio</div>
-                            <div className="text-5xl font-black tabular-nums text-zinc-800">0.0</div>
+                            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 block">Rendimiento Operativo</span>
+                            <div className="text-5xl font-black tabular-nums text-primary/20">68%</div>
                         </div>
-                        <div className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest text-right">Sin actividad <br /> reciente</div>
-                    </div>
+                        <div className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest text-right">Optimización <br /> en curso</div>
+                    </EliteCard>
                 </div>
 
                 {/* Grid de Aplicaciones */}
@@ -161,28 +182,72 @@ export default function Dashboard() {
                         <Link href="/pricing" className="text-primary text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">Ver Planes Elite →</Link>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {/* VERSION EDITOR */}
-                        <div className="glass-card group hover:scale-[1.01] transition-transform">
-                            <div className="flex justify-between items-start mb-6">
-                                <span className="badge border-primary text-primary">Pro Ready</span>
-                                <span className="text-2xl group-hover:animate-bounce">🎬</span>
-                            </div>
-                            <h4 className="text-xl font-black uppercase tracking-tighter mb-2">VERSION Editor</h4>
-                            <p className="text-zinc-500 text-xs mb-8 leading-relaxed">Automatización de clips de YouTube con IA y edición profesional integrada.</p>
-                            <Link href="/editor" className="btn-primary !py-3 !text-[10px] w-full text-center">Abrir Editor</Link>
-                        </div>
+                        <EliteCard
+                            variant="glass"
+                            title="VERSION Editor"
+                            subtitle="Pro Ready"
+                            description="Automatización de clips de YouTube con IA y edición profesional integrada."
+                            headerAction={<span className="text-3xl">🎬</span>}
+                        >
+                            <EliteButton variant="primary" size="md" fullWidth onClick={() => router.push('/editor')}>
+                                Abrir Sistema
+                            </EliteButton>
+                        </EliteCard>
+
+                        {/* VERSION THUMBNAILS */}
+                        <EliteCard
+                            variant="glass"
+                            title="Thumbnails"
+                            subtitle="Visual Core"
+                            description="Diseño de miniaturas y análisis CTR avanzado con redes neuronales."
+                            headerAction={<span className="text-3xl">🖼️</span>}
+                        >
+                            <EliteButton variant="outline" size="md" fullWidth className="!text-purple-400 !border-purple-500/20 hover:!bg-purple-500 hover:!text-white" onClick={() => router.push('/thumbnails')}>
+                                Diseñar Impacto
+                            </EliteButton>
+                        </EliteCard>
+
+                        {/* VERSION WRITER */}
+                        <EliteCard
+                            variant="glass"
+                            title="Writer"
+                            subtitle="Script Engine"
+                            description="Ingeniería de guiones virales con estructuras de alta retención."
+                            headerAction={<span className="text-3xl">📝</span>}
+                        >
+                            <EliteButton variant="outline" size="md" fullWidth className="!text-red-400 !border-red-500/20 hover:!bg-red-500 hover:!text-white" onClick={() => router.push('/writer')}>
+                                Iniciar Script
+                            </EliteButton>
+                        </EliteCard>
+
+                        {/* VERSION SEO */}
+                        <EliteCard
+                            variant="glass"
+                            title="SEO Growth"
+                            subtitle="Growth Engine"
+                            description="Dominación de motores de búsqueda y análisis de competencia viral."
+                            headerAction={<span className="text-3xl">🚀</span>}
+                        >
+                            <EliteButton variant="outline" size="md" fullWidth className="!text-green-400 !border-green-500/20 hover:!bg-green-500 hover:!text-white" onClick={() => router.push('/seo')}>
+                                Optimizar Canal
+                            </EliteButton>
+                        </EliteCard>
 
                         {/* VERSION AI */}
-                        <div className="glass-card group hover:scale-[1.01] transition-transform">
-                            <div className="flex justify-between items-start mb-6">
-                                <span className="badge border-zinc-700 text-zinc-500">Neutral Active</span>
-                                <span className="text-2xl group-hover:rotate-12 transition-transform">🤖</span>
-                            </div>
-                            <h4 className="text-xl font-black uppercase tracking-tighter mb-2">VERSION AI Chat</h4>
-                            <p className="text-zinc-500 text-xs mb-8 leading-relaxed">Asistente estratégico basado en el Master de YouTube y creación de ganchos.</p>
-                            <Link href="/ai" className="btn-outline !py-3 !text-[10px] w-full text-center">Iniciar Chat</Link>
-                        </div>
+                        <EliteCard
+                            variant="glass"
+                            title="VERSION AI"
+                            subtitle="Neural System"
+                            description="Consultor estratégico 24/7 basado en el Master de YouTube."
+                            headerAction={<span className="text-3xl">🤖</span>}
+                            className="md:col-span-2 lg:col-span-1"
+                        >
+                            <EliteButton variant="secondary" size="md" fullWidth onClick={() => router.push('/ai')}>
+                                Hablar con Oráculo
+                            </EliteButton>
+                        </EliteCard>
                     </div>
                 </section>
 
@@ -205,11 +270,11 @@ export default function Dashboard() {
                     ) : (
                         <div className="grid grid-cols-1 gap-4">
                             {history.map((task) => (
-                                <div key={task.id} className="glass-card !p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:bg-white/[0.04] transition-all border-white/[0.04] hover:border-white/10">
+                                <EliteCard key={task.id} variant="glass" className="!p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 group">
                                     <div className="flex items-center gap-4">
                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${task.status === 'completed' ? 'bg-green-500/10 text-green-500' :
-                                            task.status === 'failed' ? 'bg-red-500/10 text-red-500' :
-                                                'bg-primary/10 text-primary animate-pulse'
+                                                task.status === 'failed' ? 'bg-red-500/10 text-red-500' :
+                                                    'bg-primary/10 text-primary animate-pulse'
                                             }`}>
                                             {task.status === 'completed' ? '✓' : task.status === 'failed' ? '⚠' : '⌛'}
                                         </div>
@@ -221,33 +286,34 @@ export default function Dashboard() {
                                                 <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">
                                                     {new Date(task.created_at * 1000).toLocaleDateString()}
                                                 </span>
-                                                <span className="w-1 h-1 bg-zinc-800 rounded-full" />
-                                                <span className={`text-[9px] font-bold uppercase tracking-widest ${task.status === 'completed' ? 'text-green-500/70' :
-                                                    task.status === 'failed' ? 'text-red-500/70' :
-                                                        'text-primary/70'
-                                                    }`}>
+                                                <EliteBadge variant={task.status === 'completed' ? 'success' : task.status === 'failed' ? 'error' : 'primary'}>
                                                     {task.status}
-                                                </span>
+                                                </EliteBadge>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center gap-2 ml-14 md:ml-0">
                                         {task.status === 'completed' && task.result?.video_rel_path && (
-                                            <a
-                                                href={getApiUrl(`/downloads/${task.result.video_rel_path}`)}
-                                                target="_blank"
-                                                download
-                                                className="px-4 py-2 bg-white/[0.05] hover:bg-white/10 border border-white/[0.08] rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
-                                            >
-                                                Descargar
-                                            </a>
+                                            <div className="flex items-center gap-2">
+                                                <EliteButton
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    onClick={() => window.open(getApiUrl(`/downloads/${task.result.video_rel_path}`), '_blank')}
+                                                >
+                                                    Descargar
+                                                </EliteButton>
+                                                <EliteButton
+                                                    variant="primary"
+                                                    size="sm"
+                                                    onClick={() => router.push(`/editor/timeline?video=${encodeURIComponent(getApiUrl(`/downloads/${task.result.video_rel_path}`))}`)}
+                                                >
+                                                    ✂️ Editar
+                                                </EliteButton>
+                                            </div>
                                         )}
-                                        <button className="p-2 text-zinc-600 hover:text-white transition-colors">
-                                            <span className="text-sm">⋮</span>
-                                        </button>
                                     </div>
-                                </div>
+                                </EliteCard>
                             ))}
                         </div>
                     )}

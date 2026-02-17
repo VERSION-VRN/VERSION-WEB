@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "La plataforma definitiva de IA y automatización diseñada para la nueva élite de creadores digitales.",
 };
 
+import { CreditsProvider } from "@/context/CreditsContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -25,7 +27,9 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className="scroll-smooth">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
-        {children}
+        <CreditsProvider>
+          {children}
+        </CreditsProvider>
       </body>
     </html>
   );
