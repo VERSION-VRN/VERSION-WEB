@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { YOUTUBE_COURSE_KNOWLEDGE } from './knowledge';
 import '../globals.css';
 import { useCredits } from '@/context/CreditsContext';
+import { getAIResponse } from '@/services/aiResponseService';
 
 export default function AIChat() {
     const { credits, deductLocal, refreshCredits } = useCredits();
@@ -34,40 +35,6 @@ export default function AIChat() {
     }, [messages]);
 
     if (isLoading) return <div className="min-h-screen bg-black" />;
-
-    const getAIResponse = (userInput: string) => {
-        const lowerInput = userInput.toLowerCase();
-
-        if (lowerInput.includes('gancho') || lowerInput.includes('hook')) {
-            return "Para un ganar la atención en los primeros 5 segundos (Hook), el Master recomienda: \n\n1. Una pregunta impactante.\n2. Un dato sorprendente o contradictorio.\n3. Mostrar el resultado final de inmediato.\n\nEjemplo: '¿Sabías que el 90% de los canales fallan por no aplicar esta métrica?' o 'He probado [estrategia] por 30 días y este es el resultado inesperado'.";
-        }
-
-        if (lowerInput.includes('nicho')) {
-            return "La hoja de ruta para elegir un nicho es:\n\n1. Define pasiones y habilidades.\n2. Investiga la demanda en Google Trends y YouTube Analytics.\n3. Define un público objetivo (edad, intereses).\n4. Analiza qué está haciendo la competencia y qué puedes mejorar tú.";
-        }
-
-        if (lowerInput.includes('guion') || lowerInput.includes('guión')) {
-            return "Estructura técnica recomendada por el sistema:\n\n- **Hook (Gancho):** Los primeros 5 segundos son vitales.\n- **Story (Historia):** Desarrolla el mensaje de forma clara.\n- **Call-to-Action (CTA):** Instruye a la audiencia (Suscribirse, comentar).\n\n¿Quieres que te dé un ejemplo de estructura para un Short o para un video largo de 15 minutos?";
-        }
-
-        if (lowerInput.includes('miniatura')) {
-            return "Claves para una miniatura VITRAL según VERSION AI:\n\n1. **Contraste:** Usa colores como rojo, amarillo o naranja.\n2. **Texto:** 3 a 5 palabras grandes y legibles.\n3. **Emoción:** Expresiones faciales exageradas.\n4. **Misterio:** Un elemento que genere curiosidad sin revelar todo.";
-        }
-
-        if (lowerInput.includes('voz') || lowerInput.includes('audio')) {
-            return "Para el audio profesional en el Paso 3:\n\n- **Entorno:** Reduce ruidos con paneles o graba en lugares silenciosos.\n- **Herramientas IA:** ElevenLabs es la recomendación del sistema para narración neuronal.\n- **Música:** Usa Suno, Pixabay o la biblioteca de YouTube para evitar el Copyright.";
-        }
-
-        if (lowerInput.includes('si') || lowerInput.includes('claro') || lowerInput.includes('dale')) {
-            return "Excelente. Vamos a profundizar. Según el Master en YouTube, el siguiente paso lógico es definir el SEO o la estrategia de miniaturas. ¿Sobre cuál de estos puntos quieres datos específicos ahora?";
-        }
-
-        if (lowerInput.includes('seo') || lowerInput.includes('etiquetas') || lowerInput.includes('título')) {
-            return "Para optimizar el SEO:\n\n1. Usa **VidiQ** o **Keywords Everywhere** para hallar palabras clave.\n2. El título debe contener la keyword principal al inicio.\n3. La descripción debe ser atractiva y optimizada para buscadores.\n4. No olvides los capítulos de video para mejorar la retención.";
-        }
-
-        return "Entendido. Para darte los datos exactos del Master en YouTube, ¿puedes decirme si necesitas ayuda con el Paso 1 (Canal), Paso 2 (Estrategia/Guion), Paso 3 (Recursos) o Paso 4 (Producción/SEO)?";
-    }
 
     const handleSend = () => {
         if (!input.trim()) return;

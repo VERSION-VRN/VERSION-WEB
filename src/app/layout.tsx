@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 };
 
 import { CreditsProvider } from "@/context/CreditsContext";
+import { EliteAssistant } from "@/components/ai/EliteAssistant";
 
 export default function RootLayout({
   children,
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
         <CreditsProvider>
           {children}
+          <EliteAssistant />
         </CreditsProvider>
       </body>
     </html>
