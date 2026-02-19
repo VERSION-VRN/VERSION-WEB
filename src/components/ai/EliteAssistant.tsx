@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { useCredits } from '@/context/CreditsContext';
+import { useAuth } from '@/context/AuthContext';
 import { getAIResponse, getContextualSkillResponse } from '@/services/aiResponseService';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteButton } from '@/components/ui/EliteButton';
@@ -16,7 +16,8 @@ export const EliteAssistant = () => {
     const [lastPath, setLastPath] = useState('');
 
     const pathname = usePathname();
-    const { credits, deductLocal, refreshCredits } = useCredits();
+    const { user, deductCredits, refreshCredits } = useAuth();
+    const credits = user?.credits || 0;
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Contextual detection
@@ -53,7 +54,7 @@ export const EliteAssistant = () => {
         setMessages(prev => [...prev, userMsg]);
         setInput('');
         setIsTyping(true);
-        deductLocal(COST);
+        deductCredits(COST);
 
         setTimeout(() => {
             const aiContent = getAIResponse(userMsg.content);
@@ -106,8 +107,8 @@ export const EliteAssistant = () => {
                         {messages.map((m, i) => (
                             <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div className={`p-4 rounded-2xl text-xs leading-relaxed ${m.role === 'ai'
-                                        ? 'bg-white/[0.03] border border-white/[0.05] text-zinc-300 rounded-tl-none'
-                                        : 'bg-primary text-white rounded-tr-none'
+                                    ? 'bg-white/[0.03] border border-white/[0.05] text-zinc-300 rounded-tl-none'
+                                    : 'bg-primary text-white rounded-tr-none'
                                     } max-w-[85%]`}>
                                     {m.content}
                                 </div>

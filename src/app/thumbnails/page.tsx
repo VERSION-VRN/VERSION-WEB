@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { aiVersionClient } from '../../services/aiVersionClient';
 import Link from 'next/link';
-import { useCredits } from '@/context/CreditsContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface Layer {
     id: string;
@@ -35,7 +35,7 @@ const VIRAL_FONTS = [
 ];
 
 export default function ThumbnailPage() {
-    const { credits, deductLocal, refreshCredits } = useCredits();
+    const { user, deductCredits, refreshCredits } = useAuth();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [layers, setLayers] = useState<Layer[]>([]);
     const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
@@ -258,6 +258,10 @@ export default function ThumbnailPage() {
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            alert("⚠️ La imagen es demasiado grande. El tamaño máximo permitido es 5MB.");
+            return;
+        }
         const reader = new FileReader();
         reader.onload = (event) => {
             const img = new Image();
@@ -281,6 +285,10 @@ export default function ThumbnailPage() {
     const handleBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            alert("⚠️ La imagen es demasiado grande. El tamaño máximo permitido es 5MB.");
+            return;
+        }
         const reader = new FileReader();
         reader.onload = (event) => {
             const img = new Image();
@@ -290,7 +298,7 @@ export default function ThumbnailPage() {
         reader.readAsDataURL(file);
     };
 
-    const updateLayerProperty = (id: string, property: keyof Layer, value: any) => {
+    const updateLayerProperty = <K extends keyof Layer>(id: string, property: K, value: Layer[K]) => {
         setLayers(prev => prev.map(l => l.id === id ? { ...l, [property]: value } : l));
     };
 
@@ -298,7 +306,7 @@ export default function ThumbnailPage() {
         if (!selectedLayerId) return;
         const COST = 20;
 
-        if (credits < COST) {
+        if (!user || user.credits < COST) {
             alert(`❌ Saldo insuficiente. Necesitas ${COST} tokens.`);
             return;
         }
@@ -310,7 +318,7 @@ export default function ThumbnailPage() {
         const response = await aiVersionClient.removeBackground(layer.imageElement.src);
 
         if (response.success && response.image) {
-            deductLocal(COST);
+            deductCredits(COST);
             const img = new Image();
             img.onload = () => {
                 setLayers(prev => prev.map(l =>
@@ -329,7 +337,7 @@ export default function ThumbnailPage() {
 
     const analyzeThumbnail = async () => {
         const COST = 10;
-        if (credits < COST) {
+        if (!user || user.credits < COST) {
             setFeedback(`❌ Saldo insuficiente. Necesitas ${COST} tokens.`);
             return;
         }
@@ -339,7 +347,7 @@ export default function ThumbnailPage() {
         const response = await aiVersionClient.analyzeThumbnail(desc);
 
         if (response.success && response.result) {
-            deductLocal(COST);
+            deductCredits(COST);
             setFeedback(response.result);
             refreshCredits();
         } else {

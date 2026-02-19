@@ -4,10 +4,10 @@
 import React, { useState } from 'react';
 import { aiVersionClient } from '../../services/aiVersionClient';
 import Link from 'next/link';
-import { useCredits } from '@/context/CreditsContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function SeoPage() {
-    const { credits, deductLocal, refreshCredits } = useCredits();
+    const { user, deductCredits, refreshCredits } = useAuth();
     const [keyword, setKeyword] = useState('');
     const [results, setResults] = useState('');
     const [loading, setLoading] = useState(false);
@@ -17,7 +17,7 @@ export default function SeoPage() {
     const handleOptimize = async () => {
         if (!keyword) return;
 
-        if (credits < COST) {
+        if (!user || user.credits < COST) {
             setResults(`❌ Saldo insuficiente. Necesitas ${COST} tokens.`);
             return;
         }
@@ -28,7 +28,7 @@ export default function SeoPage() {
         const response = await aiVersionClient.generateSeo(keyword);
 
         if (response.success && response.result) {
-            deductLocal(COST);
+            deductCredits(COST);
             setResults(response.result);
             refreshCredits();
         } else {

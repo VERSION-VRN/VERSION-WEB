@@ -4,10 +4,10 @@
 import React, { useState, useEffect } from 'react';
 import { aiVersionClient } from '../../services/aiVersionClient';
 import Link from 'next/link';
-import { useCredits } from '@/context/CreditsContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function WriterPage() {
-    const { credits, deductLocal, refreshCredits } = useCredits();
+    const { user, deductCredits, refreshCredits } = useAuth();
     const [topic, setTopic] = useState('');
     const [tone, setTone] = useState('educativo');
     const [script, setScript] = useState('');
@@ -58,7 +58,7 @@ export default function WriterPage() {
     const handleGenerate = async () => {
         if (!topic) return;
 
-        if (credits < COST) {
+        if (!user || user.credits < COST) {
             setStatus(`❌ Saldo insuficiente. Necesitas ${COST} tokens.`);
             return;
         }
@@ -71,7 +71,7 @@ export default function WriterPage() {
         const response = await aiVersionClient.startScriptGeneration(topic, tone, isMegaMode);
 
         if (response.success && response.task_id) {
-            deductLocal(COST); // Optimistic UI update
+            deductCredits(COST); // Optimistic UI update
             setTaskId(response.task_id);
             setStatus(response.message || 'Encolado...');
         } else {

@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { YOUTUBE_COURSE_KNOWLEDGE } from './knowledge';
 import '../globals.css';
-import { useCredits } from '@/context/CreditsContext';
+import { useAuth } from '@/context/AuthContext';
 import { getAIResponse } from '@/services/aiResponseService';
 
 export default function AIChat() {
-    const { credits, deductLocal, refreshCredits } = useCredits();
+    const { user, deductCredits, refreshCredits } = useAuth();
     const [messages, setMessages] = useState([
         { role: 'ai', content: 'Hola, Rebelde. Soy VERSION AI, tu estratega de contenido. He cargado el "Master en YouTube" y estoy listo para orquestar tu canal. ¿Qué paso del proceso vamos a automatizar hoy?' }
     ]);
@@ -40,7 +40,7 @@ export default function AIChat() {
         if (!input.trim()) return;
 
         const COST = 1;
-        if (credits < COST) {
+        if (!user || user.credits < COST) {
             setMessages(prev => [...prev, { role: 'ai', content: '❌ Saldo insuficiente para procesar tu consulta. (1 token requerido)' }]);
             return;
         }
@@ -49,7 +49,7 @@ export default function AIChat() {
         setMessages(prev => [...prev, userMessage]);
         setInput('');
         setIsTyping(true);
-        deductLocal(COST);
+        deductCredits(COST);
 
         setTimeout(() => {
             const aiContent = getAIResponse(userMessage.content);

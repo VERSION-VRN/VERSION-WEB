@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import '../globals.css';
-import { useCredits } from '@/context/CreditsContext';
+import { useAuth } from '@/context/AuthContext';
 import { EliteButton } from '@/components/ui/EliteButton';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteBadge } from '@/components/ui/EliteBadge';
 
 export default function Dashboard() {
-    const { credits, refreshCredits } = useCredits();
+    const { user, token, logout, refreshCredits } = useAuth();
     const [isAdmin, setIsAdmin] = useState(false);
     const [userName, setUserName] = useState('REBELDE');
     const [isLoading, setIsLoading] = useState(true);
@@ -36,20 +36,17 @@ export default function Dashboard() {
     };
 
     useEffect(() => {
-        const role = localStorage.getItem('version_user_role');
-        const name = localStorage.getItem('version_user_name');
-
-        if (!role) {
+        if (!user || !token) {
             router.push('/login');
             return;
         }
 
-        setIsAdmin(role === 'admin');
-        setUserName(name || (role === 'admin' ? 'ADMIN' : 'REBELDE'));
+        setIsAdmin(user.role === 'admin');
+        setUserName(user.name || (user.role === 'admin' ? 'ADMIN' : 'REBELDE'));
         setIsLoading(false);
         fetchHistory();
-        refreshCredits(); // Mantener saldo actualizado al entrar
-    }, [router]);
+        refreshCredits();
+    }, [user, token, router]);
 
     const fetchHistory = async () => {
         try {
@@ -68,10 +65,7 @@ export default function Dashboard() {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('version_user_role');
-        localStorage.removeItem('version_user_credits');
-        localStorage.removeItem('version_user_name');
-        router.push('/login');
+        logout();
     };
 
     if (isLoading) return <div className="min-h-screen bg-black" />;
@@ -113,7 +107,7 @@ export default function Dashboard() {
                     <EliteCard variant="glass" className="!p-5 mb-4 border-primary/15 bg-primary/[0.03]">
                         <div className="flex justify-between items-center mb-3">
                             <span className="text-[9px] font-bold uppercase text-zinc-500 tracking-widest">Saldo Actual</span>
-                            <span className="text-xs font-black text-primary">{isAdmin ? '∞' : credits}</span>
+                            <span className="text-xs font-black text-primary">{isAdmin ? '∞' : user?.credits || 0}</span>
                         </div>
                         <EliteButton variant="primary" size="sm" fullWidth onClick={() => router.push('/pricing')}>
                             Recargar Arsenal
@@ -160,7 +154,7 @@ export default function Dashboard() {
                     <EliteCard variant="glass" className="flex justify-between items-center p-8">
                         <div>
                             <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 block">Tokens de Combate</span>
-                            <div className="text-5xl font-black tabular-nums">{isAdmin ? '∞' : credits}</div>
+                            <div className="text-5xl font-black tabular-nums">{isAdmin ? '∞' : user?.credits || 0}</div>
                         </div>
                         <EliteButton variant="outline" size="md" onClick={() => router.push('/pricing')}>
                             Añadir Fondos
@@ -273,8 +267,8 @@ export default function Dashboard() {
                                 <EliteCard key={task.id} variant="glass" className="!p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 group">
                                     <div className="flex items-center gap-4">
                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${task.status === 'completed' ? 'bg-green-500/10 text-green-500' :
-                                                task.status === 'failed' ? 'bg-red-500/10 text-red-500' :
-                                                    'bg-primary/10 text-primary animate-pulse'
+                                            task.status === 'failed' ? 'bg-red-500/10 text-red-500' :
+                                                'bg-primary/10 text-primary animate-pulse'
                                             }`}>
                                             {task.status === 'completed' ? '✓' : task.status === 'failed' ? '⚠' : '⌛'}
                                         </div>

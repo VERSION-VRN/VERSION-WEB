@@ -17,8 +17,9 @@ export const metadata: Metadata = {
   description: "La plataforma definitiva de IA y automatización diseñada para la nueva élite de creadores digitales.",
 };
 
-import { CreditsProvider } from "@/context/CreditsContext";
+import { AuthProvider } from "@/context/AuthContext";
 import { EliteAssistant } from "@/components/ai/EliteAssistant";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function RootLayout({
   children,
@@ -28,10 +29,12 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className="scroll-smooth">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
-        <CreditsProvider>
-          {children}
-          <EliteAssistant />
-        </CreditsProvider>
+        <AuthProvider>
+          <ProtectedRoute>
+            {children}
+            <EliteAssistant />
+          </ProtectedRoute>
+        </AuthProvider>
       </body>
     </html>
   );

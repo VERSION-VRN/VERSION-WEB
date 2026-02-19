@@ -1,5 +1,27 @@
 
-const API_URL = "http://localhost:8000"; // Ajustar si es necesario, o usar variable de entorno
+const getApiUrl = () => {
+    if (typeof window !== 'undefined') {
+        return localStorage.getItem('backend_url') || "http://localhost:8000";
+    }
+    return "http://localhost:8000";
+};
+
+const getAuthHeader = (): Record<string, string> => {
+    if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token');
+        return token ? { "Authorization": `Bearer ${token}` } : {};
+    }
+    return {};
+};
+
+const handleUnauthorized = (status: number) => {
+    if (status === 401 && typeof window !== 'undefined') {
+        console.warn("Unauthorized access detected. Cleaning up local session.");
+        localStorage.removeItem('token');
+        localStorage.removeItem('user_profile');
+        window.location.href = '/login';
+    }
+};
 
 interface ScriptGenerationResponse {
     success: boolean;
@@ -24,14 +46,15 @@ interface TaskStatus {
 export const aiVersionClient = {
     async startScriptGeneration(topic: string, tone: string, isMega: boolean): Promise<ScriptGenerationResponse> {
         try {
-            const response = await fetch(`${API_URL}/ai/script/start`, {
+            const response = await fetch(`${getApiUrl()}/ai/script/start`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    // "Authorization": `Bearer ${token}` // Si se implementa auth en el futuro
+                    ...getAuthHeader()
                 },
                 body: JSON.stringify({ topic, tone, is_mega: isMega }),
             });
+            handleUnauthorized(response.status);
             return await response.json();
         } catch (error: any) {
             console.error("Error starting script generation:", error);
@@ -41,7 +64,10 @@ export const aiVersionClient = {
 
     async getTaskStatus(taskId: string): Promise<TaskStatus | null> {
         try {
-            const response = await fetch(`${API_URL}/status/${taskId}`);
+            const response = await fetch(`${getApiUrl()}/status/${taskId}`, {
+                headers: getAuthHeader()
+            });
+            handleUnauthorized(response.status);
             if (!response.ok) return null;
             return await response.json();
         } catch (error) {
@@ -52,13 +78,15 @@ export const aiVersionClient = {
 
     async generateSeo(keyword: string): Promise<SeoResponse> {
         try {
-            const response = await fetch(`${API_URL}/ai/seo`, {
+            const response = await fetch(`${getApiUrl()}/ai/seo`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    ...getAuthHeader()
                 },
                 body: JSON.stringify({ keyword }),
             });
+            handleUnauthorized(response.status);
             return await response.json();
         } catch (error: any) {
             console.error("Error generating SEO:", error);
@@ -68,11 +96,15 @@ export const aiVersionClient = {
 
     async removeBackground(imageBase64: string) {
         try {
-            const response = await fetch(`${API_URL}/remove-background-base64`, {
+            const response = await fetch(`${getApiUrl()}/remove-background-base64`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify({ image: imageBase64 }),
             });
+            handleUnauthorized(response.status);
             return await response.json();
         } catch (error: any) {
             return { success: false, error: error.message || 'Connection Error' };
@@ -81,12 +113,13 @@ export const aiVersionClient = {
 
     async analyzeThumbnail(description: string) {
         try {
-            // Using a generic ask endpoint or a specific one. 
-            // We will add strict endpoint support next.
-            const response = await fetch(`${API_URL}/ai/seo`, { // Placeholder: using SEO endpoint structure for now or generic ask if available
+            const response = await fetch(`${getApiUrl()}/ai/seo`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ keyword: `Analyze this thumbnail description: ${description}` }), // Hacky reuse until we add specific endpoint
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getAuthHeader()
+                },
+                body: JSON.stringify({ keyword: `Analyze this thumbnail description: ${description}` }),
             });
             return await response.json();
         } catch (error: any) {

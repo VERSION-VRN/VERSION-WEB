@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import '../globals.css';
 import Toast, { ToastType } from '@/components/Toast';
-import { useCredits } from '@/context/CreditsContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface Voice {
     name: string;
@@ -47,7 +47,8 @@ const getYoutubeThumbnail = (url: string) => {
 const STEP_LABELS = ['Recursos', 'Datos', 'Estilo'];
 
 export default function VideoEditor() {
-    const { credits, deductLocal, refreshCredits } = useCredits();
+    const { user, deductCredits, refreshCredits } = useAuth();
+    const credits = user?.credits || 0;
     const [metadata, setMetadata] = useState<Metadata | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoadingAuth, setIsLoadingAuth] = useState(true);
@@ -350,7 +351,7 @@ export default function VideoEditor() {
                     setIsProcessing(false);
                     if (status.status === 'completed') {
                         if (!isAdmin) {
-                            deductLocal(cost);
+                            deductCredits(cost);
                         }
                         refreshCredits();
                         const vp = status.result.video_rel_path || status.result.video_path.split(/[\\/]/).pop();

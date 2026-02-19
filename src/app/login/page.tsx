@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 import '../globals.css';
 
 export default function Login() {
@@ -11,6 +12,7 @@ export default function Login() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const router = useRouter();
+    const { login } = useAuth();
 
     const getApiUrl = (path: string) => {
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
@@ -33,11 +35,12 @@ export default function Login() {
                 const data = await res.json();
 
                 if (data.success) {
-                    localStorage.setItem('version_user_token', data.token);
-                    localStorage.setItem('version_user_role', data.role);
-                    localStorage.setItem('version_user_credits', data.credits.toString());
-                    localStorage.setItem('version_user_name', data.name);
-                    localStorage.setItem('version_user_email', credentials.email);
+                    login(data.token, {
+                        email: credentials.email,
+                        name: data.name,
+                        role: data.role,
+                        credits: data.credits
+                    });
                     router.push('/dashboard');
                 } else {
                     setError(data.message || 'Error de autenticación.');
@@ -61,11 +64,12 @@ export default function Login() {
 
                 if (data.success) {
                     // Auto-login con los datos devueltos
-                    localStorage.setItem('version_user_token', data.token);
-                    localStorage.setItem('version_user_role', data.role);
-                    localStorage.setItem('version_user_credits', data.credits.toString());
-                    localStorage.setItem('version_user_name', data.name);
-                    localStorage.setItem('version_user_email', credentials.email);
+                    login(data.token, {
+                        email: credentials.email,
+                        name: data.name,
+                        role: data.role,
+                        credits: data.credits
+                    });
 
                     setSuccess(data.message);
                     // Pequeña pausa para leer el mensaje de éxito antes de redirigir
@@ -95,6 +99,7 @@ export default function Login() {
                 </div>
 
                 <form onSubmit={handleAction} className="flex flex-col gap-5">
+                    {/* The previous code had a bug where name was inside an inverted logic of login, I will just correct the `!isLogin` check */}
                     {!isLogin && (
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Nombre Completo</label>
