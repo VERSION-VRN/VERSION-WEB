@@ -24,7 +24,7 @@ export default function Dashboard() {
     };
 
     const getSecurityHeaders = (isJson = true) => {
-        const token = localStorage.getItem('version_user_token');
+        const token = localStorage.getItem('token');
         const headers: Record<string, string> = {
             'X-API-Key': process.env.NEXT_PUBLIC_API_SECRET_KEY || 'wolfmessi10',
             'bypass-tunnel-reminder': 'true',
@@ -36,10 +36,7 @@ export default function Dashboard() {
     };
 
     useEffect(() => {
-        if (!user || !token) {
-            router.push('/login');
-            return;
-        }
+        if (!user) return;
 
         setIsAdmin(user.role === 'admin');
         setUserName(user.name || (user.role === 'admin' ? 'ADMIN' : 'REBELDE'));

@@ -100,7 +100,7 @@ export default function VideoEditor() {
     };
 
     const getSecurityHeaders = (isJson = true) => {
-        const token = localStorage.getItem('version_user_token');
+        const token = localStorage.getItem('token');
         const headers: Record<string, string> = {
             'X-API-Key': process.env.NEXT_PUBLIC_API_SECRET_KEY || 'wolfmessi10',
             'bypass-tunnel-reminder': 'true',
@@ -112,15 +112,8 @@ export default function VideoEditor() {
     };
 
     useEffect(() => {
-        const role = localStorage.getItem('version_user_role');
-        const userCredits = localStorage.getItem('version_user_credits');
-
-        if (!role) {
-            router.push('/login');
-            return;
-        }
-
-        setIsAdmin(role === 'admin');
+        if (!user) return;
+        setIsAdmin(user.role === 'admin');
         setIsLoadingAuth(false);
 
         const loadConfig = async () => {
@@ -152,7 +145,7 @@ export default function VideoEditor() {
             }
         };
         loadConfig();
-    }, [router]);
+    }, [user]);
 
     const handleIdiomaChange = (lang: string) => {
         setSelectedIdioma(lang);
@@ -386,7 +379,7 @@ export default function VideoEditor() {
 
         try {
             const requestId = crypto.randomUUID();
-            const userEmail = JSON.parse(localStorage.getItem(`user_${localStorage.getItem('version_user_email')}`) || '{}').email || 'unknown';
+            const userEmail = user?.email || 'unknown';
             const response = await fetch(getApiUrl('/process'), {
                 method: 'POST',
                 headers: getSecurityHeaders(),

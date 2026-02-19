@@ -104,7 +104,7 @@ function TimelineEditorContent() {
     };
 
     const getSecurityHeaders = (isJson = true) => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('version_user_token') : null;
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         const headers: Record<string, string> = {
             'X-API-Key': process.env.NEXT_PUBLIC_API_SECRET_KEY || 'wolfmessi10',
             'bypass-tunnel-reminder': 'true',

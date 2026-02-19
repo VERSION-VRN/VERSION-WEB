@@ -20,13 +20,8 @@ export default function AIChat() {
     const router = useRouter();
 
     useEffect(() => {
-        const role = localStorage.getItem('version_user_role');
-        if (!role) {
-            router.push('/login');
-            return;
-        }
         setIsLoading(false);
-    }, [router]);
+    }, []);
 
     useEffect(() => {
         if (scrollRef.current) {

@@ -6,20 +6,16 @@ import { useRouter } from 'next/navigation';
 import { EliteButton } from '@/components/ui/EliteButton';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteBadge } from '@/components/ui/EliteBadge';
+import { useAuth } from '@/context/AuthContext';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import '../globals.css';
 
 export default function Pricing() {
     const [selectedPlan, setSelectedPlan] = useState<any>(null);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const { isAuthenticated, refreshCredits } = useAuth();
     const router = useRouter();
 
     const PAYPAL_CLIENT_ID = "Afc2cT4XrOnJmxiBifQR_EBJjtGVICXJMtvF4zGiZqIaQ8sIy76-7DdCNHVqmbODzv3MTO63SjjMbW_2";
-
-    useEffect(() => {
-        const role = localStorage.getItem('version_user_role');
-        setIsLoggedIn(!!role);
-    }, []);
 
     const plans = [
         {
@@ -51,16 +47,14 @@ export default function Pricing() {
     ];
 
     const handlePurchaseSuccess = (details: any) => {
-        const currentCredits = parseInt(localStorage.getItem('version_user_credits') || '0');
-        const newCredits = currentCredits + parseInt(selectedPlan.credits);
-        localStorage.setItem('version_user_credits', newCredits.toString());
+        refreshCredits();
 
-        alert(`🎉 ¡PAGO PROCESADO EXITOSAMENTE! \n\nGracias, ${details.payer.name.given_name}. Se han añadido ${selectedPlan.credits} tokens a tu cuenta.`);
+        alert(`🎉 ¡PAGO PROCESADO EXITOSAMENTE! \n\nGracias, ${details.payer.name.given_name}. Se han añadido ${selectedPlan.credits} tokens a tu cuenta de VERSION.`);
         router.push('/dashboard');
     };
 
     const handlePurchase = (plan: any) => {
-        if (!isLoggedIn) {
+        if (!isAuthenticated) {
             router.push('/login');
             return;
         }
