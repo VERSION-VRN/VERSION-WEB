@@ -76,10 +76,10 @@ export default function Dashboard() {
         logout();
     };
 
-    if (isLoading) return <div className="min-h-screen bg-black" />;
+    if (isLoading) return <div className="min-h-screen" style={{ background: 'var(--background)' }} />;
 
     return (
-        <div className="flex min-h-screen bg-black text-white selection:bg-primary/30">
+        <div className="flex min-h-screen selection:bg-primary/30" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
             {/* Sidebar */}
             <aside className="w-[280px] hidden lg:flex flex-col border-r border-white/[0.04] p-8 fixed h-full bg-zinc-950/20 backdrop-blur-xl z-50">
                 <div className="text-xl font-black tracking-tighter uppercase mb-12">
