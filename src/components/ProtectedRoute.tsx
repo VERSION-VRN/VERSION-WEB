@@ -14,6 +14,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     useEffect(() => {
         if (!loading && !isAuthenticated) {
             if (!PUBLIC_ROUTES.includes(pathname)) {
+                console.warn(`Redirecting to login from ${pathname} because isAuthenticated is false`);
                 router.push('/login');
             }
         }

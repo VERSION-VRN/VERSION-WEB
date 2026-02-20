@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setUser(JSON.parse(storedUser));
             } catch (e) {
                 console.error("Error parseando usuario:", e);
-                logout();
+                // logout();
             }
         }
         setLoading(false);
@@ -53,7 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('user_profile', JSON.stringify(newUser));
     };
 
-    const logout = () => {
+    const logout = (reason?: string) => {
+        console.warn('Forcing logout. Reason:', reason);
         setToken(null);
         setUser(null);
         localStorage.removeItem('token');
@@ -85,8 +86,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     setUser(updatedUser);
                     localStorage.setItem('user_profile', JSON.stringify(updatedUser));
                 }
-            } else if (res.status === 401) {
-                logout();
+            } else {
+                console.warn('refreshCredits falló con status:', res.status);
+                if (res.status === 401) {
+                    // logout('401 in refreshCredits'); 
+                }
             }
         } catch (error) {
             console.error("Error fetching latest credits:", error);
