@@ -2,65 +2,43 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import '../globals.css';
 import { useAuth } from '@/context/AuthContext';
-import { EliteButton } from '@/components/ui/EliteButton';
+import { useRouter } from 'next/navigation';
 import { EliteCard } from '@/components/ui/EliteCard';
+import { EliteButton } from '@/components/ui/EliteButton';
 import { EliteBadge } from '@/components/ui/EliteBadge';
-import { CreditsBar } from '@/components/ui/CreditsBar';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { CreditsBar } from '@/components/ui/CreditsBar';
+import { Navbar } from '@/components/Navbar';
+import { apiFetch } from '@/lib/api';
 
-const TASK_TYPE_META: Record<string, { icon: string; label: string }> = {
-    editor: { icon: '🎬', label: 'Editor' },
-    writer: { icon: '📝', label: 'Writer' },
-    seo: { icon: '🚀', label: 'SEO' },
-    thumbnails: { icon: '🖼️', label: 'Thumbnail' },
-    ai: { icon: '🤖', label: 'AI Chat' },
-    default: { icon: '⚡', label: 'Tarea' },
+const TASK_TYPE_META: Record<string, { icon: string, label: string }> = {
+    'editor': { icon: '🎬', label: 'Editor' },
+    'thumbnails': { icon: '🖼️', label: 'Diseño' },
+    'writer': { icon: '📝', label: 'Writer' },
+    'seo': { icon: '🚀', label: 'SEO' },
+    'ai': { icon: '🤖', label: 'VERSION AI' }
 };
 
-export default function Dashboard() {
-    const { user, token, logout, refreshCredits } = useAuth();
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [userName, setUserName] = useState('REBELDE');
-    const [isLoading, setIsLoading] = useState(true);
+export default function DashboardPage() {
+    const { user, isAdmin, logout } = useAuth();
+    const router = useRouter();
     const [history, setHistory] = useState<any[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-    const router = useRouter();
-
-    const getApiUrl = (path: string) => {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-        return `${baseUrl}${path}`;
-    };
-
-    const getSecurityHeaders = (isJson = true) => {
-        const token = localStorage.getItem('token');
-        const headers: Record<string, string> = {
-            'X-API-Key': process.env.NEXT_PUBLIC_API_SECRET_KEY || 'wolfmessi10',
-            'bypass-tunnel-reminder': 'true',
-            'Bypass-Tunnel-Reminder': 'true',
-        };
-        if (isJson) headers['Content-Type'] = 'application/json';
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-        return headers;
-    };
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (!user) return;
-
-        setIsAdmin(user.role === 'admin');
-        setUserName(user.name || (user.role === 'admin' ? 'ADMIN' : 'REBELDE'));
-        setIsLoading(false);
-        fetchHistory();
-        refreshCredits();
-    }, [user, token, router]);
+        if (!user && !isLoading) {
+            router.push('/login');
+        } else {
+            setIsLoading(false);
+            fetchHistory();
+        }
+    }, [user, isLoading]);
 
     const fetchHistory = async () => {
         try {
-            const res = await fetch(getApiUrl('/tasks/history'), {
-                headers: getSecurityHeaders()
-            });
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/all-videos?user_id=${user?.id}`);
             if (res.ok) {
                 const data = await res.json();
                 setHistory(data);
@@ -75,6 +53,8 @@ export default function Dashboard() {
     const handleLogout = () => {
         logout();
     };
+
+    const userName = user?.name || user?.email || 'Usuario';
 
     if (isLoading) return <div className="min-h-screen" style={{ background: 'var(--background)' }} />;
 
@@ -98,59 +78,29 @@ export default function Dashboard() {
                         <span className="opacity-70">🎬</span> VERSION Editor
                     </Link>
                     <Link href="/thumbnails" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
-                        <span className="opacity-70">🖼️</span> VERSION Thumbnails
+                        <span className="opacity-70">🖼️</span> Thumbnails
                     </Link>
                     <Link href="/writer" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
-                        <span className="opacity-70">📝</span> VERSION Writer
-                    </Link>
-                    <Link href="/seo" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
-                        <span className="opacity-70">🚀</span> VERSION SEO
-                    </Link>
-                    <Link href="/ai" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
-                        <span className="opacity-70">🤖</span> VERSION AI Chat
+                        <span className="opacity-70">📝</span> Script Writer
                     </Link>
                 </nav>
 
-                <nav className="mt-auto pt-8 border-t border-white/[0.04] space-y-4">
-                    <div className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-2xl mb-4">
-                        {!isAdmin ? (
-                            <CreditsBar credits={user?.credits || 0} />
-                        ) : (
-                            <div className="text-[10px] font-bold text-primary uppercase tracking-widest">∞ Admin Access</div>
-                        )}
-                        <EliteButton variant="primary" size="sm" fullWidth onClick={() => router.push('/pricing')} className="mt-3">
-                            Recargar Arsenal
-                        </EliteButton>
-                    </div>
-
-                    <Link href="/" className="text-[10px] text-zinc-500 hover:text-white font-bold tracking-widest uppercase transition-colors block pl-1">
-                        ← Volver a la Web
-                    </Link>
-
-                    <EliteCard variant="glass" className="!p-5">
-                        <div className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Identidad Digital</div>
-                        <div className="text-xs font-black uppercase mb-1 truncate">{userName}</div>
-                        <EliteBadge variant="primary" className="mb-4">
-                            {isAdmin ? 'ULTIMATE_ACCESS' : 'REBEL_LEVEL_1'}
-                        </EliteBadge>
-                        <button
-                            onClick={handleLogout}
-                            className="text-[9px] text-white/50 hover:text-primary font-bold uppercase tracking-widest underline transition-colors cursor-pointer block"
-                        >
-                            Finalizar Sesión
-                        </button>
-                    </EliteCard>
-                </nav>
+                <div className="mt-auto pt-8 border-t border-white/[0.04]">
+                    <CreditsBar credits={user?.credits || 0} maxCredits={isAdmin ? 1000000 : 1000} label={isAdmin ? 'Infinite Access' : 'Tokens Disponibles'} />
+                    <button onClick={handleLogout} className="w-full mt-8 p-3.5 text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-red-500 border border-white/[0.04] hover:border-red-500/20 rounded-xl transition-all">
+                        Cerrar Sesión
+                    </button>
+                </div>
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 lg:ml-[280px] p-8 md:p-12 min-h-screen">
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-6">
+            <main className="flex-1 lg:ml-[280px] p-8 md:p-12">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
                     <div>
                         <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase mb-2">
                             HOLA, <span className="text-primary">{isAdmin ? 'ADMIN' : userName.split(' ')[0]}</span>
                         </h1>
-                        <p className="text-zinc-500 font-medium text-sm">
+                        <p className="font-medium text-sm" style={{ color: 'var(--muted)' }}>
                             {isAdmin ? 'Panel de control maestro activo. Ecosistema bajo control.' : 'Tu arsenal digital está listo para la acción.'}
                         </p>
                     </div>
@@ -159,7 +109,7 @@ export default function Dashboard() {
                     )}
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 text-white">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
                     <EliteCard variant="glass" className="flex justify-between items-center p-8">
                         <div>
                             <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 block">Tokens de Combate</span>
@@ -172,7 +122,7 @@ export default function Dashboard() {
                     <EliteCard variant="glass" className="flex justify-between items-center p-8">
                         <div>
                             <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 block">Rendimiento Operativo</span>
-                            <div className="text-5xl font-black tabular-nums text-primary/20">68%</div>
+                            <div className="text-5xl font-black tabular-nums opacity-20">68%</div>
                         </div>
                         <div className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest text-right">Optimización <br /> en curso</div>
                     </EliteCard>
@@ -207,7 +157,7 @@ export default function Dashboard() {
                             description="Diseño de miniaturas y análisis CTR avanzado con redes neuronales."
                             headerAction={<span className="text-3xl">🖼️</span>}
                         >
-                            <EliteButton variant="outline" size="md" fullWidth className="!text-purple-400 !border-purple-500/20 hover:!bg-purple-500 hover:!text-white" onClick={() => router.push('/thumbnails')}>
+                            <EliteButton variant="outline" size="md" fullWidth className="hover:!bg-[#a855f7] hover:!text-white hover:!border-[#a855f7]" onClick={() => router.push('/thumbnails')}>
                                 Diseñar Impacto
                             </EliteButton>
                         </EliteCard>
@@ -220,7 +170,7 @@ export default function Dashboard() {
                             description="Ingeniería de guiones virales con estructuras de alta retención."
                             headerAction={<span className="text-3xl">📝</span>}
                         >
-                            <EliteButton variant="outline" size="md" fullWidth className="!text-red-400 !border-red-500/20 hover:!bg-red-500 hover:!text-white" onClick={() => router.push('/writer')}>
+                            <EliteButton variant="outline" size="md" fullWidth className="hover:!bg-red-500 hover:!text-white hover:!border-red-500" onClick={() => router.push('/writer')}>
                                 Iniciar Script
                             </EliteButton>
                         </EliteCard>
@@ -233,7 +183,7 @@ export default function Dashboard() {
                             description="Dominación de motores de búsqueda y análisis de competencia viral."
                             headerAction={<span className="text-3xl">🚀</span>}
                         >
-                            <EliteButton variant="outline" size="md" fullWidth className="!text-green-400 !border-green-500/20 hover:!bg-green-500 hover:!text-white" onClick={() => router.push('/seo')}>
+                            <EliteButton variant="outline" size="md" fullWidth className="hover:!bg-green-500 hover:!text-white hover:!border-green-500" onClick={() => router.push('/seo')}>
                                 Optimizar Canal
                             </EliteButton>
                         </EliteCard>
@@ -254,104 +204,84 @@ export default function Dashboard() {
                     </div>
                 </section>
 
-                {/* Video History */}
-                <section className="mb-20">
+                {/* Historial Operativo */}
+                <section>
                     <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-xs font-bold tracking-[0.3em] text-zinc-500 uppercase">Historial de Videos</h2>
-                        <button onClick={fetchHistory} className="text-[9px] font-bold uppercase tracking-widest text-zinc-600 hover:text-white transition-colors">Actualizar ↻</button>
+                        <h2 className="text-xs font-bold tracking-[0.3em] text-zinc-500 uppercase">Historial Operativo</h2>
+                        <span className="text-[10px] text-zinc-600 font-mono italic">Últimos despliegues</span>
                     </div>
 
-                    {isLoadingHistory ? (
-                        <div className="py-12 flex justify-center">
-                            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                        </div>
-                    ) : history.length === 0 ? (
-                        <div className="glass-card">
+                    <EliteCard variant="solid" className="overflow-hidden !p-0">
+                        {isLoadingHistory ? (
+                            <div className="p-20 text-center animate-pulse text-zinc-700 uppercase tracking-widest text-[10px] font-bold">
+                                Sincronizando datos...
+                            </div>
+                        ) : history.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="border-b border-white/[0.04] bg-white/[0.01]">
+                                            <th className="px-6 py-4 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Origen / Herramienta</th>
+                                            <th className="px-6 py-4 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Estado</th>
+                                            <th className="px-6 py-4 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Fecha</th>
+                                            <th className="px-6 py-4 text-[9px] font-bold uppercase tracking-widest text-zinc-500 text-right">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/[0.02]">
+                                        {history.map((item: any) => {
+                                            const meta = TASK_TYPE_META[item.task_type] || { icon: '📦', label: 'Proceso' };
+                                            return (
+                                                <tr key={item.id} className="hover:bg-white/[0.01] transition-colors group">
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="text-lg opacity-40 group-hover:opacity-100 transition-opacity">{meta.icon}</span>
+                                                            <div>
+                                                                <div className="text-[11px] font-black uppercase tracking-tight">{item.filename || 'Proceso sin nombre'}</div>
+                                                                <div className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">{meta.label} System</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${item.status === 'completed' ? 'border-emerald-500/20 text-emerald-500 bg-emerald-500/5' :
+                                                            item.status === 'failed' ? 'border-red-500/20 text-red-500 bg-red-500/5' :
+                                                                'border-amber-500/20 text-amber-500 bg-amber-500/5 animate-pulse'
+                                                            }`}>
+                                                            {item.status === 'completed' ? 'Sincronizado' :
+                                                                item.status === 'failed' ? 'Error Crítico' :
+                                                                    'En Proceso'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-[10px] tabular-nums text-zinc-500">
+                                                        {new Date(item.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex justify-end gap-2">
+                                                            {item.result_url && (
+                                                                <a href={item.result_url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-primary/10 border border-white/[0.04] hover:border-primary/30 rounded-lg transition-all text-xs">
+                                                                    📥
+                                                                </a>
+                                                            )}
+                                                            <button className="p-2 hover:bg-white/5 border border-white/[0.04] hover:border-white/20 rounded-lg transition-all text-xs">
+                                                                ⚡
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
                             <EmptyState
-                                icon="🎬"
-                                title="Sin proyectos aún"
-                                description="Crea tu primer video con VERSION Editor y aparecerá aquí."
-                                actionLabel="Ir al Editor"
+                                icon="📭"
+                                title="Sin despliegues registrados"
+                                description="Aún no has iniciado ninguna operación de generación. Tu historial aparecerá aquí."
+                                actionLabel="Abrir Editor"
                                 actionHref="/editor"
                             />
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 gap-4">
-                            {history.map((task) => {
-                                const typeMeta = TASK_TYPE_META[task.task_type] || TASK_TYPE_META.default;
-                                return (
-                                    <EliteCard key={task.id} variant="glass" className="!p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 group">
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${task.status === 'completed' ? 'bg-green-500/10' :
-                                                task.status === 'failed' ? 'bg-red-500/10' :
-                                                    'bg-primary/10 animate-pulse'
-                                                }`}>
-                                                {typeMeta.icon}
-                                            </div>
-                                            <div>
-                                                <h5 className="text-sm font-black uppercase tracking-tight truncate max-w-[200px] md:max-w-[400px]">
-                                                    {task.original_params?.titulo || 'Proyecto Sin Título'}
-                                                </h5>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">
-                                                        {new Date(task.created_at * 1000).toLocaleDateString()}
-                                                    </span>
-                                                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-white/[0.04] text-zinc-500 uppercase">{typeMeta.label}</span>
-                                                    <EliteBadge variant={task.status === 'completed' ? 'success' : task.status === 'failed' ? 'error' : 'primary'}>
-                                                        {task.status}
-                                                    </EliteBadge>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 ml-14 md:ml-0">
-                                            {task.status === 'completed' && task.result?.video_rel_path && (
-                                                <div className="flex items-center gap-2">
-                                                    <EliteButton
-                                                        variant="secondary"
-                                                        size="sm"
-                                                        onClick={() => window.open(getApiUrl(`/downloads/${task.result.video_rel_path}`), '_blank')}
-                                                    >
-                                                        Descargar
-                                                    </EliteButton>
-                                                    <EliteButton
-                                                        variant="primary"
-                                                        size="sm"
-                                                        onClick={() => router.push(`/editor/timeline?video=${encodeURIComponent(getApiUrl(`/downloads/${task.result.video_rel_path}`))}`)}
-                                                    >
-                                                        ✂️ Editar
-                                                    </EliteButton>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </EliteCard>
-                                );
-                            })}
-                        </div>
-                    )}
-                </section>
-
-                {/* Academy Progress */}
-                <section>
-                    <h2 className="text-xs font-bold tracking-[0.3em] text-zinc-500 uppercase mb-8">Estatus de Formación</h2>
-                    <div className="glass-card group">
-                        <div className="mb-8">
-                            <div className="flex justify-between items-end mb-4 text-xs font-bold uppercase">
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-zinc-500">Módulo Actual</span>
-                                    <span className="text-lg tracking-tighter font-black">Master en YouTube Automático</span>
-                                </div>
-                                <span className="text-primary tabular-nums font-black">{isAdmin ? '100%' : '2%'}</span>
-                            </div>
-                            <div className="w-full h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-primary shadow-[0_0_15px_var(--primary-glow)] rounded-full transition-all duration-1000 ease-out"
-                                    style={{ width: isAdmin ? '100%' : '2%' }}
-                                />
-                            </div>
-                        </div>
-                        <button className="text-[10px] font-bold uppercase tracking-widest text-primary hover:text-white transition-colors">Continuar Aprendizaje →</button>
-                    </div>
+                        )}
+                    </EliteCard>
                 </section>
             </main>
         </div>

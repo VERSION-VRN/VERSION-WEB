@@ -23,7 +23,7 @@ export const EliteButton = ({
     disabled,
     ...props
 }: EliteButtonProps) => {
-    const baseStyles = 'inline-flex items-center justify-center font-bold uppercase tracking-widest transition-all duration-300 rounded-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100';
+    const baseStyles = 'inline-flex items-center justify-center font-bold uppercase tracking-widest transition-all duration-300 rounded-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 border';
 
     const sizeStyles = {
         sm: 'px-4 py-2 text-[10px]',
@@ -32,20 +32,58 @@ export const EliteButton = ({
         xl: 'px-10 py-5 text-sm tracking-[0.2em]'
     };
 
-    const variantStyles = {
-        primary: 'bg-white text-black hover:bg-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.05)]',
-        secondary: 'bg-zinc-900 text-white border border-white/5 hover:bg-zinc-800 hover:border-white/10',
-        outline: 'bg-transparent text-white border border-white/10 hover:border-white/30 hover:bg-white/5',
-        ghost: 'bg-transparent text-zinc-500 hover:text-white hover:bg-white/5',
-        danger: 'bg-red-600/10 text-red-500 border border-red-600/20 hover:bg-red-600 hover:text-white',
-        success: 'bg-green-600/10 text-green-500 border border-green-600/20 hover:bg-green-600 hover:text-white shadow-[0_0_15px_rgba(34,197,94,0.1)]'
+    // Usamos estilos inline o clases que dependen de variables CSS
+    const getVariantStyles = () => {
+        switch (variant) {
+            case 'primary':
+                return {
+                    backgroundColor: 'var(--foreground)',
+                    color: 'var(--background)',
+                    borderColor: 'var(--foreground)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                };
+            case 'secondary':
+                return {
+                    backgroundColor: 'var(--surface-2)',
+                    color: 'var(--foreground)',
+                    borderColor: 'var(--border)'
+                };
+            case 'outline':
+                return {
+                    backgroundColor: 'transparent',
+                    color: 'var(--foreground)',
+                    borderColor: 'var(--border)'
+                };
+            case 'ghost':
+                return {
+                    backgroundColor: 'transparent',
+                    color: 'var(--muted)',
+                    borderColor: 'transparent'
+                };
+            case 'danger':
+                return {
+                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                    color: '#ef4444',
+                    borderColor: 'rgba(220, 38, 38, 0.2)'
+                };
+            case 'success':
+                return {
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    color: '#22c55e',
+                    borderColor: 'rgba(34, 197, 94, 0.2)'
+                };
+            default:
+                return {};
+        }
     };
 
     const widthStyle = fullWidth ? 'w-full' : '';
+    const variantStyle = getVariantStyles();
 
     return (
         <button
-            className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${widthStyle} ${className}`}
+            className={`${baseStyles} ${sizeStyles[size]} ${widthStyle} ${className} ${variant === 'ghost' ? 'hover:bg-primary/5 hover:text-primary' : (variant === 'outline' ? 'hover:bg-foreground hover:text-background' : 'hover:brightness-110')}`}
+            style={variantStyle}
             disabled={disabled || isLoading}
             {...props}
         >
@@ -59,9 +97,9 @@ export const EliteButton = ({
                 </div>
             ) : (
                 <>
-                    {leftIcon && <span className="mr-2 opacity-70">{leftIcon}</span>}
+                    {leftIcon && <span className="mr-2 opacity-70 transition-opacity group-hover:opacity-100">{leftIcon}</span>}
                     {children}
-                    {rightIcon && <span className="ml-2 opacity-70">{rightIcon}</span>}
+                    {rightIcon && <span className="ml-2 opacity-70 transition-opacity group-hover:opacity-100">{rightIcon}</span>}
                 </>
             )}
         </button>

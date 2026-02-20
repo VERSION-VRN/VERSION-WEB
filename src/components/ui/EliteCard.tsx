@@ -23,20 +23,43 @@ export const EliteCard = ({
     footer,
     headerAction
 }: EliteCardProps) => {
-    const variants = {
-        glass: 'bg-zinc-950/40 backdrop-blur-xl border border-white/[0.04] hover:border-white/[0.08]',
-        solid: 'bg-zinc-950 border border-white/5',
-        borderless: 'bg-zinc-900/20'
+    // Definimos estilos basados en variables CSS para que cambien automáticamente con el tema
+    const variantStyles = {
+        glass: 'backdrop-blur-xl border transition-all duration-300',
+        solid: 'border transition-all duration-300',
+        borderless: 'transition-all duration-300'
+    };
+
+    const variantColors = {
+        glass: {
+            background: 'var(--glass)',
+            borderColor: 'var(--border)'
+        },
+        solid: {
+            background: 'var(--surface)',
+            borderColor: 'var(--border)'
+        },
+        borderless: {
+            background: 'transparent',
+            borderColor: 'transparent'
+        }
     };
 
     return (
-        <div className={`rounded-3xl p-6 transition-all duration-300 ${variants[variant]} ${className}`}>
+        <div
+            className={`rounded-3xl p-6 ${variantStyles[variant]} ${className}`}
+            style={{
+                backgroundColor: variantColors[variant].background,
+                borderColor: variantColors[variant].borderColor,
+                color: 'var(--foreground)'
+            }}
+        >
             {(title || headerAction) && (
                 <div className="flex justify-between items-start mb-6">
                     <div>
                         {subtitle && <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-1 block">{subtitle}</span>}
-                        {title && <h3 className="text-xl font-black tracking-tight text-white uppercase">{title}</h3>}
-                        {description && <p className="text-xs text-zinc-500 mt-1 font-medium">{description}</p>}
+                        {title && <h3 className="text-xl font-black tracking-tight uppercase" style={{ color: 'var(--foreground)' }}>{title}</h3>}
+                        {description && <p className="text-xs mt-1 font-medium" style={{ color: 'var(--muted)' }}>{description}</p>}
                     </div>
                     {headerAction && <div className="mt-1">{headerAction}</div>}
                 </div>
@@ -45,7 +68,7 @@ export const EliteCard = ({
                 {children}
             </div>
             {footer && (
-                <div className="mt-8 pt-6 border-t border-white/[0.04] flex items-center justify-between">
+                <div className="mt-8 pt-6 border-t flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
                     {footer}
                 </div>
             )}
