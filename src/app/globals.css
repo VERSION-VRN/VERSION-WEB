@@ -1,5 +1,4 @@
 @import "tailwindcss";
-/* @config "../../tailwind.config.ts"; */
 
 :root {
   --background: #000000;
@@ -16,6 +15,12 @@
   --radius-sm: 12px;
   --radius-lg: 24px;
   --radius-full: 9999px;
+  /* Tool-specific colors */
+  --color-editor: #DC2626;
+  --color-thumbnails: #a855f7;
+  --color-writer: #ef4444;
+  --color-seo: #22c55e;
+  --color-ai: #DC2626;
 }
 
 @theme {
@@ -32,7 +37,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Scrollbar Custom */
+/* ─── Scrollbars ─── */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -51,7 +56,25 @@ body {
   background: var(--muted);
 }
 
-/* Premium Components — Rounded Modern */
+.timeline-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+
+.timeline-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.timeline-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+.timeline-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Premium Components ─── */
 @layer components {
   .btn-primary {
     @apply bg-primary text-white font-bold tracking-wider px-8 py-4 uppercase transition-all duration-300 hover:bg-primary-hover hover:scale-[1.02] active:scale-95 cursor-pointer inline-block text-xs;
@@ -93,9 +116,25 @@ body {
   .input-field:focus {
     box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
   }
+
+  .section-enter {
+    @apply opacity-0 translate-y-6 transition-all duration-700;
+  }
+
+  .section-enter.visible {
+    @apply opacity-100 translate-y-0;
+  }
+
+  .stat-bar {
+    @apply h-1.5 rounded-full overflow-hidden bg-white/[0.05];
+  }
+
+  .stat-bar-fill {
+    @apply h-full rounded-full transition-all duration-700;
+  }
 }
 
-/* Animations */
+/* ─── Animations ─── */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -120,12 +159,76 @@ body {
   }
 }
 
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glowPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px var(--primary-glow);
+  }
+
+  50% {
+    box-shadow: 0 0 24px var(--primary-glow), 0 0 48px rgba(220, 38, 38, 0.15);
+  }
+}
+
+@keyframes playheadPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 6px rgba(220, 38, 38, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 14px rgba(220, 38, 38, 0.7);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 .animate-fade {
   animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-fade-scale {
   animation: fadeScale 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 2.5s ease-in-out infinite;
+}
+
+.playhead-pulse {
+  animation: playheadPulse 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
 }
 
 .text-gradient {
@@ -136,26 +239,7 @@ body {
   @apply max-w-7xl mx-auto px-6;
 }
 
-/* ─── Timeline Editor ─── */
-.timeline-scrollbar::-webkit-scrollbar {
-  height: 8px;
-}
-
-.timeline-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 4px;
-}
-
-.timeline-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-}
-
-.timeline-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* Range input styling for volume */
+/* ─── Range inputs ─── */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -194,13 +278,4 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
   border: none;
   box-shadow: 0 0 6px rgba(220, 38, 38, 0.4);
-}
-
-@keyframes playheadPulse {
-  0%, 100% { box-shadow: 0 0 6px rgba(220, 38, 38, 0.4); }
-  50% { box-shadow: 0 0 14px rgba(220, 38, 38, 0.7); }
-}
-
-.playhead-pulse {
-  animation: playheadPulse 2s ease-in-out infinite;
 }

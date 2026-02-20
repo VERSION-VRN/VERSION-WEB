@@ -15,6 +15,20 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "VERSION — Automatiza tu Creatividad",
   description: "La plataforma definitiva de IA y automatización diseñada para la nueva élite de creadores digitales.",
+  keywords: ["VERSION", "IA", "automatizacion", "creadores", "YouTube", "video editor", "inteligencia artificial"],
+  robots: { index: true, follow: true },
+  openGraph: {
+    title: "VERSION — Automatiza tu Creatividad",
+    description: "La plataforma definitiva de IA para creadores digitales.",
+    type: "website",
+    locale: "es_ES",
+    siteName: "VERSION",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VERSION — Automatiza tu Creatividad",
+    description: "Herramientas de IA de grado industrial para creadores de contenido.",
+  },
 };
 
 import { AuthProvider } from "@/context/AuthContext";

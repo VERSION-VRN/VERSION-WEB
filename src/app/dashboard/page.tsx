@@ -8,6 +8,17 @@ import { useAuth } from '@/context/AuthContext';
 import { EliteButton } from '@/components/ui/EliteButton';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteBadge } from '@/components/ui/EliteBadge';
+import { CreditsBar } from '@/components/ui/CreditsBar';
+import { EmptyState } from '@/components/ui/EmptyState';
+
+const TASK_TYPE_META: Record<string, { icon: string; label: string }> = {
+    editor: { icon: '🎬', label: 'Editor' },
+    writer: { icon: '📝', label: 'Writer' },
+    seo: { icon: '🚀', label: 'SEO' },
+    thumbnails: { icon: '🖼️', label: 'Thumbnail' },
+    ai: { icon: '🤖', label: 'AI Chat' },
+    default: { icon: '⚡', label: 'Tarea' },
+};
 
 export default function Dashboard() {
     const { user, token, logout, refreshCredits } = useAuth();
@@ -101,15 +112,16 @@ export default function Dashboard() {
                 </nav>
 
                 <nav className="mt-auto pt-8 border-t border-white/[0.04] space-y-4">
-                    <EliteCard variant="glass" className="!p-5 mb-4 border-primary/15 bg-primary/[0.03]">
-                        <div className="flex justify-between items-center mb-3">
-                            <span className="text-[9px] font-bold uppercase text-zinc-500 tracking-widest">Saldo Actual</span>
-                            <span className="text-xs font-black text-primary">{isAdmin ? '∞' : user?.credits || 0}</span>
-                        </div>
-                        <EliteButton variant="primary" size="sm" fullWidth onClick={() => router.push('/pricing')}>
+                    <div className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-2xl mb-4">
+                        {!isAdmin ? (
+                            <CreditsBar credits={user?.credits || 0} />
+                        ) : (
+                            <div className="text-[10px] font-bold text-primary uppercase tracking-widest">∞ Admin Access</div>
+                        )}
+                        <EliteButton variant="primary" size="sm" fullWidth onClick={() => router.push('/pricing')} className="mt-3">
                             Recargar Arsenal
                         </EliteButton>
-                    </EliteCard>
+                    </div>
 
                     <Link href="/" className="text-[10px] text-zinc-500 hover:text-white font-bold tracking-widest uppercase transition-colors block pl-1">
                         ← Volver a la Web
@@ -254,58 +266,67 @@ export default function Dashboard() {
                             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                         </div>
                     ) : history.length === 0 ? (
-                        <div className="glass-card !py-12 text-center">
-                            <p className="text-zinc-600 text-xs font-medium uppercase tracking-widest">No hay videos generados aún</p>
-                            <Link href="/editor" className="text-primary text-[10px] font-bold uppercase tracking-[0.2em] mt-4 block hover:underline">Iniciar Primer Proyecto →</Link>
+                        <div className="glass-card">
+                            <EmptyState
+                                icon="🎬"
+                                title="Sin proyectos aún"
+                                description="Crea tu primer video con VERSION Editor y aparecerá aquí."
+                                actionLabel="Ir al Editor"
+                                actionHref="/editor"
+                            />
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 gap-4">
-                            {history.map((task) => (
-                                <EliteCard key={task.id} variant="glass" className="!p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 group">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${task.status === 'completed' ? 'bg-green-500/10 text-green-500' :
-                                            task.status === 'failed' ? 'bg-red-500/10 text-red-500' :
-                                                'bg-primary/10 text-primary animate-pulse'
-                                            }`}>
-                                            {task.status === 'completed' ? '✓' : task.status === 'failed' ? '⚠' : '⌛'}
-                                        </div>
-                                        <div>
-                                            <h5 className="text-sm font-black uppercase tracking-tight truncate max-w-[200px] md:max-w-[400px]">
-                                                {task.original_params?.titulo || 'Proyecto Sin Título'}
-                                            </h5>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">
-                                                    {new Date(task.created_at * 1000).toLocaleDateString()}
-                                                </span>
-                                                <EliteBadge variant={task.status === 'completed' ? 'success' : task.status === 'failed' ? 'error' : 'primary'}>
-                                                    {task.status}
-                                                </EliteBadge>
+                            {history.map((task) => {
+                                const typeMeta = TASK_TYPE_META[task.task_type] || TASK_TYPE_META.default;
+                                return (
+                                    <EliteCard key={task.id} variant="glass" className="!p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 group">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${task.status === 'completed' ? 'bg-green-500/10' :
+                                                task.status === 'failed' ? 'bg-red-500/10' :
+                                                    'bg-primary/10 animate-pulse'
+                                                }`}>
+                                                {typeMeta.icon}
+                                            </div>
+                                            <div>
+                                                <h5 className="text-sm font-black uppercase tracking-tight truncate max-w-[200px] md:max-w-[400px]">
+                                                    {task.original_params?.titulo || 'Proyecto Sin Título'}
+                                                </h5>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">
+                                                        {new Date(task.created_at * 1000).toLocaleDateString()}
+                                                    </span>
+                                                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-white/[0.04] text-zinc-500 uppercase">{typeMeta.label}</span>
+                                                    <EliteBadge variant={task.status === 'completed' ? 'success' : task.status === 'failed' ? 'error' : 'primary'}>
+                                                        {task.status}
+                                                    </EliteBadge>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div className="flex items-center gap-2 ml-14 md:ml-0">
-                                        {task.status === 'completed' && task.result?.video_rel_path && (
-                                            <div className="flex items-center gap-2">
-                                                <EliteButton
-                                                    variant="secondary"
-                                                    size="sm"
-                                                    onClick={() => window.open(getApiUrl(`/downloads/${task.result.video_rel_path}`), '_blank')}
-                                                >
-                                                    Descargar
-                                                </EliteButton>
-                                                <EliteButton
-                                                    variant="primary"
-                                                    size="sm"
-                                                    onClick={() => router.push(`/editor/timeline?video=${encodeURIComponent(getApiUrl(`/downloads/${task.result.video_rel_path}`))}`)}
-                                                >
-                                                    ✂️ Editar
-                                                </EliteButton>
-                                            </div>
-                                        )}
-                                    </div>
-                                </EliteCard>
-                            ))}
+                                        <div className="flex items-center gap-2 ml-14 md:ml-0">
+                                            {task.status === 'completed' && task.result?.video_rel_path && (
+                                                <div className="flex items-center gap-2">
+                                                    <EliteButton
+                                                        variant="secondary"
+                                                        size="sm"
+                                                        onClick={() => window.open(getApiUrl(`/downloads/${task.result.video_rel_path}`), '_blank')}
+                                                    >
+                                                        Descargar
+                                                    </EliteButton>
+                                                    <EliteButton
+                                                        variant="primary"
+                                                        size="sm"
+                                                        onClick={() => router.push(`/editor/timeline?video=${encodeURIComponent(getApiUrl(`/downloads/${task.result.video_rel_path}`))}`)}
+                                                    >
+                                                        ✂️ Editar
+                                                    </EliteButton>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </EliteCard>
+                                );
+                            })}
                         </div>
                     )}
                 </section>
