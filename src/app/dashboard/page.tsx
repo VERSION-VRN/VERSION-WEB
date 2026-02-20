@@ -3,14 +3,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteButton } from '@/components/ui/EliteButton';
 import { EliteBadge } from '@/components/ui/EliteBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CreditsBar } from '@/components/ui/CreditsBar';
 import { Navbar } from '@/components/Navbar';
-import { apiFetch } from '@/lib/api';
 
 const TASK_TYPE_META: Record<string, { icon: string, label: string }> = {
     'editor': { icon: '🎬', label: 'Editor' },
@@ -20,12 +19,24 @@ const TASK_TYPE_META: Record<string, { icon: string, label: string }> = {
     'ai': { icon: '🤖', label: 'VERSION AI' }
 };
 
+// Navegación centralizada para evitar duplicados
+const SIDEBAR_NAV = [
+    { label: 'Vista General', href: '/dashboard', icon: '📊' },
+    { label: 'VERSION AI Chat', href: '/ai', icon: '🤖' },
+    { label: 'VERSION Editor', href: '/editor', icon: '🎬' },
+    { label: 'Thumbnails', href: '/thumbnails', icon: '🖼️' },
+    { label: 'Script Writer', href: '/writer', icon: '📝' },
+    { label: 'VERSION SEO', href: '/seo', icon: '🚀' },
+];
+
 export default function DashboardPage() {
     const { user, isAdmin, logout } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
     const [history, setHistory] = useState<any[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         if (!user && !isLoading) {
@@ -37,8 +48,9 @@ export default function DashboardPage() {
     }, [user, isLoading]);
 
     const fetchHistory = async () => {
+        if (!user?.id) return;
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/all-videos?user_id=${user?.id}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/all-videos?user_id=${user.id}`);
             if (res.ok) {
                 const data = await res.json();
                 setHistory(data);
@@ -60,29 +72,71 @@ export default function DashboardPage() {
 
     return (
         <div className="flex min-h-screen selection:bg-primary/30" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
-            {/* Sidebar */}
-            <aside className="w-[280px] hidden lg:flex flex-col border-r border-white/[0.04] p-8 fixed h-full bg-zinc-950/20 backdrop-blur-xl z-50">
-                <div className="text-xl font-black tracking-tighter uppercase mb-12">
-                    VERSION<span className="text-primary">.</span>
+
+            {/* Mobile Bottom Navigation */}
+            <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md">
+                <div className="bg-zinc-950/80 backdrop-blur-2xl border border-white/10 rounded-2xl p-2 flex justify-around items-center shadow-2xl">
+                    {SIDEBAR_NAV.slice(0, 4).map((item) => {
+                        const isActive = pathname === item.href;
+                        return (
+                            <Link key={item.href} href={item.href} className={`flex flex-col items-center p-2 rounded-xl transition-all ${isActive ? 'bg-primary/10 text-primary' : 'text-zinc-500 hover:text-white'}`}>
+                                <span className="text-lg">{item.icon}</span>
+                                <span className="text-[8px] font-bold uppercase mt-1 tracking-tighter">{item.label.split(' ')[0]}</span>
+                            </Link>
+                        );
+                    })}
+                    <button
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="flex flex-col items-center p-2 text-zinc-500 hover:text-white"
+                    >
+                        <span className="text-lg">☰</span>
+                        <span className="text-[8px] font-bold uppercase mt-1">Más</span>
+                    </button>
                 </div>
+            </div>
+
+            {/* Mobile Expandable Menu */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setIsMobileMenuOpen(false)}>
+                    <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-[90%] max-w-md animate-slide-up" onClick={e => e.stopPropagation()}>
+                        <EliteCard variant="glass" className="overflow-hidden !p-2">
+                            {SIDEBAR_NAV.map((item) => (
+                                <Link key={item.href} href={item.href} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-xl text-xs font-bold transition-all">
+                                    <span className="text-xl">{item.icon}</span> {item.label}
+                                </Link>
+                            ))}
+                            <button onClick={handleLogout} className="w-full flex items-center gap-4 p-4 text-red-500 hover:bg-red-500/10 rounded-xl text-xs font-bold transition-all border-t border-white/5 mt-2">
+                                <span>🚪</span> Cerrar Sesión
+                            </button>
+                        </EliteCard>
+                    </div>
+                </div>
+            )}
+
+            {/* Desktop Sidebar */}
+            <aside className="w-[280px] hidden lg:flex flex-col border-r border-white/[0.04] p-8 fixed h-full bg-zinc-950/20 backdrop-blur-xl z-50">
+                <Link href="/" className="text-xl font-black tracking-tighter uppercase mb-12 flex items-center gap-1 group">
+                    <span className="group-hover:text-primary transition-colors">VERSION</span><span className="text-primary text-3xl">.</span>
+                </Link>
 
                 <nav className="flex flex-col gap-2">
                     <div className="text-[10px] text-zinc-500 font-bold tracking-widest mb-4 uppercase">Menú Principal</div>
-                    <Link href="/dashboard" className="flex items-center gap-3 p-3.5 bg-white/[0.04] border-l-2 border-primary text-xs font-bold transition-all rounded-xl">
-                        <span className="opacity-70">📊</span> Vista General
-                    </Link>
-                    <Link href="/ai" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
-                        <span className="opacity-70">🤖</span> VERSION AI Chat
-                    </Link>
-                    <Link href="/editor" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
-                        <span className="opacity-70">🎬</span> VERSION Editor
-                    </Link>
-                    <Link href="/thumbnails" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
-                        <span className="opacity-70">🖼️</span> Thumbnails
-                    </Link>
-                    <Link href="/writer" className="flex items-center gap-3 p-3.5 text-zinc-500 hover:text-white hover:bg-white/[0.04] text-xs font-bold transition-all rounded-xl">
-                        <span className="opacity-70">📝</span> Script Writer
-                    </Link>
+                    {SIDEBAR_NAV.map((item) => {
+                        const isActive = pathname === item.href;
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`flex items-center gap-3 p-3.5 text-xs font-bold transition-all rounded-xl border-l-2 ${isActive
+                                        ? 'bg-white/[0.04] border-primary text-foreground'
+                                        : 'border-transparent text-zinc-500 hover:text-white hover:bg-white/[0.04]'
+                                    }`}
+                            >
+                                <span className={`opacity-70 transition-opacity ${isActive ? 'opacity-100' : ''}`}>{item.icon}</span>
+                                {item.label}
+                            </Link>
+                        );
+                    })}
                 </nav>
 
                 <div className="mt-auto pt-8 border-t border-white/[0.04]">
@@ -94,45 +148,52 @@ export default function DashboardPage() {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 lg:ml-[280px] p-8 md:p-12">
+            <main className="flex-1 lg:ml-[280px] p-8 md:p-12 pb-32 lg:pb-12">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
                     <div>
-                        <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase mb-2">
-                            HOLA, <span className="text-primary">{isAdmin ? 'ADMIN' : userName.split(' ')[0]}</span>
-                        </h1>
+                        <div className="flex items-center gap-3 mb-2">
+                            <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">
+                                HOLA, <span className="text-primary">{isAdmin ? 'ADMIN' : userName.split(' ')[0]}</span>
+                            </h1>
+                            {isAdmin && (
+                                <span className="text-[10px] font-black bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">
+                                    Admin Mode
+                                </span>
+                            )}
+                        </div>
                         <p className="font-medium text-sm" style={{ color: 'var(--muted)' }}>
                             {isAdmin ? 'Panel de control maestro activo. Ecosistema bajo control.' : 'Tu arsenal digital está listo para la acción.'}
                         </p>
                     </div>
-                    {isAdmin && (
-                        <div className="badge ring-1 ring-primary/30 bg-primary/5 animate-pulse !py-2 !px-4 italic">Sistema Omnisciente Activo</div>
-                    )}
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
-                    <EliteCard variant="glass" className="flex justify-between items-center p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 animate-fade">
+                    <EliteCard variant="glass" className="flex justify-between items-center p-8 group hover:scale-[1.01]">
                         <div>
                             <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 block">Tokens de Combate</span>
-                            <div className="text-5xl font-black tabular-nums">{isAdmin ? '∞' : user?.credits || 0}</div>
+                            <div className="text-5xl font-black tabular-nums transition-transform group-hover:scale-110 origin-left duration-500">{isAdmin ? '∞' : user?.credits || 0}</div>
                         </div>
                         <EliteButton variant="outline" size="md" onClick={() => router.push('/pricing')}>
                             Añadir Fondos
                         </EliteButton>
                     </EliteCard>
-                    <EliteCard variant="glass" className="flex justify-between items-center p-8">
+                    <EliteCard variant="glass" className="flex justify-between items-center p-8 group hover:scale-[1.01]">
                         <div>
                             <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 block">Rendimiento Operativo</span>
-                            <div className="text-5xl font-black tabular-nums opacity-20">68%</div>
+                            <div className="text-5xl font-black tabular-nums transition-colors group-hover:text-primary duration-500 opacity-20 group-hover:opacity-100">68%</div>
                         </div>
                         <div className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest text-right">Optimización <br /> en curso</div>
                     </EliteCard>
                 </div>
 
                 {/* Grid de Aplicaciones */}
-                <section className="mb-20">
+                <section className="mb-20 animate-fade" style={{ animationDelay: '0.1s' }}>
                     <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-xs font-bold tracking-[0.3em] text-zinc-500 uppercase">Apps & Herramientas</h2>
-                        <Link href="/pricing" className="text-primary text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">Ver Planes Elite →</Link>
+                        <h2 className="text-xs font-bold tracking-[0.3em] text-zinc-500 uppercase flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 bg-primary rounded-full animate-ping" />
+                            Apps & Herramientas
+                        </h2>
+                        <Link href="/pricing" className="text-primary text-[10px] font-bold uppercase tracking-widest hover:text-primary/70 transition-all">Ver Planes Elite →</Link>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -205,7 +266,7 @@ export default function DashboardPage() {
                 </section>
 
                 {/* Historial Operativo */}
-                <section>
+                <section className="animate-fade" style={{ animationDelay: '0.2s' }}>
                     <div className="flex justify-between items-center mb-8">
                         <h2 className="text-xs font-bold tracking-[0.3em] text-zinc-500 uppercase">Historial Operativo</h2>
                         <span className="text-[10px] text-zinc-600 font-mono italic">Últimos despliegues</span>
@@ -217,13 +278,12 @@ export default function DashboardPage() {
                                 Sincronizando datos...
                             </div>
                         ) : history.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
+                            <div className="overflow-x-auto custom-scrollbar">
+                                <table className="w-full text-left border-collapse min-w-[600px]">
                                     <thead>
                                         <tr className="border-b border-white/[0.04] bg-white/[0.01]">
                                             <th className="px-6 py-4 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Origen / Herramienta</th>
                                             <th className="px-6 py-4 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Estado</th>
-                                            <th className="px-6 py-4 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Fecha</th>
                                             <th className="px-6 py-4 text-[9px] font-bold uppercase tracking-widest text-zinc-500 text-right">Acciones</th>
                                         </tr>
                                     </thead>
@@ -237,7 +297,7 @@ export default function DashboardPage() {
                                                             <span className="text-lg opacity-40 group-hover:opacity-100 transition-opacity">{meta.icon}</span>
                                                             <div>
                                                                 <div className="text-[11px] font-black uppercase tracking-tight">{item.filename || 'Proceso sin nombre'}</div>
-                                                                <div className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">{meta.label} System</div>
+                                                                <div className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">{meta.label} System • {new Date(item.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -251,18 +311,15 @@ export default function DashboardPage() {
                                                                     'En Proceso'}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 text-[10px] tabular-nums text-zinc-500">
-                                                        {new Date(item.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-                                                    </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <div className="flex justify-end gap-2">
+                                                        <div className="flex justify-end gap-2 text-[10px]">
                                                             {item.result_url && (
-                                                                <a href={item.result_url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-primary/10 border border-white/[0.04] hover:border-primary/30 rounded-lg transition-all text-xs">
-                                                                    📥
+                                                                <a href={item.result_url} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-primary/10 border border-primary/20 text-primary rounded-lg transition-all hover:bg-primary/20">
+                                                                    DESCARGAR
                                                                 </a>
                                                             )}
-                                                            <button className="p-2 hover:bg-white/5 border border-white/[0.04] hover:border-white/20 rounded-lg transition-all text-xs">
-                                                                ⚡
+                                                            <button className="p-2.5 bg-white/5 border border-white/10 rounded-lg transition-all hover:bg-white/10">
+                                                                DETALLES
                                                             </button>
                                                         </div>
                                                     </td>
