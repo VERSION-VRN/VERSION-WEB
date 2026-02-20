@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface UserProfile {
+    id?: string;
     email: string;
     name: string;
     role: string;
@@ -14,6 +15,7 @@ interface AuthContextType {
     user: UserProfile | null;
     token: string | null;
     isAuthenticated: boolean;
+    isAdmin: boolean;
     loading: boolean;
     login: (token: string, user: UserProfile) => void;
     logout: () => void;
@@ -102,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             user,
             token,
             isAuthenticated: !!token,
+            isAdmin: user?.role === 'admin',
             loading,
             login,
             logout,
