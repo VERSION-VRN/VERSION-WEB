@@ -43,6 +43,14 @@ interface TaskStatus {
     result?: { script: string };
 }
 
+export interface MediaFile {
+    id: string;
+    name: string;
+    url: string;
+    type: 'image' | 'video';
+    size?: number;
+}
+
 export const aiVersionClient = {
     async startScriptGeneration(topic: string, tone: string, isMega: boolean): Promise<ScriptGenerationResponse> {
         try {
@@ -123,6 +131,54 @@ export const aiVersionClient = {
             });
             return await response.json();
         } catch (error: any) {
+            return { success: false, error: error.message };
+        }
+    },
+
+    // --- Media Pool Endpoints ---
+
+    async uploadMedia(file: File): Promise<{ success: boolean; file?: MediaFile; error?: string }> {
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await fetch(`${getApiUrl()}/media/upload`, {
+                method: "POST",
+                headers: getAuthHeader(), // Do not set Content-Type to allow browser to boundary FormData
+                body: formData,
+            });
+            handleUnauthorized(response.status);
+            return await response.json();
+        } catch (error: any) {
+            console.error("Error uploading media:", error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    async listMedia(): Promise<{ success: boolean; files?: MediaFile[]; error?: string }> {
+        try {
+            const response = await fetch(`${getApiUrl()}/media/list`, {
+                headers: getAuthHeader()
+            });
+            handleUnauthorized(response.status);
+            if (!response.ok) throw new Error("Failed to list media");
+            return await response.json();
+        } catch (error: any) {
+            console.error("Error listing media:", error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    async deleteMedia(fileId: string): Promise<{ success: boolean; message?: string; error?: string }> {
+        try {
+            const response = await fetch(`${getApiUrl()}/media/${fileId}`, {
+                method: "DELETE",
+                headers: getAuthHeader()
+            });
+            handleUnauthorized(response.status);
+            return await response.json();
+        } catch (error: any) {
+            console.error("Error deleting media:", error);
             return { success: false, error: error.message };
         }
     }
