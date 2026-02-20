@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* ─── DARK MODE (default) ─── */
 :root {
   --background: #000000;
   --foreground: #ffffff;
@@ -8,9 +9,11 @@
   --primary-glow: #dc262666;
   --accent: #ffffff;
   --muted: #a1a1aa;
-  --border: #ffffff1a;
-  --glass: #ffffff08;
+  --border: rgba(255, 255, 255, 0.1);
+  --glass: rgba(255, 255, 255, 0.04);
   --card-bg: #0a0a0b;
+  --surface: #0d0d0f;
+  --surface-2: #111114;
   --radius: 16px;
   --radius-sm: 12px;
   --radius-lg: 24px;
@@ -23,6 +26,22 @@
   --color-ai: #DC2626;
 }
 
+/* ─── LIGHT MODE ─── */
+:root.light {
+  --background: #f8f8f9;
+  --foreground: #0a0a0b;
+  --primary: #DC2626;
+  --primary-hover: #b91c1c;
+  --primary-glow: #dc262640;
+  --accent: #0a0a0b;
+  --muted: #6b7280;
+  --border: rgba(0, 0, 0, 0.09);
+  --glass: rgba(0, 0, 0, 0.04);
+  --card-bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f1f1f4;
+}
+
 @theme {
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
@@ -30,11 +49,19 @@
   --color-muted-custom: var(--muted);
 }
 
+/* ─── Base ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* ─── Scrollbars ─── */
@@ -79,23 +106,32 @@ body {
   .btn-primary {
     @apply bg-primary text-white font-bold tracking-wider px-8 py-4 uppercase transition-all duration-300 hover:bg-primary-hover hover:scale-[1.02] active:scale-95 cursor-pointer inline-block text-xs;
     border-radius: var(--radius-full);
-    box-shadow: 0 0 20px var(--primary-glow), 0 4px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 20px var(--primary-glow), 0 4px 15px rgba(0, 0, 0, 0.2);
   }
 
   .btn-outline {
-    @apply border border-white/15 text-white font-bold tracking-wider px-8 py-4 uppercase transition-all duration-300 hover:bg-white hover:text-black hover:scale-[1.02] active:scale-95 cursor-pointer inline-block text-xs;
+    @apply border font-bold tracking-wider px-8 py-4 uppercase transition-all duration-300 hover:scale-[1.02] active:scale-95 cursor-pointer inline-block text-xs;
+    border-color: var(--border);
+    color: var(--foreground);
     border-radius: var(--radius-full);
   }
 
+  .btn-outline:hover {
+    background: var(--foreground);
+    color: var(--background);
+  }
+
   .glass-card {
-    @apply bg-zinc-950/60 backdrop-blur-2xl border border-white/[0.06] p-8 transition-all duration-500;
+    @apply backdrop-blur-2xl border p-8 transition-all duration-500;
+    background: var(--surface);
+    border-color: var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 8px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 1px var(--glass), 0 8px 40px rgba(0, 0, 0, 0.08);
   }
 
   .glass-card:hover {
-    border-color: rgba(220, 38, 38, 0.15);
-    box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.08), 0 8px 50px rgba(0, 0, 0, 0.5);
+    border-color: rgba(220, 38, 38, 0.18);
+    box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.08), 0 8px 50px rgba(0, 0, 0, 0.12);
   }
 
   .badge {
@@ -105,15 +141,20 @@ body {
   }
 
   .nav-link {
-    @apply text-[11px] font-bold tracking-widest uppercase text-muted-custom transition-all duration-300 hover:text-white cursor-pointer;
+    @apply text-[11px] font-bold tracking-widest uppercase transition-all duration-300 hover:text-primary cursor-pointer;
+    color: var(--muted);
   }
 
   .input-field {
-    @apply w-full bg-white/[0.03] border border-white/[0.08] p-4 text-white focus:outline-none focus:border-primary/40 transition-all duration-300 text-sm;
+    @apply w-full border p-4 focus:outline-none transition-all duration-300 text-sm;
+    background: var(--glass);
+    border-color: var(--border);
+    color: var(--foreground);
     border-radius: var(--radius);
   }
 
   .input-field:focus {
+    border-color: rgba(220, 38, 38, 0.4);
     box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
   }
 
@@ -126,11 +167,21 @@ body {
   }
 
   .stat-bar {
-    @apply h-1.5 rounded-full overflow-hidden bg-white/[0.05];
+    @apply h-1.5 rounded-full overflow-hidden;
+    background: var(--border);
   }
 
   .stat-bar-fill {
     @apply h-full rounded-full transition-all duration-700;
+  }
+
+  /* Light mode overrides for dark-hardcoded elements */
+  :root.light .glass-card {
+    box-shadow: 0 2px 24px rgba(0, 0, 0, 0.07), 0 0 0 1px var(--border);
+  }
+
+  :root.light .badge {
+    background: rgba(220, 38, 38, 0.08);
   }
 }
 
@@ -205,6 +256,16 @@ body {
   }
 }
 
+@keyframes themeFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 .animate-fade {
   animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -226,7 +287,7 @@ body {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%);
+  background: linear-gradient(90deg, var(--glass) 0%, rgba(255, 255, 255, 0.07) 50%, var(--glass) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.8s infinite;
 }
@@ -247,7 +308,7 @@ input[type="range"] {
 }
 
 input[type="range"]::-webkit-slider-runnable-track {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border);
   height: 4px;
   border-radius: 2px;
 }
@@ -265,7 +326,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 input[type="range"]::-moz-range-track {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border);
   height: 4px;
   border-radius: 2px;
 }
