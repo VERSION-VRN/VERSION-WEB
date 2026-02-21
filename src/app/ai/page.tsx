@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { YOUTUBE_COURSE_KNOWLEDGE } from './knowledge';
-import '../globals.css';
+import { aiVersionClient } from '@/services/aiVersionClient';
 import { useAuth } from '@/context/AuthContext';
-import { getAIResponse } from '@/services/aiResponseService';
+import ReactMarkdown from 'react-markdown';
+import { Bot, User, Send, ChevronLeft, Database, Terminal } from 'lucide-react';
+import '../globals.css';
 
 export default function AIChat() {
     const { user, deductCredits, refreshCredits } = useAuth();
@@ -31,28 +32,35 @@ export default function AIChat() {
 
     if (isLoading) return <div className="min-h-screen bg-black" />;
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!input.trim()) return;
 
         const COST = 1;
         if (!user || user.credits < COST) {
-            setMessages(prev => [...prev, { role: 'ai', content: '❌ Saldo insuficiente para procesar tu consulta. (1 token requerido)' }]);
+            setMessages((prev: any[]) => [...prev, { role: 'ai', content: '❌ Saldo insuficiente para procesar tu consulta. (1 token requerido)' }]);
             return;
         }
 
         const userMessage = { role: 'user', content: input };
-        setMessages(prev => [...prev, userMessage]);
+        setMessages((prev: any[]) => [...prev, userMessage]);
         setInput('');
         setIsTyping(true);
         deductCredits(COST);
 
-        setTimeout(() => {
-            const aiContent = getAIResponse(userMessage.content);
-            const aiResponse = { role: 'ai', content: aiContent };
-            setMessages(prev => [...prev, aiResponse]);
+        try {
+            const response = await aiVersionClient.chat(userMessage.content);
+            if (response.success && response.response) {
+                const content = response.response;
+                setMessages((prev: any[]) => [...prev, { role: 'ai', content }]);
+            } else {
+                setMessages((prev: any[]) => [...prev, { role: 'ai', content: `❌ Error de sistema: ${response.error || 'No se pudo obtener respuesta.'}` }]);
+            }
+        } catch (error) {
+            setMessages((prev: any[]) => [...prev, { role: 'ai', content: '❌ Error de conexión con el estratega.' }]);
+        } finally {
             setIsTyping(false);
             refreshCredits();
-        }, 1200);
+        }
     };
 
     return (
@@ -90,16 +98,41 @@ export default function AIChat() {
                     ref={scrollRef}
                     className="flex-1 overflow-y-auto p-6 md:p-12 space-y-8 custom-scrollbar scroll-smooth"
                 >
-                    {messages.map((m, i) => (
-                        <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full`}>
+                    {messages.map((m: any, i: number) => (
+                        <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full group/msg`}>
                             <div className={`${m.role === 'ai'
-                                ? 'bg-zinc-950/60 backdrop-blur-xl border border-white/[0.06] !p-6 rounded-3xl rounded-tl-lg'
-                                : 'bg-primary text-white p-6 rounded-3xl rounded-tr-lg shadow-[0_4px_20px_rgba(220,38,38,0.2)]'
-                                } max-w-[90%] md:max-w-[80%] text-sm font-medium leading-relaxed whitespace-pre-wrap`}>
-                                {m.content}
+                                ? 'bg-zinc-950/60 backdrop-blur-xl border border-white/[0.06] p-8 rounded-3xl rounded-tl-lg shadow-2xl relative overflow-hidden'
+                                : 'bg-primary text-white p-6 rounded-3xl rounded-tr-lg shadow-[0_10px_40px_rgba(220,38,38,0.25)]'
+                                } max-w-[90%] md:max-w-[85%] text-sm font-medium leading-relaxed`}>
+
+                                {m.role === 'ai' && (
+                                    <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 blur-[50px] rounded-full pointer-events-none" />
+                                )}
+
+                                {m.role === 'ai' ? (
+                                    <div className="prose prose-invert prose-sm max-w-none text-zinc-200">
+                                        <ReactMarkdown
+                                            components={{
+                                                p: ({ children }) => <p className="mb-4 last:mb-0 leading-relaxed">{children}</p>,
+                                                h1: ({ children }) => <h1 className="text-xl font-black uppercase tracking-tighter mb-4 text-white">{children}</h1>,
+                                                h2: ({ children }) => <h2 className="text-lg font-black uppercase tracking-tighter mb-3 text-white/90">{children}</h2>,
+                                                h3: ({ children }) => <h3 className="text-md font-bold uppercase tracking-widest mb-2 text-primary">{children}</h3>,
+                                                ul: ({ children }) => <ul className="space-y-2 mb-4 list-disc list-inside">{children}</ul>,
+                                                ol: ({ children }) => <ol className="space-y-2 mb-4 list-decimal list-inside">{children}</ol>,
+                                                li: ({ children }) => <li className="text-zinc-400">{children}</li>,
+                                                code: ({ children }) => <code className="bg-white/10 px-1.5 py-0.5 rounded text-primary font-mono text-[11px]">{children}</code>,
+                                                blockquote: ({ children }) => <blockquote className="border-l-2 border-primary/40 pl-4 italic text-zinc-500 my-4">{children}</blockquote>
+                                            }}
+                                        >
+                                            {m.content}
+                                        </ReactMarkdown>
+                                    </div>
+                                ) : (
+                                    <span className="whitespace-pre-wrap">{m.content}</span>
+                                )}
                             </div>
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mt-3 px-2">
-                                {m.role === 'ai' ? 'Version_Strategist' : 'Authorized_User'}
+                            <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-600 mt-4 px-2 opacity-0 group-hover/msg:opacity-100 transition-opacity">
+                                {m.role === 'ai' ? <><Terminal size={10} className="text-primary" /> Strategist_Shell</> : <><User size={10} /> Authorized_User</>}
                             </span>
                         </div>
                     ))}

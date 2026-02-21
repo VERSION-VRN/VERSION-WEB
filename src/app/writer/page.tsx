@@ -1,10 +1,11 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { aiVersionClient } from '../../services/aiVersionClient';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { EliteCard } from '@/components/ui/EliteCard';
+import { EliteButton } from '@/components/ui/EliteButton';
 
 export default function WriterPage() {
     const { user, deductCredits, refreshCredits } = useAuth();
@@ -95,61 +96,63 @@ export default function WriterPage() {
                     </p>
                 </div>
 
-                <div className="grid gap-6 mb-8">
-                    <div>
-                        <label className="text-xs font-bold text-red-600 uppercase mb-2 block tracking-widest">
-                            Concepto Central o Link
-                        </label>
-                        <input
-                            type="text"
-                            value={topic}
-                            onChange={(e) => setTopic(e.target.value)}
-                            placeholder="Ej: La caída del Imperio Romano en 2026..."
-                            className="w-full p-5 bg-zinc-900/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-red-600/50 transition-colors placeholder:text-zinc-700"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <EliteCard variant="glass" glowColor="var(--color-writer)" className="mb-8 p-8">
+                    <div className="grid gap-6">
                         <div>
-                            <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block tracking-widest">
-                                Tono de Comunicación
+                            <label className="text-xs font-bold text-red-600 uppercase mb-2 block tracking-widest">
+                                Concepto Central o Link
                             </label>
-                            <select
-                                value={tone}
-                                onChange={(e) => setTone(e.target.value)}
-                                className="w-full p-5 bg-zinc-900/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 transition-colors appearance-none cursor-pointer"
-                            >
-                                <option value="educativo">🎓 Educativo / Documental</option>
-                                <option value="humorístico">😂 Humorístico / Sátira</option>
-                                <option value="estoico/firme">🗿 Estoico / Firme</option>
-                                <option value="corporativo">💼 Profesional / Tech</option>
-                                <option value="agresivo/clickbait">🔥 Agresivo / Viral</option>
-                            </select>
+                            <input
+                                type="text"
+                                value={topic}
+                                onChange={(e) => setTopic(e.target.value)}
+                                placeholder="Ej: La caída del Imperio Romano en 2026..."
+                                className="w-full p-5 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-none focus:border-red-600/50 transition-colors placeholder:text-zinc-700"
+                            />
                         </div>
 
-                        <div
-                            onClick={() => setIsMegaMode(!isMegaMode)}
-                            className={`
-                                p-5 border rounded-xl cursor-pointer flex items-center justify-between transition-all duration-300
-                                ${isMegaMode
-                                    ? 'bg-red-600/10 border-red-600'
-                                    : 'bg-zinc-900/50 border-white/10 hover:border-white/20'}
-                            `}
-                        >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <span className={`text-xs font-bold block mb-1 tracking-widest uppercase ${isMegaMode ? 'text-red-500' : 'text-zinc-500'}`}>
-                                    Modo Mega Deep
-                                </span>
-                                <span className={`text-[10px] ${isMegaMode ? 'text-red-400' : 'text-zinc-600'}`}>
-                                    Análisis profundo (20+ min)
-                                </span>
+                                <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block tracking-widest">
+                                    Tono de Comunicación
+                                </label>
+                                <select
+                                    value={tone}
+                                    onChange={(e) => setTone(e.target.value)}
+                                    className="w-full p-5 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 transition-colors appearance-none cursor-pointer"
+                                >
+                                    <option value="educativo">🎓 Educativo / Documental</option>
+                                    <option value="humorístico">😂 Humorístico / Sátira</option>
+                                    <option value="estoico/firme">🗿 Estoico / Firme</option>
+                                    <option value="corporativo">💼 Profesional / Tech</option>
+                                    <option value="agresivo/clickbait">🔥 Agresivo / Viral</option>
+                                </select>
                             </div>
-                            <div className={`w-10 h-5 rounded-full relative transition-colors ${isMegaMode ? 'bg-red-600' : 'bg-zinc-800'}`}>
-                                <div className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all duration-200 ${isMegaMode ? 'right-[2px]' : 'left-[2px]'}`} />
+
+                            <div
+                                onClick={() => setIsMegaMode(!isMegaMode)}
+                                className={`
+                                    p-5 border rounded-xl cursor-pointer flex items-center justify-between transition-all duration-300
+                                    ${isMegaMode
+                                        ? 'bg-red-600/10 border-red-600'
+                                        : 'bg-black/40 border-white/10 hover:border-white/20'}
+                                `}
+                            >
+                                <div>
+                                    <span className={`text-xs font-bold block mb-1 tracking-widest uppercase ${isMegaMode ? 'text-red-500' : 'text-zinc-500'}`}>
+                                        Modo Mega Deep
+                                    </span>
+                                    <span className={`text-[10px] ${isMegaMode ? 'text-red-400' : 'text-zinc-600'}`}>
+                                        Análisis profundo (20+ min)
+                                    </span>
+                                </div>
+                                <div className={`w-10 h-5 rounded-full relative transition-colors ${isMegaMode ? 'bg-red-600' : 'bg-zinc-800'}`}>
+                                    <div className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all duration-200 ${isMegaMode ? 'right-[2px]' : 'left-[2px]'}`} />
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </EliteCard>
 
                 <button
                     onClick={handleGenerate}
@@ -193,9 +196,15 @@ export default function WriterPage() {
                                 Copiar al Portapapeles
                             </button>
                         </div>
-                        <div className="bg-zinc-950 p-10 rounded-2xl border border-white/5 text-zinc-300 text-sm leading-8 font-mono max-h-[800px] overflow-y-auto selection:bg-red-900/50">
-                            {script}
-                        </div>
+                        <EliteCard variant="glass" glowColor="var(--color-writer)" className="p-0 overflow-hidden">
+                            <div className="bg-zinc-950/40 p-10 text-zinc-200 text-sm leading-relaxed font-sans max-h-[800px] overflow-y-auto selection:bg-red-900/50 shadow-inner">
+                                {script.split('\n').map((line: string, i: number) => (
+                                    <p key={i} className={`mb-4 ${line.startsWith('#') ? 'text-red-500 font-black text-lg uppercase tracking-tighter' : ''}`}>
+                                        {line}
+                                    </p>
+                                ))}
+                            </div>
+                        </EliteCard>
                     </div>
                 )}
             </div>

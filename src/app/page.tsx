@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/Navbar';
+import { HeroBackground } from '@/components/visual/HeroBackground';
+import { motion } from 'framer-motion';
+import { EliteCard } from '@/components/ui/EliteCard';
+import { EliteButton } from '@/components/ui/EliteButton';
 import './globals.css';
 
 const STATS = [
@@ -23,16 +27,6 @@ const APPS = [
 
 export default function Home() {
   const { user } = useAuth();
-  const sectionRefs = useRef<(HTMLElement | null)[]>([]);
-
-  useEffect(() => {
-    const el = document.querySelectorAll('.section-enter');
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-    }, { threshold: 0.12 });
-    el.forEach(e => obs.observe(e));
-    return () => obs.disconnect();
-  }, []);
 
   return (
     <main className="min-h-screen overflow-x-hidden">
@@ -41,59 +35,94 @@ export default function Home() {
       <Navbar variant="public" />
 
       {/* Hero Section */}
-      <section className="container py-24 md:py-32 text-center relative">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-primary/5 blur-[150px] rounded-full -z-10" />
+      <section className="container py-32 md:py-48 text-center relative min-h-[90vh] flex flex-col justify-center items-center">
+        <HeroBackground />
 
-        <h1 className="animate-fade text-[clamp(2.5rem,12vw,9rem)] font-black leading-[0.85] tracking-tighter mb-8 uppercase">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="text-[clamp(2.5rem,10vw,8rem)] font-black leading-[0.8] tracking-tighter mb-8 uppercase"
+        >
           VERSION <br />
           <span className="text-primary">—</span> AUTOMATIZA <br />
           TU CREATIVIDAD
-        </h1>
+        </motion.h1>
 
-        <p className="animate-fade opacity-0 [animation-delay:200ms] text-muted-custom text-lg md:text-xl max-w-2xl mx-auto mb-12 font-medium">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="text-muted-custom text-lg md:text-xl max-w-2xl mx-auto mb-12 font-medium"
+        >
           La plataforma definitiva de IA y automatización diseñada para la nueva élite de creadores digitales.
-        </p>
+        </motion.p>
 
-        <div className="animate-fade opacity-0 [animation-delay:400ms] flex flex-col md:flex-row gap-4 justify-center items-center">
-          <Link href="#apps" className="btn-primary w-full md:w-auto">Explorar Ecosistema</Link>
-          <Link href={user ? '/dashboard' : '/login'} className="btn-outline w-full md:w-auto text-primary">
-            {user ? 'Ir al Dashboard →' : 'Unirse a la Élite'}
-          </Link>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col md:flex-row gap-4 justify-center items-center"
+        >
+          <EliteButton href="#apps" size="xl" className="w-full md:w-auto">Explorar Ecosistema</EliteButton>
+          <EliteButton href={user ? '/dashboard' : '/login'} variant="outline" size="xl" className="w-full md:w-auto">
+            {user ? 'Ir al Dashboard' : 'Unirse a la Élite'}
+          </EliteButton>
+        </motion.div>
 
         {/* Stats bar */}
-        <div className="animate-fade opacity-0 [animation-delay:600ms] flex flex-wrap justify-center gap-8 mt-20 border-t border-white/[0.04] pt-12">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1, duration: 1 }}
+          className="flex flex-wrap justify-center gap-8 mt-20 border-t border-white/[0.04] pt-12"
+        >
           {STATS.map(s => (
             <div key={s.label} className="text-center">
               <div className="text-2xl font-black text-white">{s.value}</div>
               <div className="text-[9px] font-bold uppercase tracking-widest text-zinc-600 mt-1">{s.label}</div>
             </div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* Apps Section */}
       <section id="apps" className="container py-24 border-t border-white/[0.04]">
-        <div className="section-enter flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
           <div>
-            <span className="badge mb-4">Ecosistema 2026</span>
+            <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em] mb-4 block">Ecosistema 2026</span>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">Armamento <span className="text-primary">Digital</span></h2>
           </div>
           <p className="text-muted-custom max-w-sm text-sm">Herramientas de grado industrial para dominar los algoritmos modernos.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {APPS.map((app, i) => (
-            <div key={app.title} className={`section-enter glass-card group relative overflow-hidden ${app.wide ? 'ring-1 ring-primary/15 md:col-span-2 lg:col-span-1' : ''}`}
-              style={{ transitionDelay: `${i * 80}ms` }}>
-              <div className="absolute top-0 right-0 p-5 text-3xl opacity-10 group-hover:opacity-100 transition-opacity duration-500">{app.icon}</div>
-              <span className={`badge border-2 mb-6 ${app.badgeColor} ${app.wide ? 'animate-pulse bg-primary/5' : ''}`}>{app.badge}</span>
-              <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">{app.title}</h3>
-              <p className="text-muted-custom text-sm mb-8 leading-relaxed">{app.desc}</p>
-              <Link href={app.href} className={`${app.linkColor} font-bold text-xs uppercase tracking-widest hover:text-white transition-colors`}>
-                {app.linkLabel} →
-              </Link>
-            </div>
+            <motion.div
+              key={app.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className={app.wide ? 'md:col-span-2 lg:col-span-1' : ''}
+            >
+              <EliteCard
+                title={app.title}
+                subtitle={app.badge}
+                description={app.desc}
+                glowColor={app.badgeColor.includes('red') ? '#dc2626' : (app.badgeColor.includes('purple') ? '#a855f7' : '#dc2626')}
+                className="h-full"
+                footer={
+                  <EliteButton href={app.href} variant="outline" size="sm" className="w-full md:w-auto">
+                    {app.linkLabel}
+                  </EliteButton>
+                }
+              >
+                <div className="absolute top-0 right-0 p-8 text-4xl opacity-5 group-hover/card:opacity-20 transition-all duration-700 rotate-12 group-hover/card:rotate-0">
+                  {app.icon}
+                </div>
+              </EliteCard>
+            </motion.div>
           ))}
         </div>
       </section>
@@ -101,7 +130,11 @@ export default function Home() {
       {/* Academy Section */}
       <section id="cursos" className="bg-zinc-950/50 py-32 border-y border-white/[0.04]">
         <div className="container grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <div className="section-enter">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+          >
             <span className="text-primary font-bold tracking-widest text-[10px] uppercase mb-4 block">Formación de Élite</span>
             <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-none mb-8 uppercase">
               DEJA DE <br /> <span className="text-primary">CONSUMIR</span>, <br /> EMPIEZA A <br /> CREAR.
@@ -125,70 +158,86 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="section-enter relative aspect-square md:aspect-video lg:aspect-square bg-gradient-to-tr from-zinc-900 to-black border border-white/[0.06] flex items-center justify-center overflow-hidden rounded-3xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="relative aspect-square md:aspect-video lg:aspect-square bg-gradient-to-tr from-zinc-900 to-black border border-white/[0.06] flex items-center justify-center overflow-hidden rounded-3xl"
+          >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--primary-glow)_0%,transparent_70%)]" />
             <div className="z-10 text-center">
               <div className="text-[10vw] font-black text-white/5 select-none mb-4">REBEL</div>
-              <Link href={user ? '/dashboard' : '/login'} className="btn-outline border-primary text-primary hover:bg-primary hover:text-white">
+              <EliteButton href={user ? '/dashboard' : '/login'} variant="outline">
                 Acceder a la Academia
-              </Link>
+              </EliteButton>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Pricing Section */}
       <section id="precios" className="container py-32">
-        <div className="section-enter text-center mb-20">
-          <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase mb-4 text-gradient">Inversión en tu Arsenal</h2>
+        <div className="text-center mb-20">
+          <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase mb-4">Inversión en tu Arsenal</h2>
           <p className="text-muted-custom">Desbloquea el poder total de la automatización.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <div className="section-enter glass-card flex flex-col items-center text-center">
-            <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-[0.3em] mb-8">Access Free</h3>
+          <EliteCard
+            title="Access Free"
+            subtitle="Nivel 1"
+            className="flex flex-col items-center text-center py-12"
+          >
             <div className="text-5xl font-black mb-8">$0<span className="text-xs text-zinc-500 font-normal">/mes</span></div>
             <ul className="space-y-4 text-xs text-zinc-400 mb-12 text-left w-full">
               <li className="flex items-center gap-3">✓ <span className="uppercase tracking-widest">VERSION AI Chat Acceso</span></li>
               <li className="flex items-center gap-3">✓ <span className="uppercase tracking-widest">Creación de Cuenta Gratis</span></li>
-              <li className="flex items-center gap-3 text-zinc-600">✓ <span className="uppercase tracking-widest">Visualización de Herramientas</span></li>
             </ul>
-            <Link href="/login" className="btn-outline w-full py-3 text-xs mt-auto text-center">Crear Cuenta Gratis</Link>
-          </div>
+            <EliteButton href="/login" variant="outline" fullWidth>Crear Cuenta Gratis</EliteButton>
+          </EliteCard>
 
-          <div className="section-enter glass-card flex flex-col items-center text-center border-primary shadow-[0_0_50px_rgba(220,38,38,0.1)] relative scale-105 z-10">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-[8px] font-bold px-5 py-1.5 tracking-[0.3em] uppercase rounded-full shadow-[0_4px_15px_rgba(220,38,38,0.3)] animate-glow-pulse">Pack Elite</div>
-            <h3 className="text-sm font-bold text-primary uppercase tracking-[0.3em] mb-8 mt-2">Elite Access</h3>
+          <EliteCard
+            title="Elite Access"
+            subtitle="Nivel Master"
+            glowColor="#dc2626"
+            className="flex flex-col items-center text-center py-12 scale-105"
+          >
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-[8px] font-bold px-5 py-1.5 tracking-[0.3em] uppercase rounded-full shadow-[0_4px_15px_rgba(220,38,38,0.3)]">Pack Elite</div>
             <div className="text-5xl font-black mb-8">$29<span className="text-xs text-zinc-500 font-normal">.USD</span></div>
             <ul className="space-y-4 text-xs mb-12 text-left w-full">
               <li className="flex items-center gap-3 text-white">✓ <span className="uppercase tracking-widest text-primary font-bold">1.000 Tokens (100 Videos)</span></li>
               <li className="flex items-center gap-3 text-white">✓ <span className="uppercase tracking-widest">VERSION Editor Desbloqueado</span></li>
-              <li className="flex items-center gap-3 text-white">✓ <span className="uppercase tracking-widest">VERSION AI Master Knowledge</span></li>
-              <li className="flex items-center gap-3 text-white">✓ <span className="uppercase tracking-widest">Soporte Mastermind VIP</span></li>
             </ul>
-            <Link href="/pricing" className="btn-primary w-full py-4 text-xs mt-auto text-center">Adquirir Tokens Ahora</Link>
-          </div>
+            <EliteButton href="/pricing" fullWidth>Adquirir Tokens Ahora</EliteButton>
+          </EliteCard>
         </div>
       </section>
 
       {/* CTA Final */}
-      <section className="bg-primary py-24 text-center rounded-t-[3rem]">
-        <h2 className="container text-4xl md:text-6xl font-black tracking-tighter mb-12 uppercase italic">¿Vas a ser el arquitecto o el que es reemplazado?</h2>
-        <Link href={user ? '/dashboard' : '/login'}
-          className="bg-white text-black px-12 py-5 font-black tracking-[0.2em] uppercase hover:bg-black hover:text-white transition-all shadow-2xl rounded-full inline-block">
-          {user ? 'Ir al Dashboard' : 'Unirse a VERSION Ahora'}
-        </Link>
+      <section className="bg-primary py-32 text-center rounded-t-[4rem] relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10 mix-blend-overlay" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="container relative z-10"
+        >
+          <h2 className="text-4xl md:text-7xl font-black tracking-tighter mb-12 uppercase italic leading-none">¿VAS A SER EL ARQUITECTO<br />O EL QUE ES REEMPLAZADO?</h2>
+          <EliteButton href={user ? '/dashboard' : '/login'} variant="secondary" size="xl">
+            {user ? 'Ir al Dashboard' : 'Unirse a VERSION Ahora'}
+          </EliteButton>
+        </motion.div>
       </section>
 
       {/* Footer */}
       <footer className="container py-12 flex flex-col md:flex-row justify-between items-center gap-8 border-t border-white/[0.04] opacity-50">
         <div className="text-[10px] font-bold uppercase tracking-widest">© {new Date().getFullYear()} VERSION. — Tech Rebel Architecture Systems.</div>
         <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest">
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Instagram</a>
-          <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Twitter (X)</a>
-          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">YouTube</a>
+          <a href="#" className="hover:text-primary transition-colors">Instagram</a>
+          <a href="#" className="hover:text-primary transition-colors">Twitter (X)</a>
+          <a href="#" className="hover:text-primary transition-colors">YouTube</a>
         </div>
       </footer>
     </main>

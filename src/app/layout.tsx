@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { EliteAssistant } from "@/components/ai/EliteAssistant";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { SmoothScroll } from "@/components/SmoothScroll";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const outfit = Outfit({ variable: "--font-outfit", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "VERSION — Automatiza tu Creatividad",
@@ -31,7 +33,6 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" suppressHydrationWarning className="scroll-smooth">
-      {/* Inline script prevents flash-of-wrong-theme */}
       <head>
         <script dangerouslySetInnerHTML={{
           __html: `
@@ -42,11 +43,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           } catch(e) {}
         ` }} />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`} suppressHydrationWarning>
         <ThemeProvider>
           <AuthProvider>
             <ProtectedRoute>
-              {children}
+              <SmoothScroll>
+                {children}
+              </SmoothScroll>
               <EliteAssistant />
             </ProtectedRoute>
           </AuthProvider>

@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { EliteButton } from './ui/EliteButton';
+import { LayoutDashboard, LogOut, ExternalLink, Moon, Sun } from 'lucide-react';
 
 interface NavbarProps {
     variant?: 'public' | 'app';
@@ -22,10 +24,10 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
     return (
         <nav className="w-full border-b sticky top-0 z-50 backdrop-blur-2xl transition-colors duration-300"
             style={{ borderColor: 'var(--border)', background: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(248,248,249,0.85)' }}>
-            <div className="container flex justify-between items-center py-5">
-                <Link href="/" className="text-2xl font-black tracking-tighter uppercase hover:opacity-80 transition-opacity"
-                    style={{ color: 'var(--foreground)' }}>
-                    VERSION<span className="text-primary">.</span>
+            <div className="container flex justify-between items-center py-4">
+                <Link href="/" className="text-xl font-black tracking-tighter uppercase group flex items-center gap-2">
+                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white text-md group-hover:rotate-12 transition-transform duration-300 shadow-[0_0_20px_rgba(220,38,38,0.3)]">V</div>
+                    <span className="hidden sm:block" style={{ color: 'var(--foreground)' }}>VERSION</span>
                 </Link>
 
                 <div className="hidden md:flex gap-6 items-center">
@@ -55,28 +57,28 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
                     </button>
 
                     {user ? (
-                        <div className="flex items-center gap-3">
-                            <Link href="/dashboard"
-                                className="px-5 py-2.5 bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-primary/20 transition-all">
-                                ⚡ Dashboard
-                            </Link>
-                            <button type="button" onClick={logout}
-                                className="px-4 py-2.5 border text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-white/5 transition-all"
-                                style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}>
-                                Salir
+                        <div className="flex items-center gap-4">
+                            <EliteButton href="/dashboard" size="sm" variant="primary" leftIcon={<LayoutDashboard size={14} />}>
+                                Dashboard
+                            </EliteButton>
+                            <button
+                                onClick={logout}
+                                className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-zinc-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                title="Cerrar Sesión"
+                            >
+                                <LogOut size={16} />
                             </button>
                         </div>
                     ) : (
                         <div className="flex items-center gap-3">
                             <Link href="/login"
-                                className="px-5 py-2.5 border text-[10px] font-bold uppercase tracking-widest rounded-full transition-all hover:bg-primary hover:text-white hover:border-primary"
-                                style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}>
+                                className="text-[11px] font-bold uppercase tracking-widest px-6 py-2.5 hover:text-primary transition-colors"
+                            >
                                 Ingresar
                             </Link>
-                            <Link href="/dashboard"
-                                className="px-5 py-2.5 bg-primary/5 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-primary/10 transition-all">
+                            <EliteButton href="/dashboard" size="sm" variant="outline">
                                 Acceso VIP
-                            </Link>
+                            </EliteButton>
                         </div>
                     )}
                 </div>

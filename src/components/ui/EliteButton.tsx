@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 interface EliteButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
@@ -9,6 +10,7 @@ interface EliteButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
     leftIcon?: React.ReactNode;
     rightIcon?: React.ReactNode;
     fullWidth?: boolean;
+    href?: string;
 }
 
 export const EliteButton = ({
@@ -19,11 +21,12 @@ export const EliteButton = ({
     leftIcon,
     rightIcon,
     fullWidth = false,
+    href,
     className = '',
     disabled,
     ...props
 }: EliteButtonProps) => {
-    const baseStyles = 'inline-flex items-center justify-center font-bold uppercase tracking-widest transition-all duration-300 rounded-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 border';
+    const baseStyles = 'inline-flex items-center justify-center font-bold uppercase tracking-widest transition-all duration-300 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed border group relative overflow-hidden';
 
     const sizeStyles = {
         sm: 'px-4 py-2 text-[10px]',
@@ -32,7 +35,6 @@ export const EliteButton = ({
         xl: 'px-10 py-5 text-sm tracking-[0.2em]'
     };
 
-    // Usamos estilos inline o clases que dependen de variables CSS
     const getVariantStyles = () => {
         switch (variant) {
             case 'primary':
@@ -40,7 +42,6 @@ export const EliteButton = ({
                     backgroundColor: 'var(--foreground)',
                     color: 'var(--background)',
                     borderColor: 'var(--foreground)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                 };
             case 'secondary':
                 return {
@@ -80,13 +81,8 @@ export const EliteButton = ({
     const widthStyle = fullWidth ? 'w-full' : '';
     const variantStyle = getVariantStyles();
 
-    return (
-        <button
-            className={`${baseStyles} ${sizeStyles[size]} ${widthStyle} ${className} ${variant === 'ghost' ? 'hover:bg-primary/5 hover:text-primary' : (variant === 'outline' ? 'hover:bg-foreground hover:text-background' : 'hover:brightness-110')}`}
-            style={variantStyle}
-            disabled={disabled || isLoading}
-            {...props}
-        >
+    const Content = () => (
+        <>
             {isLoading ? (
                 <div className="flex items-center gap-2">
                     <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
@@ -96,12 +92,47 @@ export const EliteButton = ({
                     <span>Procesando...</span>
                 </div>
             ) : (
-                <>
+                <div className="flex items-center justify-center relative z-10">
                     {leftIcon && <span className="mr-2 opacity-70 transition-opacity group-hover:opacity-100">{leftIcon}</span>}
                     {children}
                     {rightIcon && <span className="ml-2 opacity-70 transition-opacity group-hover:opacity-100">{rightIcon}</span>}
-                </>
+                </div>
             )}
-        </button>
+
+            {/* Hover Glow effect */}
+            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </>
+    );
+
+    const animationProps = {
+        whileHover: { scale: 1.02, y: -1 },
+        whileTap: { scale: 0.98, y: 0 },
+        transition: { type: 'spring' as const, stiffness: 400, damping: 10 }
+    };
+
+    if (href) {
+        return (
+            <motion.div {...animationProps} className={widthStyle}>
+                <Link
+                    href={href}
+                    className={`${baseStyles} ${sizeStyles[size]} ${widthStyle} ${className} ${variant === 'outline' ? 'hover:bg-foreground hover:text-background border-zinc-800' : ''}`}
+                    style={variantStyle}
+                >
+                    <Content />
+                </Link>
+            </motion.div>
+        );
+    }
+
+    return (
+        <motion.button
+            {...animationProps}
+            className={`${baseStyles} ${sizeStyles[size]} ${widthStyle} ${className}`}
+            style={variantStyle}
+            disabled={disabled || isLoading}
+            {...props as any}
+        >
+            <Content />
+        </motion.button>
     );
 };

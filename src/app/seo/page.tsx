@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { aiVersionClient } from '../../services/aiVersionClient';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { EliteCard } from '@/components/ui/EliteCard';
 
 export default function SeoPage() {
     const { user, deductCredits, refreshCredits } = useAuth();
@@ -52,7 +53,7 @@ export default function SeoPage() {
                     </p>
                 </div>
 
-                <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-10 mb-8 backdrop-blur-sm">
+                <EliteCard variant="glass" glowColor="var(--color-seo)" className="mb-8 p-10">
                     <div className="mb-8">
                         <label className="text-xs font-bold text-green-500 uppercase mb-3 block tracking-widest">
                             Target Keyword / Tema Viral
@@ -62,7 +63,7 @@ export default function SeoPage() {
                             value={keyword}
                             onChange={(e) => setKeyword(e.target.value)}
                             placeholder="Ej: Marketing Digital 2026, Recetas Veganas..."
-                            className="w-full p-5 bg-black border border-white/10 rounded-xl text-white focus:outline-none focus:border-green-500/50 transition-colors placeholder:text-zinc-800"
+                            className="w-full p-5 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-none focus:border-green-500/50 transition-colors placeholder:text-zinc-800"
                             onKeyDown={(e) => e.key === 'Enter' && handleOptimize()}
                         />
                     </div>
@@ -79,19 +80,24 @@ export default function SeoPage() {
                     >
                         {loading ? 'Analizando Métricas...' : 'Optimizar Metadatos'}
                     </button>
-                </div>
+                </EliteCard>
 
                 {results && (
                     <div className="animate-fade-in-up">
-                        <div className="bg-zinc-950 p-10 rounded-2xl border-l-4 border-green-500 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 blur-3xl bg-green-500 w-64 h-64 rounded-full pointer-events-none"></div>
-                            <h3 className="text-sm font-bold text-white mb-8 flex items-center gap-3 uppercase tracking-widest">
-                                <span className="text-green-500 text-xl">⚡</span> Reporte de Optimización
-                            </h3>
-                            <div className="whitespace-pre-wrap text-zinc-300 text-sm leading-relaxed font-mono">
-                                {results}
+                        <EliteCard variant="glass" glowColor="var(--color-seo)" className="p-0 overflow-hidden">
+                            <div className="bg-zinc-950/40 p-10 relative">
+                                <h3 className="text-sm font-bold text-white mb-8 flex items-center gap-3 uppercase tracking-widest">
+                                    <span className="text-green-500 text-xl">⚡</span> Reporte de Optimización
+                                </h3>
+                                <div className="whitespace-pre-wrap text-zinc-200 text-sm leading-relaxed font-sans mt-4">
+                                    {results.split('\n').map((line, i) => (
+                                        <div key={i} className={`mb-3 ${line.match(/^\d\./) ? 'text-green-500 font-bold text-base mt-6' : ''}`}>
+                                            {line}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        </EliteCard>
                     </div>
                 )}
             </div>

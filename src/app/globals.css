@@ -18,12 +18,15 @@
   --radius-sm: 12px;
   --radius-lg: 24px;
   --radius-full: 9999px;
-  /* Tool-specific colors */
+  /* Tool-specific colors (Rich Tones) */
   --color-editor: #DC2626;
-  --color-thumbnails: #a855f7;
-  --color-writer: #ef4444;
-  --color-seo: #22c55e;
-  --color-ai: #DC2626;
+  --color-thumbnails: #A855F7;
+  --color-writer: #F43F5E;
+  --color-seo: #10B981;
+  --color-ai: #3B82F6;
+
+  --shadow-premium: 0 0 50px rgba(0, 0, 0, 0.5), 0 0 100px rgba(0, 0, 0, 0.2);
+  --glow-intensity: 0.15;
 }
 
 /* ─── LIGHT MODE ─── */
@@ -53,7 +56,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-outfit), 'Inter', sans-serif;
   overflow-x: hidden;
   transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }

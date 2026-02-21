@@ -36,6 +36,12 @@ interface SeoResponse {
     error?: string;
 }
 
+interface ChatResponse {
+    success: boolean;
+    response?: string;
+    error?: string;
+}
+
 interface TaskStatus {
     status: string;
     progress: number;
@@ -98,6 +104,24 @@ export const aiVersionClient = {
             return await response.json();
         } catch (error: any) {
             console.error("Error generating SEO:", error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    async chat(message: string): Promise<ChatResponse> {
+        try {
+            const response = await fetch(`${getApiUrl()}/ai/chat`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getAuthHeader()
+                },
+                body: JSON.stringify({ message }),
+            });
+            handleUnauthorized(response.status);
+            return await response.json();
+        } catch (error: any) {
+            console.error("Chat error:", error);
             return { success: false, error: error.message };
         }
     },
