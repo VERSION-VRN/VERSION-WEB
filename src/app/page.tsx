@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/Navbar';
-import { HeroBackground } from '@/components/visual/HeroBackground';
+import dynamic from 'next/dynamic';
+const HeroBackground = dynamic(() => import('@/components/visual/HeroBackground').then(mod => mod.HeroBackground), { ssr: false });
 import { motion } from 'framer-motion';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteButton } from '@/components/ui/EliteButton';
+import { PricingCard } from '@/components/ui/PricingCard';
 import './globals.css';
 
 const STATS = [
@@ -185,33 +187,34 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <EliteCard
+          <PricingCard
             title="Access Free"
             subtitle="Nivel 1"
-            className="flex flex-col items-center text-center py-12"
-          >
-            <div className="text-5xl font-black mb-8">$0<span className="text-xs text-zinc-500 font-normal">/mes</span></div>
-            <ul className="space-y-4 text-xs text-zinc-400 mb-12 text-left w-full">
-              <li className="flex items-center gap-3">✓ <span className="uppercase tracking-widest">VERSION AI Chat Acceso</span></li>
-              <li className="flex items-center gap-3">✓ <span className="uppercase tracking-widest">Creación de Cuenta Gratis</span></li>
-            </ul>
-            <EliteButton href="/login" variant="outline" fullWidth>Crear Cuenta Gratis</EliteButton>
-          </EliteCard>
+            price="0"
+            period="/mes"
+            features={[
+              { text: 'VERSION AI Chat Acceso' },
+              { text: 'Creación de Cuenta Gratis' }
+            ]}
+            buttonText="Crear Cuenta Gratis"
+            buttonHref="/login"
+          />
 
-          <EliteCard
+          <PricingCard
             title="Elite Access"
             subtitle="Nivel Master"
+            price="29"
+            period=".USD"
             glowColor="#dc2626"
-            className="flex flex-col items-center text-center py-12 scale-105"
-          >
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-[8px] font-bold px-5 py-1.5 tracking-[0.3em] uppercase rounded-full shadow-[0_4px_15px_rgba(220,38,38,0.3)]">Pack Elite</div>
-            <div className="text-5xl font-black mb-8">$29<span className="text-xs text-zinc-500 font-normal">.USD</span></div>
-            <ul className="space-y-4 text-xs mb-12 text-left w-full">
-              <li className="flex items-center gap-3 text-white">✓ <span className="uppercase tracking-widest text-primary font-bold">1.000 Tokens (100 Videos)</span></li>
-              <li className="flex items-center gap-3 text-white">✓ <span className="uppercase tracking-widest">VERSION Editor Desbloqueado</span></li>
-            </ul>
-            <EliteButton href="/pricing" fullWidth>Adquirir Tokens Ahora</EliteButton>
-          </EliteCard>
+            isPopular={true}
+            badge="Pack Elite"
+            features={[
+              { text: '1.000 Tokens (100 Videos)', highlighted: true },
+              { text: 'VERSION Editor Desbloqueado' }
+            ]}
+            buttonText="Adquirir Tokens Ahora"
+            buttonHref="/pricing"
+          />
         </div>
       </section>
 

@@ -26,7 +26,7 @@ export const EliteButton = ({
     disabled,
     ...props
 }: EliteButtonProps) => {
-    const baseStyles = 'inline-flex items-center justify-center font-bold uppercase tracking-widest transition-all duration-300 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed border group relative overflow-hidden';
+    const baseStyles = 'inline-flex items-center justify-center font-bold uppercase tracking-widest transition-all duration-300 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed border group relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black';
 
     const sizeStyles = {
         sm: 'px-4 py-2 text-[10px]',
@@ -117,6 +117,8 @@ export const EliteButton = ({
                     href={href}
                     className={`${baseStyles} ${sizeStyles[size]} ${widthStyle} ${className} ${variant === 'outline' ? 'hover:bg-foreground hover:text-background border-zinc-800' : ''}`}
                     style={variantStyle}
+                    aria-disabled={disabled || isLoading}
+                    {...(props as any)}
                 >
                     <Content />
                 </Link>
@@ -130,6 +132,8 @@ export const EliteButton = ({
             className={`${baseStyles} ${sizeStyles[size]} ${widthStyle} ${className}`}
             style={variantStyle}
             disabled={disabled || isLoading}
+            aria-disabled={disabled || isLoading}
+            aria-busy={isLoading}
             {...props as any}
         >
             <Content />

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import '../globals.css';
 import Toast, { ToastType } from '@/components/Toast';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch, getApiUrl } from '@/lib/api';
 
 interface Voice {
     name: string;
@@ -94,22 +95,6 @@ export default function VideoEditor() {
         setToast({ message, type });
     };
 
-    const getApiUrl = (path: string) => {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-        return `${baseUrl}${path}`;
-    };
-
-    const getSecurityHeaders = (isJson = true) => {
-        const token = localStorage.getItem('token');
-        const headers: Record<string, string> = {
-            'X-API-Key': process.env.NEXT_PUBLIC_API_SECRET_KEY || 'wolfmessi10',
-            'bypass-tunnel-reminder': 'true',
-            'Bypass-Tunnel-Reminder': 'true',
-        };
-        if (isJson) headers['Content-Type'] = 'application/json';
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-        return headers;
-    };
 
     useEffect(() => {
         if (!user) return;
@@ -120,12 +105,7 @@ export default function VideoEditor() {
             setIsLoadingConfig(true);
             setConfigError('');
             try {
-                const metaRes = await fetch(getApiUrl('/metadata'), {
-                    headers: getSecurityHeaders(false)
-                });
-                if (!metaRes.ok) throw new Error('Error al conectar con el servidor backend');
-
-                const metaData = await metaRes.json();
+                const metaData = await apiFetch<Metadata & { success: boolean }>('/metadata');
                 if (metaData.success) {
                     setMetadata(metaData);
                     const defaultLang = "Español";
@@ -137,9 +117,10 @@ export default function VideoEditor() {
                     if (metaData.subtitle_colors) setSelectedSubtitleColor(metaData.subtitle_colors[0]);
                     if (metaData.subtitle_positions) setSelectedSubtitlePosition(metaData.subtitle_positions[0]);
                 }
-            } catch (err: any) {
+            } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
                 console.error('Error de Carga:', err);
-                setConfigError('No se pudo conectar con el servidor. ' + err.message);
+                setConfigError('No se pudo conectar con el servidor. ' + errorMessage);
             } finally {
                 setIsLoadingConfig(false);
             }
@@ -183,7 +164,7 @@ export default function VideoEditor() {
                     try {
                         const res = await fetch(getApiUrl('/upload-chunk'), {
                             method: 'POST',
-                            headers: getSecurityHeaders(false),
+                            headers: { 'bypass-tunnel-reminder': 'true', 'ngrok-skip-browser-warning': 'true' },
                             body: chunkFormData
                         });
                         if (res.ok) {
@@ -197,7 +178,7 @@ export default function VideoEditor() {
                             } catch { errorDetail = errorText || `Error ${res.status}`; }
                             throw new Error(`[Chunk ${i}] ${res.status}: ${errorDetail}`);
                         }
-                    } catch (e: any) {
+                    } catch (e) {
                         retries--;
                         if (retries === 0) throw e;
                         await new Promise(r => setTimeout(r, 1500));
@@ -213,22 +194,19 @@ export default function VideoEditor() {
             formDataAssemble.append('file_id', fileId);
             formDataAssemble.append('filename', file.name);
 
-            const resAssemble = await fetch(getApiUrl('/assemble-file'), {
+            const data = await apiFetch<any>('/assemble-file', {
                 method: 'POST',
-                headers: getSecurityHeaders(false),
                 body: formDataAssemble
             });
-            if (!resAssemble.ok) throw new Error('Error al ensamblar archivo');
-
-            const data = await resAssemble.json();
             if (data.success) {
                 setFormData({ ...formData, backgroundVideo: file, backgroundVideoPath: data.path });
                 setStatusMessage('');
             } else {
                 throw new Error(data.error || 'Error desconocido');
             }
-        } catch (err: any) {
-            showToast('Error al subir el video: ' + err.message, 'error');
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+            showToast('Error al subir el video: ' + errorMessage, 'error');
             setStatusMessage('');
         } finally {
             setUploadingBg(false);
@@ -254,7 +232,7 @@ export default function VideoEditor() {
 
                 const res = await fetch(getApiUrl('/upload-chunk'), {
                     method: 'POST',
-                    headers: getSecurityHeaders(false),
+                    headers: { 'bypass-tunnel-reminder': 'true', 'ngrok-skip-browser-warning': 'true' },
                     body: formDataChunk
                 });
                 if (!res.ok) throw new Error(`Error en chunk ${i}`);
@@ -265,20 +243,17 @@ export default function VideoEditor() {
             formDataAssemble.append('file_id', fileId);
             formDataAssemble.append('filename', file.name);
 
-            const resAssemble = await fetch(getApiUrl('/assemble-file'), {
+            const data = await apiFetch<any>('/assemble-file', {
                 method: 'POST',
-                headers: getSecurityHeaders(false),
                 body: formDataAssemble
             });
-            if (!resAssemble.ok) throw new Error('Error al ensamblar archivo');
-
-            const data = await resAssemble.json();
             if (data.success) {
                 setFormData({ ...formData, music: file, musicPath: data.filename });
                 showToast('Música subida correctamente', 'success');
             }
-        } catch (err: any) {
-            showToast('Error al subir música: ' + err.message, 'error');
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+            showToast('Error al subir música: ' + errorMessage, 'error');
         } finally {
             setUploadingBg(false);
             setUploadProgress(0);
@@ -304,7 +279,7 @@ export default function VideoEditor() {
         if (!confirm('¿Cancelar el proceso?')) return;
         try {
             setStatusMessage('Cancelando...');
-            await fetch(getApiUrl(`/cancel/${currentTaskId}`), { method: 'POST', headers: getSecurityHeaders(false) });
+            await apiFetch(`/cancel/${currentTaskId}`, { method: 'POST' });
         } catch { alert("No se pudo cancelar."); }
     };
 
@@ -313,12 +288,10 @@ export default function VideoEditor() {
         setIsConfirmingScript(true);
         setStatusMessage('Confirmando guion...');
         try {
-            const res = await fetch(getApiUrl(`/confirm-script/${currentTaskId}`), {
+            const data = await apiFetch<{ success: boolean; detail?: string }>(`/confirm-script/${currentTaskId}`, {
                 method: 'POST',
-                headers: getSecurityHeaders(),
                 body: JSON.stringify({ script: editedScript })
             });
-            const data = await res.json();
             if (data.success) {
                 setIsAwaitingScript(false);
                 setIsProcessing(true);
@@ -334,22 +307,27 @@ export default function VideoEditor() {
     const startStatusPolling = (taskId: string, cost: number) => {
         const interval = setInterval(async () => {
             try {
-                const statusRes = await fetch(getApiUrl(`/status/${taskId}`), { headers: getSecurityHeaders(false) });
-                const status = await statusRes.json();
+                const status = await apiFetch<{
+                    status: string;
+                    progress: number;
+                    message: string;
+                    script_content?: string;
+                    result?: { video_rel_path?: string; video_path: string; script_rel_path?: string };
+                }>(`/status/${taskId}`);
                 setProgress(status.progress);
                 setStatusMessage(status.message);
 
                 if (['completed', 'failed', 'cancelled', 'awaiting_review'].includes(status.status)) {
                     clearInterval(interval);
                     setIsProcessing(false);
-                    if (status.status === 'completed') {
+                    if (status.status === 'completed' && status.result) {
                         if (!isAdmin) {
                             deductCredits(cost);
                         }
                         refreshCredits();
                         const vp = status.result.video_rel_path || status.result.video_path.split(/[\\/]/).pop();
-                        const sp = status.result.script_rel_path || vp.replace('.mp4', '_GUION.txt');
-                        setResultData({ video_path: getApiUrl(`/downloads/${encodeURI(vp)}`), script_path: getApiUrl(`/downloads/${encodeURI(sp)}`) });
+                        const sp = status.result.script_rel_path || (vp ? vp.replace('.mp4', '_GUION.txt') : '');
+                        setResultData({ video_path: getApiUrl(`/downloads/${encodeURI(vp || '')}`), script_path: getApiUrl(`/downloads/${encodeURI(sp)}`) });
                         setCurrentTaskId(null);
                     } else if (status.status === 'failed') {
                         alert('❌ ' + status.message);
@@ -380,9 +358,8 @@ export default function VideoEditor() {
         try {
             const requestId = crypto.randomUUID();
             const userEmail = user?.email || 'unknown';
-            const response = await fetch(getApiUrl('/process'), {
+            const data = await apiFetch<{ success: boolean; task_id: string; detail?: string; message?: string }>('/process', {
                 method: 'POST',
-                headers: getSecurityHeaders(),
                 body: JSON.stringify({
                     url: formData.url, idioma: selectedIdioma, voz: selectedVoice,
                     prompt_name: selectedPrompt, titulo: formData.titulo,
@@ -396,7 +373,6 @@ export default function VideoEditor() {
                     bg_music_vol: formData.musicVolume
                 })
             });
-            const data = await response.json();
             if (!data.success) { setIsProcessing(false); return showToast('Error: ' + (data.detail || data.message), 'error'); }
             setCurrentTaskId(data.task_id);
             startStatusPolling(data.task_id, currentCost);

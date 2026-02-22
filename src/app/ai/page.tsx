@@ -9,9 +9,14 @@ import ReactMarkdown from 'react-markdown';
 import { Bot, User, Send, ChevronLeft, Database, Terminal } from 'lucide-react';
 import '../globals.css';
 
+interface Message {
+    role: 'ai' | 'user';
+    content: string;
+}
+
 export default function AIChat() {
     const { user, deductCredits, refreshCredits } = useAuth();
-    const [messages, setMessages] = useState([
+    const [messages, setMessages] = useState<Message[]>([
         { role: 'ai', content: 'Hola, Rebelde. Soy VERSION AI, tu estratega de contenido. He cargado el "Master en YouTube" y estoy listo para orquestar tu canal. ¿Qué paso del proceso vamos a automatizar hoy?' }
     ]);
     const [input, setInput] = useState('');
@@ -37,12 +42,12 @@ export default function AIChat() {
 
         const COST = 1;
         if (!user || user.credits < COST) {
-            setMessages((prev: any[]) => [...prev, { role: 'ai', content: '❌ Saldo insuficiente para procesar tu consulta. (1 token requerido)' }]);
+            setMessages((prev: Message[]) => [...prev, { role: 'ai', content: '❌ Saldo insuficiente para procesar tu consulta. (1 token requerido)' }]);
             return;
         }
 
-        const userMessage = { role: 'user', content: input };
-        setMessages((prev: any[]) => [...prev, userMessage]);
+        const userMessage: Message = { role: 'user', content: input };
+        setMessages((prev: Message[]) => [...prev, userMessage]);
         setInput('');
         setIsTyping(true);
         deductCredits(COST);
@@ -51,12 +56,12 @@ export default function AIChat() {
             const response = await aiVersionClient.chat(userMessage.content);
             if (response.success && response.response) {
                 const content = response.response;
-                setMessages((prev: any[]) => [...prev, { role: 'ai', content }]);
+                setMessages((prev: Message[]) => [...prev, { role: 'ai', content }]);
             } else {
-                setMessages((prev: any[]) => [...prev, { role: 'ai', content: `❌ Error de sistema: ${response.error || 'No se pudo obtener respuesta.'}` }]);
+                setMessages((prev: Message[]) => [...prev, { role: 'ai', content: `❌ Error de sistema: ${response.error || 'No se pudo obtener respuesta.'}` }]);
             }
         } catch (error) {
-            setMessages((prev: any[]) => [...prev, { role: 'ai', content: '❌ Error de conexión con el estratega.' }]);
+            setMessages((prev: Message[]) => [...prev, { role: 'ai', content: '❌ Error de conexión con el estratega.' }]);
         } finally {
             setIsTyping(false);
             refreshCredits();
@@ -98,7 +103,7 @@ export default function AIChat() {
                     ref={scrollRef}
                     className="flex-1 overflow-y-auto p-6 md:p-12 space-y-8 custom-scrollbar scroll-smooth"
                 >
-                    {messages.map((m: any, i: number) => (
+                    {messages.map((m: Message, i: number) => (
                         <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full group/msg`}>
                             <div className={`${m.role === 'ai'
                                 ? 'bg-zinc-950/60 backdrop-blur-xl border border-white/[0.06] p-8 rounded-3xl rounded-tl-lg shadow-2xl relative overflow-hidden'

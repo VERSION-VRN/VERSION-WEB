@@ -50,6 +50,24 @@
   --color-primary-hover: var(--primary-hover);
   --color-border-custom: var(--border);
   --color-muted-custom: var(--muted);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-sans: 'Inter', sans-serif;
+
+  --animate-fade-in-up: fadeInUp 0.8s ease-out forwards;
+
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 
 /* ─── Base ─── */
@@ -114,6 +132,12 @@ body {
 
   .stat-bar-fill {
     @apply h-full rounded-full transition-all duration-700;
+  }
+
+  .input-field {
+    @apply w-full px-5 py-3.5 bg-white/[0.03] border border-white/[0.08] text-white rounded-xl placeholder:text-zinc-600 font-medium tracking-wide transition-all duration-300;
+    @apply hover:border-white/[0.15] hover:bg-white/[0.05];
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/50;
   }
 }
 

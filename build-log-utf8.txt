@@ -1,0 +1,34 @@
+﻿
+> version-web@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 3.8s
+  Running TypeScript ...
+node.exe : Failed to compile.
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\valen\AppData\Roaming\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Failed to compile.:String) [], RemoteE 
+   xception
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+./src/app/thumbnails/page.tsx:320:13
+Type error: 'response' is of type 'unknown'.
+
+[0m [90m 318 |[39m         [36mconst[39m response [33m=[39m [36mawait[39m a
+iVersionClient[33m.[39mremoveBackground(layer[33m.[39mimageElement[33m.[39msrc
+)[33m;[39m
+ [90m 319 |[39m
+[31m[1m>[22m[39m[90m 320 |[39m         [36mif[39m 
+(response[33m.[39msuccess [33m&&[39m response[33m.[39mimage) {
+ [90m     |[39m             [31m[1m^[22m[39m
+ [90m 321 |[39m             deductCredits([33mCOST[39m)[33m;[39m
+ [90m 322 |[39m             [36mconst[39m img [33m=[39m [36mnew[39m 
+[33mImage[39m()[33m;[39m
+ [90m 323 |[39m             img[33m.[39monload [33m=[39m () [33m=>[39m {[0m
+Next.js build worker exited with code: 1 and signal: null

@@ -1,18 +1,4 @@
-
-const getApiUrl = () => {
-    if (typeof window !== 'undefined') {
-        return localStorage.getItem('backend_url') || "http://localhost:8000";
-    }
-    return "http://localhost:8000";
-};
-
-const getAuthHeader = (): Record<string, string> => {
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token');
-        return token ? { "Authorization": `Bearer ${token}` } : {};
-    }
-    return {};
-};
+import { apiFetch, getApiUrl, getHeaders } from '@/lib/api';
 
 const handleUnauthorized = (status: number) => {
     if (status === 401 && typeof window !== 'undefined') {
@@ -60,30 +46,20 @@ export interface MediaFile {
 export const aiVersionClient = {
     async startScriptGeneration(topic: string, tone: string, isMega: boolean): Promise<ScriptGenerationResponse> {
         try {
-            const response = await fetch(`${getApiUrl()}/ai/script/start`, {
+            return await apiFetch('/ai/script/start', {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...getAuthHeader()
-                },
                 body: JSON.stringify({ topic, tone, is_mega: isMega }),
             });
-            handleUnauthorized(response.status);
-            return await response.json();
-        } catch (error: any) {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error("Error starting script generation:", error);
-            return { success: false, error: error.message };
+            return { success: false, error: errorMessage };
         }
     },
 
     async getTaskStatus(taskId: string): Promise<TaskStatus | null> {
         try {
-            const response = await fetch(`${getApiUrl()}/status/${taskId}`, {
-                headers: getAuthHeader()
-            });
-            handleUnauthorized(response.status);
-            if (!response.ok) return null;
-            return await response.json();
+            return await apiFetch(`/status/${taskId}`);
         } catch (error) {
             console.error("Error fetching task status:", error);
             return null;
@@ -92,70 +68,51 @@ export const aiVersionClient = {
 
     async generateSeo(keyword: string): Promise<SeoResponse> {
         try {
-            const response = await fetch(`${getApiUrl()}/ai/seo`, {
+            return await apiFetch('/ai/seo', {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...getAuthHeader()
-                },
                 body: JSON.stringify({ keyword }),
             });
-            handleUnauthorized(response.status);
-            return await response.json();
-        } catch (error: any) {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error("Error generating SEO:", error);
-            return { success: false, error: error.message };
+            return { success: false, error: errorMessage };
         }
     },
 
     async chat(message: string): Promise<ChatResponse> {
         try {
-            const response = await fetch(`${getApiUrl()}/ai/chat`, {
+            return await apiFetch('/ai/chat', {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...getAuthHeader()
-                },
                 body: JSON.stringify({ message }),
             });
-            handleUnauthorized(response.status);
-            return await response.json();
-        } catch (error: any) {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error("Chat error:", error);
-            return { success: false, error: error.message };
+            return { success: false, error: errorMessage };
         }
     },
 
     async removeBackground(imageBase64: string) {
         try {
-            const response = await fetch(`${getApiUrl()}/remove-background-base64`, {
+            return await apiFetch('/remove-background-base64', {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...getAuthHeader()
-                },
                 body: JSON.stringify({ image: imageBase64 }),
             });
-            handleUnauthorized(response.status);
-            return await response.json();
-        } catch (error: any) {
-            return { success: false, error: error.message || 'Connection Error' };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Connection Error';
+            return { success: false, error: errorMessage };
         }
     },
 
     async analyzeThumbnail(description: string) {
         try {
-            const response = await fetch(`${getApiUrl()}/ai/seo`, {
+            return await apiFetch('/ai/seo', {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...getAuthHeader()
-                },
                 body: JSON.stringify({ keyword: `Analyze this thumbnail description: ${description}` }),
             });
-            return await response.json();
-        } catch (error: any) {
-            return { success: false, error: error.message };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            return { success: false, error: errorMessage };
         }
     },
 
@@ -166,44 +123,39 @@ export const aiVersionClient = {
             const formData = new FormData();
             formData.append("file", file);
 
-            const response = await fetch(`${getApiUrl()}/media/upload`, {
+            const response = await fetch(getApiUrl('/media/upload'), {
                 method: "POST",
-                headers: getAuthHeader(), // Do not set Content-Type to allow browser to boundary FormData
+                headers: getHeaders(false),
                 body: formData,
             });
             handleUnauthorized(response.status);
             return await response.json();
-        } catch (error: any) {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error("Error uploading media:", error);
-            return { success: false, error: error.message };
+            return { success: false, error: errorMessage };
         }
     },
 
     async listMedia(): Promise<{ success: boolean; files?: MediaFile[]; error?: string }> {
         try {
-            const response = await fetch(`${getApiUrl()}/media/list`, {
-                headers: getAuthHeader()
-            });
-            handleUnauthorized(response.status);
-            if (!response.ok) throw new Error("Failed to list media");
-            return await response.json();
-        } catch (error: any) {
+            return await apiFetch('/media/list');
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error("Error listing media:", error);
-            return { success: false, error: error.message };
+            return { success: false, error: errorMessage };
         }
     },
 
     async deleteMedia(fileId: string): Promise<{ success: boolean; message?: string; error?: string }> {
         try {
-            const response = await fetch(`${getApiUrl()}/media/${fileId}`, {
-                method: "DELETE",
-                headers: getAuthHeader()
+            return await apiFetch(`/media/${fileId}`, {
+                method: "DELETE"
             });
-            handleUnauthorized(response.status);
-            return await response.json();
-        } catch (error: any) {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error("Error deleting media:", error);
-            return { success: false, error: error.message };
+            return { success: false, error: errorMessage };
         }
     }
 };

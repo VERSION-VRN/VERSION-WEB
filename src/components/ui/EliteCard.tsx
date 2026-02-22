@@ -84,7 +84,7 @@ export const EliteCard = ({
             }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className={`group/card rounded-3xl p-6 ${variantStyles[variant]} ${className} relative overflow-hidden transition-colors duration-500`}
+            className={`group/card rounded-3xl p-6 ${variantStyles[variant]} ${className} relative overflow-hidden transition-all duration-500 hover:border-white/20`}
         >
             {/* Perspective Overlay Glow */}
             <motion.div

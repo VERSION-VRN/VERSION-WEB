@@ -3,14 +3,23 @@
 
 import React, { useState } from 'react';
 import { aiVersionClient } from '../../../services/aiVersionClient';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function SeoAssistantPage() {
     const [keyword, setKeyword] = useState('');
     const [results, setResults] = useState('');
     const [loading, setLoading] = useState(false);
+    const { user, deductCredits } = useAuth();
 
     const handleOptimize = async () => {
         if (!keyword) return;
+
+        const cost = 10;
+        if (!user || user.credits < cost) {
+            setResults(`❌ Error: Créditos insuficientes. Necesitas ${cost} tokens para el Análisis SEO.`);
+            return;
+        }
+
         setLoading(true);
         setResults('');
 
@@ -18,6 +27,7 @@ export default function SeoAssistantPage() {
 
         if (response.success && response.result) {
             setResults(response.result);
+            deductCredits(cost);
         } else {
             setResults(`Error: ${response.error || 'No se pudo generar el análisis.'}`);
         }
@@ -65,13 +75,23 @@ export default function SeoAssistantPage() {
             </div>
 
             {results && (
-                <div className="animate-fade-in-up">
+                <div className="animate-fade-in-up mt-8">
                     <div className="bg-[#0a0a0a] p-8 rounded-2xl border-l-4 border-green-500 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10 blur-xl bg-green-500 w-32 h-32 rounded-full pointer-events-none"></div>
-                        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                            <span className="text-green-500">⚡</span> Resultados de Optimización
-                        </h3>
-                        <div className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed">
+
+                        <div className="flex justify-between items-center mb-6 relative z-10">
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                <span className="text-green-500">⚡</span> Resultados de Optimización
+                            </h3>
+                            <button
+                                onClick={() => navigator.clipboard.writeText(results)}
+                                className="text-[10px] bg-[#111] border border-white/10 text-gray-400 px-3 py-1.5 rounded-lg hover:text-white hover:border-white/30 transition-colors"
+                            >
+                                COPIAR ANÁLISIS
+                            </button>
+                        </div>
+
+                        <div className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed relative z-10 max-h-[600px] overflow-y-auto selection:bg-green-500/30">
                             {results}
                         </div>
                     </div>

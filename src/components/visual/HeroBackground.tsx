@@ -7,17 +7,20 @@ function ParticleGrid() {
     const pointsRef = useRef<THREE.Points>(null!)
     const count = 2000
 
-    const particles = useMemo(() => {
+    const [particles, setParticles] = React.useState<Float32Array | null>(null)
+
+    React.useEffect(() => {
         const positions = new Float32Array(count * 3)
         for (let i = 0; i < count; i++) {
             positions[i * 3] = (Math.random() - 0.5) * 10
             positions[i * 3 + 1] = (Math.random() - 0.5) * 10
             positions[i * 3 + 2] = (Math.random() - 0.5) * 10
         }
-        return positions
-    }, [])
+        setParticles(positions)
+    }, [count])
 
     useFrame((state) => {
+        if (!pointsRef.current || !particles) return
         const time = state.clock.getElapsedTime()
         pointsRef.current.rotation.y = time * 0.05
         pointsRef.current.rotation.x = time * 0.03
@@ -31,6 +34,8 @@ function ParticleGrid() {
         }
         pointsRef.current.geometry.attributes.position.needsUpdate = true
     })
+
+    if (!particles) return null
 
     return (
         <points ref={pointsRef}>

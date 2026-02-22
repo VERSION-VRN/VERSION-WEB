@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import '../../globals.css';
 import { aiVersionClient, MediaFile } from '@/services/aiVersionClient';
+import { apiFetch, getApiUrl } from '@/lib/api';
 
 // ─── Types ───────────────────────────────────────────────
 interface Clip {
@@ -115,18 +116,6 @@ function TimelineEditorContent() {
     };
 
     // ─── API ─────────────────────────────────────────────
-    const getApiUrl = (path: string) => {
-        const base = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-        return `${base}${path}`;
-    };
-    const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const getHeaders = (json = true) => {
-        const h: Record<string, string> = { 'bypass-tunnel-reminder': 'true' };
-        if (json) h['Content-Type'] = 'application/json';
-        const t = getToken();
-        if (t) h['Authorization'] = `Bearer ${t}`;
-        return h;
-    };
 
     // ─── Video Init ──────────────────────────────────────
     useEffect(() => {
@@ -353,11 +342,10 @@ function TimelineEditorContent() {
             for (let i = 0; i < clips.length; i++) {
                 const clip = clips[i];
                 setExportProgress(10 + Math.round((i / clips.length) * 50));
-                const res = await fetch(getApiUrl('/trim-video'), {
-                    method: 'POST', headers: getHeaders(),
+                const data = await apiFetch<{ success: boolean; error?: string; trimmed_path: string }>('/trim-video', {
+                    method: 'POST',
                     body: JSON.stringify({ video_url: decodeURIComponent(videoUrl), start_time: clip.startTime, end_time: clip.endTime }),
                 });
-                const data = await res.json();
                 if (!data.success) throw new Error(data.error || 'Error recortando');
                 trimmedPaths.push(data.trimmed_path);
             }
@@ -374,17 +362,17 @@ function TimelineEditorContent() {
                 })),
             };
 
-            const mergeRes = await fetch(getApiUrl('/merge-clips'), {
-                method: 'POST', headers: getHeaders(),
+            const mergeData = await apiFetch<{ success: boolean; error?: string; download_url: string }>('/merge-clips', {
+                method: 'POST',
                 body: JSON.stringify(composition),
             });
-            const mergeData = await mergeRes.json();
             if (!mergeData.success) throw new Error(mergeData.error || 'Error uniendo');
             setExportProgress(100); setExportMessage('¡Exportado!');
             setExportResult(getApiUrl(mergeData.download_url));
             showToast('¡Video exportado!', 'success');
-        } catch (err: any) {
-            showToast('Error: ' + err.message, 'error');
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+            showToast('Error: ' + errorMessage, 'error');
             setExportMessage('Error en exportación');
         } finally { setIsExporting(false); }
     };
@@ -758,12 +746,20 @@ function TimelineEditorContent() {
                                                             <span className="text-[9px] font-bold uppercase tracking-wider text-white/80 truncate">{clip.label}</span>
                                                             <span className="text-[8px] font-mono text-white/40 ml-2 whitespace-nowrap">{formatTime(clip.duration)}</span>
                                                         </div>
-                                                        {/* Waveform decoration */}
-                                                        <div className="absolute inset-x-3 bottom-1.5 flex items-end gap-px opacity-20 pointer-events-none">
-                                                            {Array.from({ length: Math.max(8, Math.floor(width * 1.5)) }).map((_, j) => (
-                                                                <div key={j} className="flex-1 bg-white rounded-full" style={{ height: `${4 + Math.sin(j * 0.7) * 6 + Math.random() * 6}px` }} />
-                                                            ))}
-                                                        </div>
+                                                        {/* Waveform decoration SVG */}
+                                                        <svg viewBox="0 0 100 24" preserveAspectRatio="none" className="absolute inset-x-3 bottom-1.5 h-6 w-[calc(100%-24px)] opacity-20 pointer-events-none">
+                                                            {(() => {
+                                                                const points = Math.max(8, Math.floor(width * 1.5));
+                                                                let d = '';
+                                                                for (let j = 0; j < points; j++) {
+                                                                    const x = (j / Math.max(1, points - 1)) * 100;
+                                                                    const h = 4 + Math.sin(j * 0.7) * 6 + (Math.abs(Math.sin(j * 13.37)) * 6);
+                                                                    const y = 24 - h;
+                                                                    d += `M ${x} 24 L ${x} ${y} `;
+                                                                }
+                                                                return <path d={d} fill="none" stroke="white" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinecap="round" />;
+                                                            })()}
+                                                        </svg>
                                                         {/* Trim Right */}
                                                         <div onMouseDown={e => handleTrimStart(e, clip.id, 'end')} className="absolute right-0 top-0 bottom-0 w-3 cursor-col-resize group/h hover:bg-white/10 rounded-r-xl flex items-center justify-center">
                                                             <div className="w-0.5 h-5 bg-white/20 group-hover/h:bg-white/60 rounded-full transition-colors" />
@@ -831,8 +827,8 @@ function TimelineEditorContent() {
             {/* Toast */}
             {toast && (
                 <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-sm font-bold shadow-2xl transition-all animate-fade ${toast.type === 'success' ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300' :
-                        toast.type === 'error' ? 'bg-red-500/20 border border-red-500/30 text-red-300' :
-                            'bg-zinc-800/90 border border-white/10 text-white'}`}>
+                    toast.type === 'error' ? 'bg-red-500/20 border border-red-500/30 text-red-300' :
+                        'bg-zinc-800/90 border border-white/10 text-white'}`}>
                     {toast.msg}
                 </div>
             )}

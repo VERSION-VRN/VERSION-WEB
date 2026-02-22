@@ -33,7 +33,7 @@ export default function DashboardPage() {
     const { user, isAdmin, logout } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
-    const [history, setHistory] = useState<any[]>([]);
+    const [history, setHistory] = useState<{ id: string, task_type: string, filename: string, created_at: string, status: string, result_url: string }[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -128,8 +128,8 @@ export default function DashboardPage() {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 p-3.5 text-xs font-bold transition-all rounded-xl border-l-2 ${isActive
-                                        ? 'bg-white/[0.04] border-primary text-foreground'
-                                        : 'border-transparent text-zinc-500 hover:text-white hover:bg-white/[0.04]'
+                                    ? 'bg-white/[0.04] border-primary text-foreground'
+                                    : 'border-transparent text-zinc-500 hover:text-white hover:bg-white/[0.04]'
                                     }`}
                             >
                                 <span className={`opacity-70 transition-opacity ${isActive ? 'opacity-100' : ''}`}>{item.icon}</span>
@@ -288,7 +288,7 @@ export default function DashboardPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/[0.02]">
-                                        {history.map((item: any) => {
+                                        {history.map((item: { id: string, task_type: string, filename: string, created_at: string, status: string, result_url: string }) => {
                                             const meta = TASK_TYPE_META[item.task_type] || { icon: '📦', label: 'Proceso' };
                                             return (
                                                 <tr key={item.id} className="hover:bg-white/[0.01] transition-colors group">

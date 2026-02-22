@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { aiVersionClient } from '../../../services/aiVersionClient';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ScriptGeneratorPage() {
     const [topic, setTopic] = useState('');
@@ -13,6 +14,7 @@ export default function ScriptGeneratorPage() {
     const [progress, setProgress] = useState(0);
     const [status, setStatus] = useState('');
     const [taskId, setTaskId] = useState<string | null>(null);
+    const { user, deductCredits } = useAuth();
 
     // Efecto para polling de estado
     useEffect(() => {
@@ -50,6 +52,13 @@ export default function ScriptGeneratorPage() {
 
     const handleGenerate = async () => {
         if (!topic) return;
+
+        const cost = isMegaMode ? 50 : 30;
+        if (!user || user.credits < cost) {
+            setStatus(`❌ Error: Créditos insuficientes. Necesitas ${cost} tokens para este guion.`);
+            return;
+        }
+
         setLoading(true);
         setScript('');
         setProgress(0);
@@ -60,6 +69,7 @@ export default function ScriptGeneratorPage() {
         if (response.success && response.task_id) {
             setTaskId(response.task_id);
             setStatus(response.message || 'Encolado...');
+            deductCredits(cost);
         } else {
             setLoading(false);
             setStatus(`❌ Error al iniciar: ${response.message || response.error}`);

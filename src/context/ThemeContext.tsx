@@ -20,6 +20,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const [theme, setThemeState] = useState<Theme>('dark');
     const [mounted, setMounted] = useState(false);
 
+    const applyTheme = (t: Theme) => {
+        const html = document.documentElement;
+        if (t === 'light') {
+            html.classList.add('light');
+        } else {
+            html.classList.remove('light');
+        }
+        localStorage.setItem('version_theme', t);
+    };
+
     useEffect(() => {
         // Read from localStorage or fall back to system preference
         const stored = localStorage.getItem('version_theme') as Theme | null;
@@ -32,16 +42,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setThemeState(resolved);
         setMounted(true);
     }, []);
-
-    const applyTheme = (t: Theme) => {
-        const html = document.documentElement;
-        if (t === 'light') {
-            html.classList.add('light');
-        } else {
-            html.classList.remove('light');
-        }
-        localStorage.setItem('version_theme', t);
-    };
 
     const setTheme = (t: Theme) => {
         applyTheme(t);
