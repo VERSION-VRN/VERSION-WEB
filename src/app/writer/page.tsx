@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { aiVersionClient } from '../../services/aiVersionClient';
+import { aiVersionClient } from '@/services/aiVersionClient';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { EliteCard } from '@/components/ui/EliteCard';
@@ -54,7 +54,7 @@ export default function WriterPage() {
         return () => clearInterval(intervalId);
     }, [taskId, loading]);
 
-    const COST = 50;
+    const COST = isMegaMode ? 50 : 10;
 
     const handleGenerate = async () => {
         if (!topic) return;
@@ -158,13 +158,20 @@ export default function WriterPage() {
                     onClick={handleGenerate}
                     disabled={loading}
                     className={`
-                        w-full p-6 rounded-xl font-black text-lg tracking-[0.2em] uppercase transition-all duration-300 shadow-2xl
+                        w-full p-6 rounded-xl font-bold text-sm tracking-[0.2em] uppercase transition-all duration-300 flex items-center justify-center gap-2
                         ${loading
-                            ? 'bg-zinc-900 text-zinc-600 cursor-not-allowed border border-white/5'
-                            : 'bg-white text-black hover:bg-red-600 hover:text-white'}
+                            ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                            : 'bg-red-600 text-white hover:bg-red-500 shadow-[0_0_30px_rgba(220,38,38,0.25)]'}
                     `}
                 >
-                    {loading ? 'Procesando Datos...' : 'Ejecutar Protocolo de Escritura'}
+                    {loading ? 'Orquestando Estructura...' : (
+                        <>
+                            Generar Guión Maestro
+                            <span className="ml-2 px-2 py-0.5 bg-black/20 rounded text-[10px] border border-white/10">
+                                ⚡ {COST} Tokens
+                            </span>
+                        </>
+                    )}
                 </button>
 
                 {loading && (

@@ -7,7 +7,6 @@ import { aiVersionClient } from '@/services/aiVersionClient';
 import { useAuth } from '@/context/AuthContext';
 import ReactMarkdown from 'react-markdown';
 import { Bot, User, Send, ChevronLeft, Database, Terminal } from 'lucide-react';
-import '../globals.css';
 
 interface Message {
     role: 'ai' | 'user';
@@ -162,9 +161,12 @@ export default function AIChat() {
                         />
                         <button
                             onClick={handleSend}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-primary text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-primary-hover transition-colors shadow-lg active:scale-95"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-primary text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-primary-hover transition-colors shadow-lg active:scale-95 flex items-center gap-2"
                         >
                             Enviar
+                            <span className="px-1.5 py-0.5 bg-black/20 rounded border border-white/10">
+                                ⚡ 1
+                            </span>
                         </button>
                     </div>
                 </footer>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/api';
 import { useRouter, usePathname } from 'next/navigation';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteButton } from '@/components/ui/EliteButton';
@@ -41,18 +42,31 @@ export default function DashboardPage() {
     useEffect(() => {
         if (!user && !isLoading) {
             router.push('/login');
-        } else {
+        } else if (user) {
             setIsLoading(false);
-            fetchHistory();
         }
     }, [user, isLoading]);
 
+    // Fetch historial solo al montar o cuando cambia el email del usuario
+    useEffect(() => {
+        if (user) {
+            fetchHistory();
+        }
+    }, [user?.email]);
+
     const fetchHistory = async () => {
-        if (!user?.id) return;
+        const userId = user?.email || user?.id;
+        if (!userId) {
+            console.log("[Dashboard] No user ID available for history fetch");
+            return;
+        }
+
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/all-videos?user_id=${user.id}`);
-            if (res.ok) {
-                const data = await res.json();
+            console.log(`[Dashboard] Fetching history for: ${userId}`);
+            // El backend ahora prioriza el token, pero enviamos el email completo por compatibilidad
+            const data = await apiFetch<any[]>(`/all-videos?user_id=${encodeURIComponent(userId)}`);
+            if (data) {
+                console.log(`[Dashboard] History received: ${data.length} items`);
                 setHistory(data);
             }
         } catch (err) {
@@ -167,22 +181,41 @@ export default function DashboardPage() {
                     </div>
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20 animate-fade">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20 animate-fade">
                     <EliteCard variant="glass" className="flex justify-between items-center p-8 group hover:scale-[1.01]">
                         <div>
                             <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 block">Tokens de Combate</span>
                             <div className="text-5xl font-black tabular-nums transition-transform group-hover:scale-110 origin-left duration-500">{isAdmin ? '∞' : user?.credits || 0}</div>
                         </div>
                         <EliteButton variant="outline" size="md" onClick={() => router.push('/pricing')}>
-                            Añadir Fondos
+                            FONDOS
                         </EliteButton>
                     </EliteCard>
-                    <EliteCard variant="glass" className="flex justify-between items-center p-8 group hover:scale-[1.01]">
-                        <div>
-                            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 block">Rendimiento Operativo</span>
-                            <div className="text-5xl font-black tabular-nums transition-colors group-hover:text-primary duration-500 opacity-20 group-hover:opacity-100">68%</div>
+
+                    {/* SEO Widget */}
+                    <EliteCard variant="glass" className="md:col-span-2 p-8 relative overflow-hidden group">
+                        <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                                <span className="text-[10px] text-green-500 font-bold uppercase tracking-[0.2em] mb-2 block">Últimas Estrategias SEO</span>
+                                {history.filter(t => t.task_type === 'seo' && t.status === 'completed').slice(0, 1).map(seo => (
+                                    <div key={seo.id} className="animate-fade-in">
+                                        <h3 className="text-xl font-black uppercase tracking-tight truncate max-w-[250px] mb-2">{seo.filename}</h3>
+                                        <div className="flex gap-2">
+                                            <a href={seo.result_url} target="_blank" className="text-[10px] bg-green-500/10 text-green-500 border border-green-500/20 px-3 py-1.5 rounded-lg font-black hover:bg-green-500/20 transition-all uppercase">Ver Plan Full</a>
+                                            <button onClick={() => router.push(`/seo?q=${encodeURIComponent(seo.filename)}`)} className="text-[10px] bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg font-black hover:bg-white/10 transition-all uppercase">Optimizar Más</button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {history.filter(t => t.task_type === 'seo' && t.status === 'completed').length === 0 && (
+                                    <div>
+                                        <h3 className="text-xl font-black uppercase tracking-tight opacity-20 mb-2 underline decoration-zinc-800">Sin Datos de Crecimiento</h3>
+                                        <Link href="/seo" className="text-[10px] text-zinc-500 font-bold hover:text-white transition-colors uppercase tracking-widest">Iniciar Primera Auditoría →</Link>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="text-4xl grayscale opacity-20 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 scale-125">🚀</div>
                         </div>
-                        <div className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest text-right">Optimización <br /> en curso</div>
+                        <div className="absolute -bottom-6 -right-6 text-[120px] font-black text-white/[0.02] select-none pointer-events-none tracking-tighter">SEO</div>
                     </EliteCard>
                 </div>
 
@@ -318,9 +351,12 @@ export default function DashboardPage() {
                                                                     DESCARGAR
                                                                 </a>
                                                             )}
-                                                            <button className="p-2.5 bg-white/5 border border-white/10 rounded-lg transition-all hover:bg-white/10">
-                                                                DETALLES
-                                                            </button>
+                                                            <Link
+                                                                href={`/editor?task_id=${item.id}`}
+                                                                className="p-2.5 bg-white/5 border border-white/10 rounded-lg transition-all hover:bg-white/10 flex items-center gap-1.5"
+                                                            >
+                                                                REANUDAR
+                                                            </Link>
                                                         </div>
                                                     </td>
                                                 </tr>

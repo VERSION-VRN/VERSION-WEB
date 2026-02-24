@@ -4,6 +4,8 @@
 import React, { useState, useEffect } from 'react';
 import { aiVersionClient } from '../../../services/aiVersionClient';
 import { useAuth } from '../../../context/AuthContext';
+import Toast, { ToastType } from '../../../components/Toast';
+import ReactMarkdown from 'react-markdown';
 
 export default function ScriptGeneratorPage() {
     const [topic, setTopic] = useState('');
@@ -14,7 +16,17 @@ export default function ScriptGeneratorPage() {
     const [progress, setProgress] = useState(0);
     const [status, setStatus] = useState('');
     const [taskId, setTaskId] = useState<string | null>(null);
-    const { user, deductCredits } = useAuth();
+    const [hooks, setHooks] = useState('');
+    const [loadingHooks, setLoadingHooks] = useState(false);
+    const { user, deductCredits, refreshCredits } = useAuth();
+    const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+
+    const HOOK_COST = 10;
+
+    const showToast = (message: string, type: ToastType) => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     // Efecto para polling de estado
     useEffect(() => {
@@ -38,10 +50,12 @@ export default function ScriptGeneratorPage() {
                         setTaskId(null);
                         setStatus('✅ Guion completado con éxito.');
                         if (taskStatus.result?.script) setScript(taskStatus.result.script);
+                        showToast('Guion generado con éxito', 'success');
                     } else if (taskStatus.status === 'failed' || taskStatus.status === 'cancelled') {
                         setLoading(false);
                         setTaskId(null);
                         setStatus(`❌ Error: ${taskStatus.message}`);
+                        showToast(taskStatus.message || 'Error en la generación', 'error');
                     }
                 }
             }, 2000); // Poll cada 2 segundos
@@ -56,6 +70,7 @@ export default function ScriptGeneratorPage() {
         const cost = isMegaMode ? 50 : 30;
         if (!user || user.credits < cost) {
             setStatus(`❌ Error: Créditos insuficientes. Necesitas ${cost} tokens para este guion.`);
+            showToast('Créditos insuficientes', 'error');
             return;
         }
 
@@ -64,7 +79,7 @@ export default function ScriptGeneratorPage() {
         setProgress(0);
         setStatus('Iniciando sistema...');
 
-        const response = await aiVersionClient.startScriptGeneration(topic, tone, isMegaMode);
+        const response = await aiVersionClient.startScriptGeneration(topic, tone, isMegaMode, user?.email || user?.id);
 
         if (response.success && response.task_id) {
             setTaskId(response.task_id);
@@ -73,6 +88,31 @@ export default function ScriptGeneratorPage() {
         } else {
             setLoading(false);
             setStatus(`❌ Error al iniciar: ${response.message || response.error}`);
+        }
+    };
+
+    const handleGenerateHooks = async () => {
+        if (!topic) return;
+        if (!user || user.credits < HOOK_COST) {
+            showToast(`Necesitas ${HOOK_COST} tokens para los hooks`, 'error');
+            return;
+        }
+
+        setLoadingHooks(true);
+        try {
+            const response = await aiVersionClient.generateHooks(topic, script, user.email || user.id);
+            if (response.success && response.result) {
+                setHooks(response.result);
+                deductCredits(HOOK_COST);
+                refreshCredits();
+                showToast('Hooks generados con éxito', 'success');
+            } else {
+                showToast(response.error || 'Error al generar hooks', 'error');
+            }
+        } catch (error) {
+            showToast('Error de conexión', 'error');
+        } finally {
+            setLoadingHooks(false);
         }
     };
 
@@ -156,6 +196,14 @@ export default function ScriptGeneratorPage() {
                 {loading ? 'GENERANDO EN LA NUBE...' : '⚡ GENERAR GUION VIRAL'}
             </button>
 
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
             {loading && (
                 <div className="mt-8 animate-fade-in-up">
                     <div className="flex justify-between mb-2">
@@ -172,19 +220,74 @@ export default function ScriptGeneratorPage() {
             )}
 
             {script && (
-                <div className="mt-10 animate-fade-in-up">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Resultado de Alta Definición:</h3>
-                        <button
-                            onClick={() => navigator.clipboard.writeText(script)}
-                            className="text-[10px] bg-[#111] border border-white/10 text-gray-400 px-3 py-1.5 rounded-lg hover:text-white hover:border-white/30 transition-colors"
-                        >
-                            COPIAR GUION
-                        </button>
+                <div className="mt-10 animate-fade-in-up space-y-10">
+                    <div className="p-1 bg-white/[0.03] rounded-3xl border border-white/5 overflow-hidden">
+                        <div className="flex justify-between items-center p-6 border-b border-white/5 bg-white/[0.01]">
+                            <div>
+                                <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-1">Guion de Alta Definición</h3>
+                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">IA Optimized Structure</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(script);
+                                    showToast('Guion copiado al portapapeles', 'success');
+                                }}
+                                className="text-[10px] bg-white/5 border border-white/10 text-white font-bold px-4 py-2 rounded-xl hover:bg-white/10 transition-all uppercase tracking-widest"
+                            >
+                                Copiar Guion
+                            </button>
+                        </div>
+                        <div className="p-8 whitespace-pre-wrap text-zinc-300 text-sm leading-relaxed max-h-[500px] overflow-y-auto selection:bg-red-500/30 prose prose-invert max-w-none scrollbar-thin scrollbar-thumb-zinc-800">
+                            <ReactMarkdown>{script}</ReactMarkdown>
+                        </div>
                     </div>
-                    <div className="whitespace-pre-wrap bg-[#0a0a0a] p-8 rounded-2xl border border-white/5 text-gray-300 text-sm leading-relaxed max-h-[600px] overflow-y-auto selection:bg-red-500/30">
-                        {script}
-                    </div>
+
+                    {/* Sección de Hooks */}
+                    {!hooks && !loadingHooks ? (
+                        <div className="border border-dashed border-red-500/20 rounded-3xl p-10 text-center bg-red-500/[0.02] animate-fade group cursor-pointer hover:bg-red-500/[0.04] transition-all"
+                            onClick={handleGenerateHooks}>
+                            <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-500">🔥</div>
+                            <h4 className="text-xs font-black uppercase tracking-[0.3em] mb-2">Potenciar Retención</h4>
+                            <p className="text-[10px] text-zinc-500 font-medium max-w-xs mx-auto mb-6">Genera 5 variaciones de ganchos virales basados en este guion.</p>
+                            <div className="inline-flex items-center gap-3 px-6 py-3 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-900/20 group-hover:bg-red-500 transition-colors">
+                                <span>Generar Hooks Vitrales</span>
+                                <span className="opacity-50 border-l border-white/20 pl-2">⚡ {HOOK_COST}</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="animate-fade space-y-6">
+                            <div className="flex items-center gap-4">
+                                <div className="h-px flex-1 bg-gradient-to-r from-transparent to-red-500/30" />
+                                <h3 className="text-[10px] font-black text-red-500 uppercase tracking-[0.4em]">Viral Hooks Matrix</h3>
+                                <div className="h-px flex-1 bg-gradient-to-l from-transparent to-red-500/30" />
+                            </div>
+
+                            {loadingHooks ? (
+                                <div className="p-12 text-center bg-white/[0.02] border border-white/5 rounded-3xl animate-pulse">
+                                    <div className="text-2xl mb-4">🧠</div>
+                                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Calculando Ángulos de Retención...</p>
+                                </div>
+                            ) : (
+                                <div className="p-8 bg-black border border-red-500/10 rounded-3xl relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => { navigator.clipboard.writeText(hooks); showToast('Hooks copiados', 'success'); }}
+                                            className="p-2 bg-white/5 border border-white/10 rounded-lg text-xs">📋</button>
+                                    </div>
+                                    <div className="prose prose-invert prose-sm max-w-none text-zinc-400 font-medium">
+                                        <ReactMarkdown>{hooks}</ReactMarkdown>
+                                    </div>
+                                    <div className="mt-8 pt-6 border-t border-white/5 flex justify-between items-center">
+                                        <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest italic">* Usa estos hooks como la primera frase de tu video.</span>
+                                        <div className="flex gap-2">
+                                            {["Curiosidad", "Fomo", "Autoridad"].map(t => (
+                                                <span key={t} className="px-2 py-0.5 bg-red-500/10 text-red-500 text-[8px] font-black rounded uppercase border border-red-500/20">{t}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

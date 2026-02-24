@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { aiVersionClient } from '../../services/aiVersionClient';
+import { aiVersionClient } from '@/services/aiVersionClient';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
@@ -436,12 +436,6 @@ export default function ThumbnailPage() {
 
     const removeBackground = async () => {
         if (!selectedLayerId) return;
-        const COST = 20;
-
-        if (!user || user.credits < COST) {
-            alert(`❌ Saldo insuficiente. Necesitas ${COST} tokens.`);
-            return;
-        }
 
         const layer = layers.find(l => l.id === selectedLayerId);
         if (!layer || layer.type !== 'image' || !layer.imageElement) return;
@@ -450,7 +444,6 @@ export default function ThumbnailPage() {
         const response = await aiVersionClient.removeBackground(layer.imageElement.src) as { success: boolean; image?: string; error?: string };
 
         if (response.success && response.image) {
-            deductCredits(COST);
             const img = new Image();
             img.onload = () => {
                 setLayers(prev => {
@@ -472,9 +465,8 @@ export default function ThumbnailPage() {
     };
 
     const analyzeThumbnail = async () => {
-        const COST = 10;
-        if (!user || user.credits < COST) {
-            setFeedback(`❌ Saldo insuficiente. Necesitas ${COST} tokens.`);
+        if (!user) {
+            setFeedback('❌ Debes iniciar sesión.');
             return;
         }
 
@@ -483,7 +475,6 @@ export default function ThumbnailPage() {
         const response = await aiVersionClient.analyzeThumbnail(desc) as { success: boolean; result?: string; error?: string };
 
         if (response.success && response.result) {
-            deductCredits(COST);
             setFeedback(response.result);
             refreshCredits();
         } else {

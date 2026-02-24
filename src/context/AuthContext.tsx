@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/api';
 
 interface UserProfile {
     id?: string;
@@ -37,12 +38,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const storedUser = localStorage.getItem('user_profile');
 
         if (storedToken && storedUser) {
+            // Verificar si el token ha expirado (decodificación sin verificación de firma)
+            try {
+                const payload = JSON.parse(atob(storedToken.split('.')[1]));
+                if (payload.exp && payload.exp * 1000 < Date.now()) {
+                    console.warn('[Auth] Token expirado, limpiando sesión.');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user_profile');
+                    setLoading(false);
+                    return;
+                }
+            } catch (e) {
+                console.error('[Auth] Error decodificando token:', e);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user_profile');
+                setLoading(false);
+                return;
+            }
+
             setToken(storedToken);
             try {
                 setUser(JSON.parse(storedUser));
             } catch (e) {
                 console.error("Error parseando usuario:", e);
-                // logout();
             }
         }
         setLoading(false);
@@ -76,23 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const refreshCredits = async () => {
         if (!token || !user) return;
         try {
-            const apiUrl = localStorage.getItem('backend_url') || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-            const res = await fetch(`${apiUrl}/users/me/credits`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                if (data.credits !== undefined) {
-                    const updatedUser = { ...user, credits: data.credits, role: data.role || user.role };
-                    setUser(updatedUser);
-                    localStorage.setItem('user_profile', JSON.stringify(updatedUser));
-                }
-            } else {
-                console.warn('refreshCredits falló con status:', res.status);
-                if (res.status === 401) {
-                    // logout('401 in refreshCredits'); 
-                }
+            const data = await apiFetch<{ credits: number; role?: string }>('/users/me/credits');
+            if (data && data.credits !== undefined) {
+                const updatedUser = { ...user, credits: data.credits, role: data.role || user.role };
+                setUser(updatedUser);
+                localStorage.setItem('user_profile', JSON.stringify(updatedUser));
             }
         } catch (error) {
             console.error("Error fetching latest credits:", error);

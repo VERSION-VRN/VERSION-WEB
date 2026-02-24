@@ -17,7 +17,6 @@ export const getHeaders = (json = true): Record<string, string> => {
     const headers: Record<string, string> = {
         'bypass-tunnel-reminder': 'true',
         'ngrok-skip-browser-warning': 'true',
-        'X-API-Key': process.env.NEXT_PUBLIC_API_SECRET_KEY || 'wolfmessi10',
     };
     if (json) headers['Content-Type'] = 'application/json';
     const token = getToken();
@@ -30,18 +29,47 @@ export const apiFetch = async <T = unknown>(
     options: RequestInit = {}
 ): Promise<T> => {
     const url = getApiUrl(path.startsWith('/') ? path : `/${path}`);
+
+    // Detectar si el cuerpo es FormData para dejar que el navegador ponga el boundary
+    const isFormData = options.body instanceof FormData;
+
     try {
         const res = await fetch(url, {
             ...options,
             headers: {
-                ...getHeaders(options.body ? true : false),
+                ...getHeaders(!isFormData), // Solo poner application/json si NO es FormData
                 ...(options.headers || {}),
             },
         });
 
         if (!res.ok) {
-            const err = await res.json().catch(() => ({ error: `Error HTTP ${res.status}` }));
-            throw new Error(err.error || err.detail || err.message || `Error ${res.status}`);
+            let errorDetail: any = `Error ${res.status}`;
+            try {
+                const errJson = await res.json();
+                // Manejar errores de validación de FastAPI o formatos {detail: ...} / {error: ...}
+                errorDetail = errJson.detail || errJson.error || errJson.message || errJson;
+
+                // Si el detalle es un array (FastAPI validation), extraer mensajes
+                if (Array.isArray(errorDetail)) {
+                    errorDetail = errorDetail.map(d => `${d.loc?.join('.') || 'field'}: ${d.msg}`).join(', ');
+                } else if (typeof errorDetail === 'object') {
+                    errorDetail = JSON.stringify(errorDetail);
+                }
+            } catch {
+                errorDetail = await res.text() || `Error HTTP ${res.status}`;
+            }
+            if (res.status === 401 || res.status === 403) {
+                if (typeof window !== 'undefined') {
+                    const currentPath = window.location.pathname;
+                    if (currentPath !== '/login' && currentPath !== '/register') {
+                        console.warn(`[API] Sesión inválida o insuficiente (${res.status}). Limpiando y redirigiendo.`);
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user_profile');
+                        window.location.href = '/login';
+                    }
+                }
+            }
+            throw new Error(errorDetail);
         }
 
         const contentType = res.headers.get('content-type');

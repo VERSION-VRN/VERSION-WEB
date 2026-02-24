@@ -3,9 +3,13 @@ import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
-import { EliteAssistant } from "@/components/ai/EliteAssistant";
+import dynamic from "next/dynamic";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { VERSIONErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { SmoothScroll } from "@/components/SmoothScroll";
+import { NotificationCenter } from "@/components/ui/NotificationCenter";
+
+const EliteAssistant = dynamic(() => import("@/components/ai/EliteAssistant").then(m => ({ default: m.EliteAssistant })));
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -44,16 +48,19 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         ` }} />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`} suppressHydrationWarning>
-        <ThemeProvider>
-          <AuthProvider>
-            <ProtectedRoute>
-              <SmoothScroll>
-                {children}
-              </SmoothScroll>
-              <EliteAssistant />
-            </ProtectedRoute>
-          </AuthProvider>
-        </ThemeProvider>
+        <VERSIONErrorBoundary>
+          <ThemeProvider>
+            <AuthProvider>
+              <ProtectedRoute>
+                <SmoothScroll>
+                  {children}
+                </SmoothScroll>
+                <NotificationCenter />
+                <EliteAssistant />
+              </ProtectedRoute>
+            </AuthProvider>
+          </ThemeProvider>
+        </VERSIONErrorBoundary>
       </body>
     </html>
   );

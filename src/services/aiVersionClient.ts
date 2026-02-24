@@ -1,11 +1,14 @@
 import { apiFetch, getApiUrl, getHeaders } from '@/lib/api';
 
 const handleUnauthorized = (status: number) => {
-    if (status === 401 && typeof window !== 'undefined') {
-        console.warn("Unauthorized access detected. Cleaning up local session.");
-        localStorage.removeItem('token');
-        localStorage.removeItem('user_profile');
-        window.location.href = '/login';
+    if ((status === 401 || status === 403) && typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/login' && currentPath !== '/register') {
+            console.warn("Unauthorized access detected. Cleaning up local session.");
+            localStorage.removeItem('token');
+            localStorage.removeItem('user_profile');
+            window.location.href = '/login';
+        }
     }
 };
 
@@ -44,11 +47,11 @@ export interface MediaFile {
 }
 
 export const aiVersionClient = {
-    async startScriptGeneration(topic: string, tone: string, isMega: boolean): Promise<ScriptGenerationResponse> {
+    async startScriptGeneration(topic: string, tone: string, isMega: boolean, userId?: string): Promise<ScriptGenerationResponse> {
         try {
             return await apiFetch('/ai/script/start', {
                 method: "POST",
-                body: JSON.stringify({ topic, tone, is_mega: isMega }),
+                body: JSON.stringify({ topic, tone, is_mega: isMega, user_id: userId }),
             });
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -66,11 +69,11 @@ export const aiVersionClient = {
         }
     },
 
-    async generateSeo(keyword: string): Promise<SeoResponse> {
+    async generateSeo(keyword: string, tone: string = "Viral", audience: string = "General", userId?: string): Promise<SeoResponse> {
         try {
             return await apiFetch('/ai/seo', {
                 method: "POST",
-                body: JSON.stringify({ keyword }),
+                body: JSON.stringify({ keyword, tone, audience, user_id: userId }),
             });
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -88,6 +91,18 @@ export const aiVersionClient = {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error("Chat error:", error);
+            return { success: false, error: errorMessage };
+        }
+    },
+
+    async generateHooks(topic: string, scriptContext?: string, userId?: string): Promise<{ success: boolean; result?: string; error?: string }> {
+        try {
+            return await apiFetch('/ai/hooks', {
+                method: "POST",
+                body: JSON.stringify({ topic, script_context: scriptContext, user_id: userId }),
+            });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             return { success: false, error: errorMessage };
         }
     },

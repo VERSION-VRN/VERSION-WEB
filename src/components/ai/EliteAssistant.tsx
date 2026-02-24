@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { aiVersionClient } from '@/services/aiVersionClient';
 import { getAIResponse, getContextualSkillResponse } from '@/services/aiResponseService';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteButton } from '@/components/ui/EliteButton';
@@ -20,19 +21,28 @@ export const EliteAssistant = () => {
     const credits = user?.credits || 0;
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    const [editorContext, setEditorContext] = useState<{ titulo: string, step: number, status: string } | null>(null);
+
     // Contextual detection
     useEffect(() => {
         if (pathname !== lastPath) {
             const skillMessage = getContextualSkillResponse(pathname);
             if (skillMessage) {
                 setShowSkillTip(true);
-                // Trigger an AI message if it's the first time on this tool
+                // Si cambiamos de página, reiniciamos el mensaje si el chat estaba vacío
                 if (messages.length === 0) {
                     setMessages([{ role: 'ai', content: skillMessage }]);
                 }
             }
             setLastPath(pathname);
         }
+
+        // Listener para sincronización con el Editor
+        const handleEditorUpdate = (e: any) => {
+            setEditorContext(e.detail);
+        };
+        window.addEventListener('VERSION_EDITOR_UPDATE', handleEditorUpdate);
+        return () => window.removeEventListener('VERSION_EDITOR_UPDATE', handleEditorUpdate);
     }, [pathname, lastPath, messages.length]);
 
     useEffect(() => {
@@ -41,7 +51,7 @@ export const EliteAssistant = () => {
         }
     }, [messages, isTyping]);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!input.trim()) return;
 
         const COST = 1;
@@ -56,12 +66,20 @@ export const EliteAssistant = () => {
         setIsTyping(true);
         deductCredits(COST);
 
-        setTimeout(() => {
+        try {
+            const response = await aiVersionClient.chat(userMsg.content);
+            const aiContent = response.success && response.response
+                ? response.response
+                : getAIResponse(userMsg.content); // Fallback local
+            setMessages(prev => [...prev, { role: 'ai', content: aiContent }]);
+        } catch {
+            // Fallback a respuestas locales si el backend no responde
             const aiContent = getAIResponse(userMsg.content);
             setMessages(prev => [...prev, { role: 'ai', content: aiContent }]);
+        } finally {
             setIsTyping(false);
             refreshCredits();
-        }, 800);
+        }
     };
 
     if (pathname === '/login' || pathname === '/register') return null;
@@ -101,7 +119,12 @@ export const EliteAssistant = () => {
                         {messages.length === 0 && (
                             <div className="text-center py-10">
                                 <div className="text-3xl mb-4 group-hover:animate-pulse">🤖</div>
-                                <p className="text-xs text-zinc-500 font-medium">Hola Rebelde. Soy tu soporte integrado. ¿Qué datos del Master necesitas?</p>
+                                <p className="text-xs text-zinc-300 font-bold mb-2">Hola Rebelde.</p>
+                                <p className="text-[10px] text-zinc-500 font-medium px-6">
+                                    {editorContext?.titulo
+                                        ? `Veo que estás operando en "${editorContext.titulo}". ¿Necesitas ayuda con el paso ${editorContext.step}?`
+                                        : 'Soy tu soporte integrado. ¿Qué datos del Master necesitas?'}
+                                </p>
                             </div>
                         )}
                         {messages.map((m, i) => (

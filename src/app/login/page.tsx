@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/api';
 import '../globals.css';
 
 export default function Login() {
@@ -14,10 +15,6 @@ export default function Login() {
     const router = useRouter();
     const { login } = useAuth();
 
-    const getApiUrl = (path: string) => {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-        return `${baseUrl}${path}`;
-    };
 
     const handleAction = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -27,12 +24,17 @@ export default function Login() {
         try {
             if (isLogin) {
                 // --- LOGIN FLOW ---
-                const res = await fetch(getApiUrl('/login'), {
+                const data = await apiFetch<{
+                    success: boolean;
+                    token: string;
+                    name: string;
+                    role: string;
+                    credits: number;
+                    message?: string;
+                }>('/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: credentials.email, password: credentials.password })
                 });
-                const data = await res.json();
 
                 if (data.success) {
                     login(data.token, {
@@ -51,16 +53,21 @@ export default function Login() {
                     return setError('Por favor, completa todos los campos.');
                 }
 
-                const res = await fetch(getApiUrl('/register'), {
+                const data = await apiFetch<{
+                    success: boolean;
+                    token: string;
+                    name: string;
+                    role: string;
+                    credits: number;
+                    message: string;
+                }>('/register', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         email: credentials.email,
                         password: credentials.password,
                         name: credentials.name.toUpperCase()
                     })
                 });
-                const data = await res.json();
 
                 if (data.success) {
                     // Auto-login con los datos devueltos
@@ -78,8 +85,8 @@ export default function Login() {
                     setError(data.message || 'Error al crear cuenta.');
                 }
             }
-        } catch (err) {
-            setError('No se pudo conectar con el servidor VERSION. Verifica tu conexión.');
+        } catch (err: any) {
+            setError(err.message || 'No se pudo conectar con el servidor VERSION. Verifica tu conexión.');
         }
     };
 

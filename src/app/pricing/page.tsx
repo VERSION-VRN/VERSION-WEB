@@ -7,15 +7,15 @@ import { EliteButton } from '@/components/ui/EliteButton';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteBadge } from '@/components/ui/EliteBadge';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/api';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import '../globals.css';
 
 export default function Pricing() {
     const [selectedPlan, setSelectedPlan] = useState<any>(null);
     const { isAuthenticated, refreshCredits } = useAuth();
     const router = useRouter();
 
-    const PAYPAL_CLIENT_ID = "Afc2cT4XrOnJmxiBifQR_EBJjtGVICXJMtvF4zGiZqIaQ8sIy76-7DdCNHVqmbODzv3MTO63SjjMbW_2";
+    const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "Afc2cT4XrOnJmxiBifQR_EBJjtGVICXJMtvF4zGiZqIaQ8sIy76-7DdCNHVqmbODzv3MTO63SjjMbW_2";
 
     const plans = [
         {
@@ -46,11 +46,28 @@ export default function Pricing() {
         }
     ];
 
-    const handlePurchaseSuccess = (details: any) => {
-        refreshCredits();
+    const handlePurchaseSuccess = async (details: any) => {
+        try {
+            // Confirmar el pago en el backend y añadir créditos
+            const result = await apiFetch<{ success: boolean; credits: number; added: number }>('/payments/confirm', {
+                method: 'POST',
+                body: JSON.stringify({
+                    plan_id: selectedPlan.id,
+                    order_id: details.id
+                })
+            });
 
-        alert(`🎉 ¡PAGO PROCESADO EXITOSAMENTE! \n\nGracias, ${details.payer.name.given_name}. Se han añadido ${selectedPlan.credits} tokens a tu cuenta de VERSION.`);
-        router.push('/dashboard');
+            if (result.success) {
+                refreshCredits();
+                alert(`🎉 ¡PAGO PROCESADO! Se añadieron ${result.added} tokens a tu cuenta. Total: ${result.credits}`);
+                router.push('/dashboard');
+            } else {
+                alert('Error al procesar el pago. Contacta soporte.');
+            }
+        } catch (err) {
+            console.error('Error confirmando pago:', err);
+            alert('Error al confirmar el pago con el servidor. Contacta soporte.');
+        }
     };
 
     const handlePurchase = (plan: any) => {
@@ -84,7 +101,7 @@ export default function Pricing() {
                                 <p className="text-zinc-500 max-w-xl mx-auto font-medium">Selecciona el paquete de tokens que mejor se adapte a tu nivel de producción digital.</p>
                             </header>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                                 {plans.map((plan) => (
                                     <EliteCard
                                         key={plan.id}

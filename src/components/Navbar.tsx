@@ -62,7 +62,11 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
                                 Dashboard
                             </EliteButton>
                             <button
-                                onClick={logout}
+                                onClick={() => {
+                                    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                                        logout();
+                                    }
+                                }}
                                 className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-zinc-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
                                 title="Cerrar Sesión"
                             >

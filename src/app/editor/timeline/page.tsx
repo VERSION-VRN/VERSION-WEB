@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import '../../globals.css';
 import { aiVersionClient, MediaFile } from '@/services/aiVersionClient';
 import { apiFetch, getApiUrl } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
+import Toast, { ToastType } from '@/components/Toast';
 
 // ─── Types ───────────────────────────────────────────────
 interface Clip {
@@ -108,11 +110,19 @@ function TimelineEditorContent() {
     const [exportProgress, setExportProgress] = useState(0);
     const [exportMessage, setExportMessage] = useState('');
     const [exportResult, setExportResult] = useState<string | null>(null);
-    const [toast, setToast] = useState<{ msg: string; type: 'info' | 'success' | 'error' } | null>(null);
+    const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null);
+    const { user, loading: authLoading, deductCredits } = useAuth();
+    const router = useRouter(); // Asegúrate de importar useRouter de next/navigation
 
-    const showToast = (msg: string, type: 'info' | 'success' | 'error' = 'info') => {
+    useEffect(() => {
+        if (!authLoading && !user) {
+            console.warn("[Timeline] No user detected, redirecting to login.");
+            router.push('/login');
+        }
+    }, [user, authLoading, router]);
+
+    const showToast = (msg: string, type: ToastType = 'info') => {
         setToast({ msg, type });
-        setTimeout(() => setToast(null), 3000);
     };
 
     // ─── API ─────────────────────────────────────────────
@@ -330,6 +340,13 @@ function TimelineEditorContent() {
     // ─── Export ──────────────────────────────────────────
     const handleExport = async () => {
         if (!clips.length) return;
+
+        const exportCost = 0;
+        if (!user || user.credits < exportCost) {
+            showToast(`Créditos insuficientes. Requieres ${exportCost} tokens para exportar.`, 'error');
+            return;
+        }
+
         setIsExporting(true); setExportProgress(0); setExportMessage('Preparando...');
         try {
             if (clips.length === 1 && clips[0].startTime === 0 && Math.abs(clips[0].endTime - duration) < 0.1 && !overlays.length) {
@@ -364,9 +381,15 @@ function TimelineEditorContent() {
 
             const mergeData = await apiFetch<{ success: boolean; error?: string; download_url: string }>('/merge-clips', {
                 method: 'POST',
-                body: JSON.stringify(composition),
+                body: JSON.stringify({
+                    ...composition,
+                    user_id: user?.email || 'unknown',
+                    title: `Export Timeline: ${videoUrl.split('/').pop() || 'Sin Título'}`
+                }),
             });
             if (!mergeData.success) throw new Error(mergeData.error || 'Error uniendo');
+
+            deductCredits(exportCost);
             setExportProgress(100); setExportMessage('¡Exportado!');
             setExportResult(getApiUrl(mergeData.download_url));
             showToast('¡Video exportado!', 'success');
@@ -429,6 +452,15 @@ function TimelineEditorContent() {
                     </div>
                 </div>
             </nav>
+
+            {toast && (
+                <Toast
+                    message={toast.msg}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )
+            }
 
             {/* Main */}
             <div className="flex-1 flex flex-col pt-14">
@@ -754,7 +786,8 @@ function TimelineEditorContent() {
                                                                 for (let j = 0; j < points; j++) {
                                                                     const x = (j / Math.max(1, points - 1)) * 100;
                                                                     const h = 4 + Math.sin(j * 0.7) * 6 + (Math.abs(Math.sin(j * 13.37)) * 6);
-                                                                    const y = 24 - h;
+                                                                    const COST = 0;
+                                                                    const y = 4 - h;
                                                                     d += `M ${x} 24 L ${x} ${y} `;
                                                                 }
                                                                 return <path d={d} fill="none" stroke="white" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinecap="round" />;
@@ -824,15 +857,8 @@ function TimelineEditorContent() {
                 )}
             </div>
 
-            {/* Toast */}
-            {toast && (
-                <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-sm font-bold shadow-2xl transition-all animate-fade ${toast.type === 'success' ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300' :
-                    toast.type === 'error' ? 'bg-red-500/20 border border-red-500/30 text-red-300' :
-                        'bg-zinc-800/90 border border-white/10 text-white'}`}>
-                    {toast.msg}
-                </div>
-            )}
-        </div>
+
+        </div >
     );
 }
 

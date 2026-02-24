@@ -238,9 +238,9 @@ export default function Home() {
       <footer className="container py-12 flex flex-col md:flex-row justify-between items-center gap-8 border-t border-white/[0.04] opacity-50">
         <div className="text-[10px] font-bold uppercase tracking-widest">© {new Date().getFullYear()} VERSION. — Tech Rebel Architecture Systems.</div>
         <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest">
-          <a href="#" className="hover:text-primary transition-colors">Instagram</a>
-          <a href="#" className="hover:text-primary transition-colors">Twitter (X)</a>
-          <a href="#" className="hover:text-primary transition-colors">YouTube</a>
+          <a href="/#apps" className="hover:text-primary transition-colors">Aplicaciones</a>
+          <a href="/#cursos" className="hover:text-primary transition-colors">Academia</a>
+          <a href="/pricing" className="hover:text-primary transition-colors">Precios</a>
         </div>
       </footer>
     </main>
