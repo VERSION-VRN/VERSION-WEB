@@ -441,7 +441,7 @@ export default function ThumbnailPage() {
         if (!layer || layer.type !== 'image' || !layer.imageElement) return;
 
         setLoadingAnalysis(true);
-        const response = await aiVersionClient.removeBackground(layer.imageElement.src) as { success: boolean; image?: string; error?: string };
+        const response = await aiVersionClient.removeBackground(layer.imageElement.src);
 
         if (response.success && response.image) {
             const img = new Image();
@@ -472,7 +472,7 @@ export default function ThumbnailPage() {
 
         setLoadingAnalysis(true);
         const desc = layers.map(l => `${l.type}: ${l.content || 'imagen'}`).join(', ');
-        const response = await aiVersionClient.analyzeThumbnail(desc) as { success: boolean; result?: string; error?: string };
+        const response = await aiVersionClient.analyzeThumbnail(desc);
 
         if (response.success && response.result) {
             setFeedback(response.result);

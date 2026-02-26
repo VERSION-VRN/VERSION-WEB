@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { aiVersionClient } from '@/services/aiVersionClient';
 import { useAuth } from '@/context/AuthContext';
 import ReactMarkdown from 'react-markdown';
-import { Bot, User, Send, ChevronLeft, Database, Terminal } from 'lucide-react';
+import { User, Terminal } from 'lucide-react';
 
 interface Message {
     role: 'ai' | 'user';
@@ -22,31 +22,17 @@ export default function AIChat() {
     const [isTyping, setIsTyping] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const scrollRef = useRef<HTMLDivElement>(null);
-    const router = useRouter();
-
-    useEffect(() => {
-        setIsLoading(false);
-    }, []);
-
-    useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-    }, [messages]);
-
-    if (isLoading) return <div className="min-h-screen bg-black" />;
-
     const handleSend = async () => {
         if (!input.trim()) return;
 
         const COST = 1;
         if (!user || user.credits < COST) {
-            setMessages((prev: Message[]) => [...prev, { role: 'ai', content: '❌ Saldo insuficiente para procesar tu consulta. (1 token requerido)' }]);
+            setMessages((prev) => [...prev, { role: 'ai', content: '❌ Saldo insuficiente para procesar tu consulta. (1 token requerido)' }]);
             return;
         }
 
         const userMessage: Message = { role: 'user', content: input };
-        setMessages((prev: Message[]) => [...prev, userMessage]);
+        setMessages((prev) => [...prev, userMessage]);
         setInput('');
         setIsTyping(true);
         deductCredits(COST);

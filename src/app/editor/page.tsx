@@ -49,37 +49,19 @@ function VideoEditorContent() {
     const searchParams = useSearchParams();
     const taskIdParam = searchParams.get('task_id');
 
-    // Sync Auth State & Resume Logic
+    // Sync Auth State
     useEffect(() => {
-        if (!user) return;
-        setIsAdmin(user.role === 'admin');
+        if (user) {
+            setIsAdmin(user.role === 'admin');
+        }
+    }, [user]);
 
-        const loadConfig = async () => {
-            // Context initialization logic here if first time
-            if (metadata) return;
-
-            try {
-                const metaData = await apiFetch<any>('/metadata');
-                if (metaData.success) {
-                    setMetadata(metaData);
-                    const defaultLang = "Español";
-                    const initialLang = metaData.idiomas.includes(defaultLang) ? defaultLang : metaData.idiomas[0];
-                    setSelectedIdioma(initialLang);
-                    if (metaData.voices[initialLang]) setSelectedVoice(metaData.voices[initialLang][0].id);
-                    if (metaData.prompts[initialLang]) setSelectedPrompt(metaData.prompts[initialLang][0].name);
-
-                    // Resume logic if taskId exists
-                    if (taskIdParam) {
-                        const status = await apiFetch<any>(`/status/${taskIdParam}`);
-                        // ... resume logic could be in context too, but keeping minimal here
-                    }
-                }
-            } catch (err) {
-                console.error("Error loading config", err);
-            }
-        };
-        loadConfig();
-    }, [user, metadata]);
+    // Resume logic if taskId exists on mount
+    useEffect(() => {
+        if (taskIdParam && !currentTaskId) {
+            setCurrentTaskId(taskIdParam);
+        }
+    }, [taskIdParam, currentTaskId, setCurrentTaskId]);
 
     const handleNextStep = () => {
         if (currentStep === 1 && !formData.backgroundVideoPath) return; // Add toasts as needed

@@ -1,16 +1,4 @@
-import { apiFetch, getApiUrl, getHeaders } from '@/lib/api';
-
-const handleUnauthorized = (status: number) => {
-    if ((status === 401 || status === 403) && typeof window !== 'undefined') {
-        const currentPath = window.location.pathname;
-        if (currentPath !== '/login' && currentPath !== '/register') {
-            console.warn("Unauthorized access detected. Cleaning up local session.");
-            localStorage.removeItem('token');
-            localStorage.removeItem('user_profile');
-            window.location.href = '/login';
-        }
-    }
-};
+import { apiFetch } from '@/lib/api';
 
 interface ScriptGenerationResponse {
     success: boolean;
@@ -46,6 +34,18 @@ export interface MediaFile {
     size?: number;
 }
 
+interface RemoveBgResponse {
+    success: boolean;
+    image?: string;
+    error?: string;
+}
+
+interface ThumbnailAnalysisResponse {
+    success: boolean;
+    result?: string;
+    error?: string;
+}
+
 export const aiVersionClient = {
     async startScriptGeneration(topic: string, tone: string, isMega: boolean, userId?: string): Promise<ScriptGenerationResponse> {
         try {
@@ -62,7 +62,7 @@ export const aiVersionClient = {
 
     async getTaskStatus(taskId: string): Promise<TaskStatus | null> {
         try {
-            return await apiFetch(`/status/${taskId}`);
+            return await apiFetch(`/ status / ${taskId} `);
         } catch (error) {
             console.error("Error fetching task status:", error);
             return null;
@@ -107,7 +107,7 @@ export const aiVersionClient = {
         }
     },
 
-    async removeBackground(imageBase64: string) {
+    async removeBackground(imageBase64: string): Promise<RemoveBgResponse> {
         try {
             return await apiFetch('/remove-background-base64', {
                 method: "POST",
@@ -119,11 +119,11 @@ export const aiVersionClient = {
         }
     },
 
-    async analyzeThumbnail(description: string) {
+    async analyzeThumbnail(description: string): Promise<ThumbnailAnalysisResponse> {
         try {
             return await apiFetch('/ai/seo', {
                 method: "POST",
-                body: JSON.stringify({ keyword: `Analyze this thumbnail description: ${description}` }),
+                body: JSON.stringify({ keyword: `Analyze this thumbnail description: ${description} ` }),
             });
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -138,13 +138,10 @@ export const aiVersionClient = {
             const formData = new FormData();
             formData.append("file", file);
 
-            const response = await fetch(getApiUrl('/media/upload'), {
+            return await apiFetch('/media/upload', {
                 method: "POST",
-                headers: getHeaders(false),
                 body: formData,
             });
-            handleUnauthorized(response.status);
-            return await response.json();
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error("Error uploading media:", error);
@@ -164,7 +161,7 @@ export const aiVersionClient = {
 
     async deleteMedia(fileId: string): Promise<{ success: boolean; message?: string; error?: string }> {
         try {
-            return await apiFetch(`/media/${fileId}`, {
+            return await apiFetch(`/ media / ${fileId} `, {
                 method: "DELETE"
             });
         } catch (error) {

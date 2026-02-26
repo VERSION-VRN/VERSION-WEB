@@ -131,6 +131,36 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
         setFormDataInternal(prev => ({ ...prev, ...data }));
     };
 
+    // Carga inicial de metadatos (voces, idiomas, estilos)
+    useEffect(() => {
+        const loadMetadata = async () => {
+            setIsLoadingConfig(true);
+            try {
+                const data = await apiFetch<Metadata>('/metadata');
+                if (data.success) {
+                    setMetadata(data);
+                    // Selección inicial inteligente
+                    const defaultLang = "Español";
+                    const initialLang = data.idiomas.includes(defaultLang) ? defaultLang : data.idiomas[0];
+                    setSelectedIdioma(initialLang);
+                    if (data.voices?.[initialLang]) setSelectedVoice(data.voices[initialLang][0].id);
+                    if (data.prompts?.[initialLang]) setSelectedPrompt(data.prompts[initialLang][0].name);
+                } else {
+                    setConfigError('Error al obtener la configuración del servidor.');
+                }
+            } catch (err) {
+                console.error("[EditorContext] Metadata fetch error:", err);
+                setConfigError('Fallo de conexión con el backend para cargar configuración.');
+            } finally {
+                setIsLoadingConfig(false);
+            }
+        };
+
+        if (!metadata) {
+            loadMetadata();
+        }
+    }, [metadata]);
+
     // Efecto de sincronización con componentes externos (EliteAssistant)
     useEffect(() => {
         const event = new CustomEvent('VERSION_EDITOR_UPDATE', {
@@ -201,13 +231,11 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
                 let success = false;
                 while (retries > 0 && !success) {
                     try {
-                        const res = await fetch(getApiUrl('/upload-chunk'), {
+                        await apiFetch('/upload-chunk', {
                             method: 'POST',
-                            headers: { 'bypass-tunnel-reminder': 'true', 'ngrok-skip-browser-warning': 'true' },
                             body: chunkFormData
                         });
-                        if (res.ok) success = true;
-                        else throw new Error(`Error ${res.status}`);
+                        success = true;
                     } catch (e) {
                         retries--;
                         if (retries === 0) throw e;
@@ -259,12 +287,10 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
                 formDataChunk.append('chunk_index', i.toString());
                 formDataChunk.append('total_chunks', totalChunks.toString());
 
-                const res = await fetch(getApiUrl('/upload-chunk'), {
+                await apiFetch('/upload-chunk', {
                     method: 'POST',
-                    headers: { 'bypass-tunnel-reminder': 'true', 'ngrok-skip-browser-warning': 'true' },
                     body: formDataChunk
                 });
-                if (!res.ok) throw new Error(`Error en chunk ${i}`);
                 setUploadProgress(Math.round(((i + 1) / totalChunks) * 100));
             }
 
@@ -329,7 +355,7 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
     }, [taskProgress, taskMessage]);
 
     const handleSubmit = async (userEmail: string, isAdmin: boolean, credits: number) => {
-        const currentCost = targetLength === 'short' ? 5 : targetLength === 'long' ? 20 : 10;
+        const currentCost = 0; // Herramienta gratuita para usuarios registrados
         if (!isAdmin && credits < currentCost) return showToast(`Créditos insuficientes (${currentCost} tokens requeridos).`, 'error');
         if (!formData.backgroundVideoPath || !formData.url || !formData.titulo || !selectedVoice || !selectedPrompt)
             return showToast('Completa todos los campos obligatorios.', 'warning');

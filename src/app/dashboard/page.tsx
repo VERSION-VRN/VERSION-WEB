@@ -1,16 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { useRouter, usePathname } from 'next/navigation';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteButton } from '@/components/ui/EliteButton';
-import { EliteBadge } from '@/components/ui/EliteBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CreditsBar } from '@/components/ui/CreditsBar';
-import { Navbar } from '@/components/Navbar';
 
 const TASK_TYPE_META: Record<string, { icon: string, label: string }> = {
     'editor': { icon: '🎬', label: 'Editor' },
@@ -45,16 +43,9 @@ export default function DashboardPage() {
         } else if (user) {
             setIsLoading(false);
         }
-    }, [user, isLoading]);
+    }, [user, isLoading, router]);
 
-    // Fetch historial solo al montar o cuando cambia el email del usuario
-    useEffect(() => {
-        if (user) {
-            fetchHistory();
-        }
-    }, [user?.email]);
-
-    const fetchHistory = async () => {
+    const fetchHistory = useCallback(async () => {
         const userId = user?.email || user?.id;
         if (!userId) {
             console.log("[Dashboard] No user ID available for history fetch");
@@ -74,7 +65,13 @@ export default function DashboardPage() {
         } finally {
             setIsLoadingHistory(false);
         }
-    };
+    }, [user?.email, user?.id]);
+
+    useEffect(() => {
+        if (user) {
+            fetchHistory();
+        }
+    }, [user, fetchHistory]);
 
     const handleLogout = () => {
         logout();

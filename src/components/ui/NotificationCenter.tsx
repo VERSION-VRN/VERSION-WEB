@@ -59,7 +59,11 @@ export function NotificationCenter() {
                     }
                 }
             } catch (error) {
-                console.error("NotificationCenter error:", error);
+                if (error instanceof Error && (error.message.includes('fetch') || error.message.includes('Network Error'))) {
+                    showToast("⚠️ Error de conexión: Verifica que el backend y el túnel (localtunnel) estén encendidos.", "error");
+                } else {
+                    console.error("NotificationCenter error:", error);
+                }
             }
         };
 
