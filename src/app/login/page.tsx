@@ -86,7 +86,9 @@ export default function Login() {
                 }
             }
         } catch (err: any) {
-            setError(err.message || 'No se pudo conectar con el servidor VERSION. Verifica tu conexión.');
+            const backendUrl = typeof window !== 'undefined' ? (localStorage.getItem('backend_url') || process.env.NEXT_PUBLIC_API_URL || 'localhost') : 'servidor';
+            setError(`No se pudo conectar con el servidor VERSION en ${backendUrl}. Verifica tu conexión o el estado del túnel.`);
+            console.error("Login connection error:", err);
         }
     };
 

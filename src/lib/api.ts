@@ -4,7 +4,14 @@
  */
 
 export const getApiUrl = (path: string): string => {
-    const base = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000').trim();
+    // Prioridad 1: Override local para facilitar cambios de túnel sin re-desplegar
+    if (typeof window !== 'undefined') {
+        const localOverride = localStorage.getItem('backend_url');
+        if (localOverride) return `${localOverride.trim().replace(/\/$/, '')}${path}`;
+    }
+
+    // Prioridad 2: Variable de entorno de compilación (Vercel) o default localhost
+    const base = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000').trim().replace(/\/$/, '');
     return `${base}${path}`;
 };
 
