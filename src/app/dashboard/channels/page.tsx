@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, getApiUrl } from '@/lib/api';
@@ -8,111 +8,298 @@ import { useRouter } from 'next/navigation';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteButton } from '@/components/ui/EliteButton';
 
+interface UpcomingVideo {
+    id?: string;
+    titulo: string;
+    url: string;
+    idioma: string;
+    voz?: string;
+    prompt_name?: string;
+    miniatura?: string;
+    background_video?: string;
+}
+
 interface Channel {
     id: string;
     name: string;
     logo_url?: string;
     banner_url?: string;
-    upcoming_videos: string[];
+    upcoming_videos: UpcomingVideo[];
 }
 
+const LANGS = ['Español', 'English', 'Português', 'Français'];
+const emptyVideo = (): UpcomingVideo => ({
+    titulo: '', url: '', idioma: 'Español', voz: '', prompt_name: '', miniatura: '', background_video: ''
+});
+
 export default function ChannelsPage() {
-    const { user, isAdmin } = useAuth();
+    const { user } = useAuth();
     const router = useRouter();
     const [channels, setChannels] = useState<Channel[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Modal nuevo canal
     const [showAddModal, setShowAddModal] = useState(false);
-
-    const [newChannel, setNewChannel] = useState({
-        name: '',
-        logo_url: '',
-        banner_url: '',
-        upcoming_videos: [] as string[]
-    });
-
+    const [newChannel, setNewChannel] = useState({ name: '', logo_url: '', banner_url: '' });
     const [uploadingType, setUploadingType] = useState<string | null>(null);
 
+    // Panel de gestión de canal seleccionado
+    const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+    const [editingVideos, setEditingVideos] = useState<UpcomingVideo[]>([]);
+    const [savingVideos, setSavingVideos] = useState(false);
+
+    // Generación en cola
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [generatingIdx, setGeneratingIdx] = useState<number>(-1);
+    const [queueLog, setQueueLog] = useState<string[]>([]);
+
     useEffect(() => {
-        if (!user && !isLoading) {
-            router.push('/login');
-        }
+        if (!user && !isLoading) router.push('/login');
     }, [user, isLoading, router]);
+
+    useEffect(() => {
+        if (user) fetchChannels();
+    }, [user]);
 
     const fetchChannels = async () => {
         try {
             const data = await apiFetch<Channel[]>('/channels');
             if (data) setChannels(data);
         } catch (err) {
-            console.error("Error fetching channels:", err);
+            console.error('Error fetching channels:', err);
         } finally {
             setIsLoading(false);
         }
     };
 
-    useEffect(() => {
-        if (user) fetchChannels();
-    }, [user]);
-
+    // ─── Subida de imágenes ───────────────────────────────────────────
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'banner') => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         setUploadingType(type);
         const formData = new FormData();
         formData.append('file', file);
         formData.append('type', type);
-
         try {
-            const res = await apiFetch<{ success: boolean, url: string }>('/upload-channel-asset', {
-                method: 'POST',
-                body: formData
-            });
-
+            const res = await apiFetch<{ success: boolean; url: string }>('/upload-channel-asset', { method: 'POST', body: formData });
             if (res.success) {
-                setNewChannel(prev => ({
-                    ...prev,
-                    [type === 'logo' ? 'logo_url' : 'banner_url']: res.url
-                }));
+                setNewChannel(prev => ({ ...prev, [type === 'logo' ? 'logo_url' : 'banner_url']: res.url }));
             }
         } catch (err) {
-            console.error(`Error uploading ${type}:`, err);
-            alert(`Error al subir ${type}. Revisa el log.`);
+            alert(`Error al subir ${type}`);
         } finally {
             setUploadingType(null);
         }
     };
 
+    // ─── Guardar canal ────────────────────────────────────────────────
     const handleSaveChannel = async () => {
-        if (!newChannel.name) return;
+        if (!newChannel.name.trim()) return;
         setIsSaving(true);
         try {
-            await apiFetch('/channels', {
-                method: 'POST',
-                body: JSON.stringify(newChannel)
-            });
+            await apiFetch('/channels', { method: 'POST', body: JSON.stringify({ ...newChannel, upcoming_videos: [] }) });
             setShowAddModal(false);
-            setNewChannel({ name: '', logo_url: '', banner_url: '', upcoming_videos: [] });
+            setNewChannel({ name: '', logo_url: '', banner_url: '' });
             fetchChannels();
-        } catch (err) {
-            console.error("Error saving channel:", err);
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleDeleteChannel = async (id: string) => {
-        if (!confirm('¿Estás seguro de eliminar este canal?')) return;
+        if (!confirm('¿Eliminar este canal y todos sus datos?')) return;
+        await apiFetch(`/channels/${id}`, { method: 'DELETE' });
+        setSelectedChannel(null);
+        fetchChannels();
+    };
+
+    // ─── Abrir panel de canal ─────────────────────────────────────────
+    const openChannel = (ch: Channel) => {
+        setSelectedChannel(ch);
+        setEditingVideos(ch.upcoming_videos.length > 0 ? [...ch.upcoming_videos] : [emptyVideo()]);
+        setQueueLog([]);
+        setGeneratingIdx(-1);
+    };
+
+    // ─── Videos en lista ──────────────────────────────────────────────
+    const updateVideo = (idx: number, field: keyof UpcomingVideo, val: string) => {
+        setEditingVideos(prev => prev.map((v, i) => i === idx ? { ...v, [field]: val } : v));
+    };
+    const addVideo = () => setEditingVideos(prev => [...prev, emptyVideo()]);
+    const removeVideo = (idx: number) => setEditingVideos(prev => prev.filter((_, i) => i !== idx));
+
+    const saveVideos = async () => {
+        if (!selectedChannel) return;
+        setSavingVideos(true);
         try {
-            await apiFetch(`/channels/${id}`, { method: 'DELETE' });
-            fetchChannels();
-        } catch (err) {
-            console.error("Error deleting channel:", err);
+            const updated = { ...selectedChannel, upcoming_videos: editingVideos.filter(v => v.titulo.trim()) };
+            await apiFetch('/channels', { method: 'POST', body: JSON.stringify(updated) });
+            await fetchChannels();
+            setSelectedChannel(prev => prev ? { ...prev, upcoming_videos: updated.upcoming_videos } : null);
+        } finally {
+            setSavingVideos(false);
         }
+    };
+
+    // ─── Generación en cola ───────────────────────────────────────────
+    const handleGenerateAll = async () => {
+        const videos = editingVideos.filter(v => v.titulo.trim() && v.url.trim());
+        if (videos.length === 0) { alert('Agrega al menos un video con título y URL.'); return; }
+
+        setIsGenerating(true);
+        setQueueLog([`🚀 Iniciando generación de ${videos.length} video(s) en cola...`]);
+
+        for (let i = 0; i < videos.length; i++) {
+            const video = videos[i];
+            setGeneratingIdx(i);
+            setQueueLog(prev => [...prev, `▶️ (${i + 1}/${videos.length}) Encolando: "${video.titulo}"...`]);
+
+            try {
+                const requestId = `ch_${selectedChannel?.id?.slice(0, 8)}_v${i}_${Date.now()}`;
+                await apiFetch('/process', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        request_id: requestId,
+                        url: video.url,
+                        titulo: video.titulo,
+                        idioma: video.idioma || 'Español',
+                        voz: video.voz || null,
+                        prompt_name: video.prompt_name || null,
+                        miniatura: video.miniatura || '',
+                        background_video: video.background_video || '',
+                        pause_at_script: false,
+                    }),
+                });
+                setQueueLog(prev => [...prev, `✅ "${video.titulo}" encolado correctamente.`]);
+            } catch (err: any) {
+                setQueueLog(prev => [...prev, `❌ Error en "${video.titulo}": ${err.message}`]);
+            }
+        }
+
+        setQueueLog(prev => [...prev, `🎬 Cola completa. Ve a "Mis Videos" para ver el progreso.`]);
+        setIsGenerating(false);
+        setGeneratingIdx(-1);
     };
 
     if (isLoading) return <div className="min-h-screen bg-black" />;
 
+    // ─── Panel del canal seleccionado ─────────────────────────────────
+    if (selectedChannel) return (
+        <div className="min-h-screen p-6 md:p-10 pb-32" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+            <button onClick={() => setSelectedChannel(null)} className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-primary transition-colors mb-6 block">
+                ← Volver a Mis Canales
+            </button>
+
+            {/* Header del canal */}
+            <EliteCard variant="glass" className="!p-0 overflow-hidden mb-8">
+                <div className="h-36 relative overflow-hidden">
+                    {selectedChannel.banner_url ? (
+                        <img src={getApiUrl(selectedChannel.banner_url)} alt="Banner" className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, transparent 100%)', opacity: 0.15 }} />
+                    )}
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #000 0%, transparent 70%)' }} />
+                    <div className="absolute bottom-4 left-6 flex items-end gap-4">
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden border-4 border-black shadow-2xl bg-zinc-800">
+                            {selectedChannel.logo_url
+                                ? <img src={getApiUrl(selectedChannel.logo_url)} alt="Logo" className="w-full h-full object-cover" />
+                                : <div className="w-full h-full flex items-center justify-center text-2xl">📺</div>
+                            }
+                        </div>
+                        <h1 className="text-2xl font-black uppercase tracking-tight">{selectedChannel.name}</h1>
+                    </div>
+                </div>
+            </EliteCard>
+
+            {/* Lista de próximos videos */}
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-black uppercase tracking-tight">📋 Próximos Videos <span className="text-primary">({editingVideos.filter(v => v.titulo).length})</span></h2>
+                <div className="flex gap-3">
+                    <EliteButton variant="outline" size="sm" onClick={addVideo}>+ Agregar Video</EliteButton>
+                    <EliteButton variant="outline" size="sm" onClick={saveVideos} disabled={savingVideos}>
+                        {savingVideos ? 'Guardando...' : '💾 Guardar Lista'}
+                    </EliteButton>
+                    <EliteButton variant="primary" size="sm" onClick={handleGenerateAll} disabled={isGenerating}>
+                        {isGenerating ? `⏳ Generando ${generatingIdx + 1}...` : '🎬 GENERAR TODOS'}
+                    </EliteButton>
+                </div>
+            </div>
+
+            <div className="space-y-4 mb-8">
+                {editingVideos.map((video, idx) => (
+                    <EliteCard key={idx} variant="glass" className="!p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                            <span className="text-primary font-mono font-black text-sm w-6">{idx + 1}.</span>
+                            <input
+                                value={video.titulo}
+                                onChange={e => updateVideo(idx, 'titulo', e.target.value)}
+                                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-bold focus:border-primary outline-none"
+                                placeholder="Título del video..."
+                            />
+                            <button onClick={() => removeVideo(idx)} className="text-zinc-600 hover:text-red-500 transition-colors text-lg ml-2">✕</button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-9">
+                            <input
+                                value={video.url}
+                                onChange={e => updateVideo(idx, 'url', e.target.value)}
+                                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-primary outline-none"
+                                placeholder="🔗 URL YouTube fuente"
+                            />
+                            <select
+                                value={video.idioma}
+                                onChange={e => updateVideo(idx, 'idioma', e.target.value)}
+                                className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-primary outline-none"
+                            >
+                                {LANGS.map(l => <option key={l} value={l}>{l}</option>)}
+                            </select>
+                            <input
+                                value={video.prompt_name || ''}
+                                onChange={e => updateVideo(idx, 'prompt_name', e.target.value)}
+                                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-primary outline-none"
+                                placeholder="🎭 Estilo de guion (opcional)"
+                            />
+                            <input
+                                value={video.background_video || ''}
+                                onChange={e => updateVideo(idx, 'background_video', e.target.value)}
+                                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-primary outline-none"
+                                placeholder="🎥 Video de fondo (opcional)"
+                            />
+                        </div>
+                        {isGenerating && generatingIdx === idx && (
+                            <div className="mt-2 pl-9 text-[10px] text-primary animate-pulse">▶ Generando este video...</div>
+                        )}
+                    </EliteCard>
+                ))}
+
+                {editingVideos.length === 0 && (
+                    <div className="text-center py-10 text-zinc-600">
+                        <p className="text-3xl mb-2">🎬</p>
+                        <p className="text-sm">No hay videos en la lista. Agrega el primero.</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Log de generación */}
+            {queueLog.length > 0 && (
+                <EliteCard variant="glass" className="!p-4">
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">LOG DE GENERACIÓN</h3>
+                    <div className="space-y-1 font-mono">
+                        {queueLog.map((line, i) => (
+                            <p key={i} className="text-[11px] text-zinc-400">{line}</p>
+                        ))}
+                    </div>
+                    {!isGenerating && (
+                        <EliteButton variant="outline" size="sm" className="mt-4" onClick={() => router.push('/dashboard')}>
+                            Ver Progreso en Dashboard →
+                        </EliteButton>
+                    )}
+                </EliteCard>
+            )}
+        </div>
+    );
+
+    // ─── Vista principal: lista de canales ────────────────────────────
     return (
         <div className="min-h-screen p-8 md:p-12 pb-32" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
@@ -124,83 +311,81 @@ export default function ChannelsPage() {
                         MIS <span className="text-primary">CANALES</span>
                     </h1>
                     <p className="font-medium text-sm text-zinc-500 mt-2">
-                        Gestiona tu flota de canales automatizados y próximos proyectos.
+                        Gestiona tu flota de canales y genera tu producción en cola.
                     </p>
                 </div>
                 <EliteButton variant="primary" onClick={() => setShowAddModal(true)}>
-                    + AÑADIR CANAL
+                    + NUEVO CANAL
                 </EliteButton>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {channels.map((channel) => (
-                    <EliteCard key={channel.id} variant="glass" className="group overflow-hidden !p-0">
-                        {/* Banner Preview */}
-                        <div className="h-24 bg-zinc-900 overflow-hidden relative">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {channels.map(channel => (
+                    <EliteCard key={channel.id} variant="glass" className="group overflow-hidden !p-0 cursor-pointer hover:ring-1 hover:ring-primary/50 transition-all" onClick={() => openChannel(channel)}>
+                        <div className="h-28 bg-zinc-900 overflow-hidden relative">
                             {channel.banner_url ? (
-                                <img src={getApiUrl(channel.banner_url)} alt="Banner" className="w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-opacity" />
+                                <img
+                                    src={getApiUrl(channel.banner_url)}
+                                    alt="Banner"
+                                    className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-r from-primary/10 to-transparent" />
+                                <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, transparent 100%)', opacity: 0.12 }} />
                             )}
-                            {/* Logo Overlay */}
-                            <div className="absolute -bottom-6 left-6 w-16 h-16 rounded-2xl border-4 border-black bg-zinc-800 overflow-hidden shadow-2xl">
+                            <div className="absolute bottom-0 left-0 right-0 h-12" style={{ background: 'linear-gradient(to top, #0d0d0d, transparent)' }} />
+                            <div className="absolute -bottom-5 left-5 w-14 h-14 rounded-xl border-4 border-black bg-zinc-800 overflow-hidden shadow-2xl">
                                 {channel.logo_url ? (
-                                    <img src={getApiUrl(channel.logo_url)} alt="Logo" className="w-full h-full object-cover" />
+                                    <img
+                                        src={getApiUrl(channel.logo_url)}
+                                        alt="Logo"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-xl">📺</div>
                                 )}
                             </div>
                         </div>
 
-                        <div className="p-8 pt-10">
-                            <div className="flex justify-between items-start mb-6">
-                                <h3 className="text-xl font-black uppercase tracking-tight">{channel.name}</h3>
-                                <button onClick={() => handleDeleteChannel(channel.id)} className="text-zinc-600 hover:text-red-500 transition-colors">
-                                    🗑️
-                                </button>
+                        <div className="p-6 pt-9">
+                            <div className="flex justify-between items-start mb-4">
+                                <h3 className="text-lg font-black uppercase tracking-tight">{channel.name}</h3>
+                                <button
+                                    onClick={e => { e.stopPropagation(); handleDeleteChannel(channel.id); }}
+                                    className="text-zinc-700 hover:text-red-500 transition-colors"
+                                >🗑️</button>
                             </div>
 
-                            <div className="space-y-4">
-                                <div>
-                                    <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 block mb-2">Próximos Videos</span>
-                                    {channel.upcoming_videos.length > 0 ? (
-                                        <ul className="space-y-1">
-                                            {channel.upcoming_videos.map((vid, i) => (
-                                                <li key={i} className="text-[11px] font-bold py-1.5 border-b border-white/5 flex items-center gap-2">
-                                                    <span className="text-primary font-mono text-[9px]">{i + 1}.</span> {vid}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <p className="text-[10px] italic text-zinc-700">Sin videos en planificación</p>
-                                    )}
-                                </div>
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="text-primary font-black text-lg">{channel.upcoming_videos?.length || 0}</span>
+                                <span className="text-[10px] uppercase tracking-widest text-zinc-500">Videos en cola</span>
                             </div>
 
-                            <EliteButton variant="outline" size="md" className="w-full mt-6" onClick={() => router.push(`/editor?channel=${channel.name}`)}>
-                                CREAR VIDEO PARA CANAL
-                            </EliteButton>
+                            <div className="w-full text-center py-2 border border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-widest text-zinc-400 group-hover:border-primary/50 group-hover:text-primary transition-all">
+                                Gestionar Canal →
+                            </div>
                         </div>
                     </EliteCard>
                 ))}
 
                 {channels.length === 0 && (
-                    <div className="col-span-full py-20 text-center">
+                    <div className="col-span-full py-24 text-center">
                         <div className="text-6xl mb-4">📺</div>
                         <h2 className="text-xl font-black uppercase text-zinc-700">No tienes canales registrados</h2>
-                        <p className="text-zinc-600 text-sm mt-2">Empieza creando tu primer canal para organizar tus producciones.</p>
+                        <p className="text-zinc-600 text-sm mt-2">Empieza creando tu primer canal.</p>
                     </div>
                 )}
             </div>
 
-            {/* Modal de Adición (Simplificado para el ejemplo) */}
+            {/* Modal nuevo canal */}
             {showAddModal && (
                 <div className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
                     <EliteCard variant="glass" className="w-full max-w-lg p-8">
                         <h2 className="text-2xl font-black uppercase tracking-tighter mb-6">Nuevo Canal</h2>
-                        <div className="space-y-6 mb-8">
+                        <div className="space-y-5 mb-8">
                             <div>
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 block">Nombre del Canal</label>
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 block">Nombre del Canal *</label>
                                 <input
                                     type="text"
                                     value={newChannel.name}
@@ -209,48 +394,36 @@ export default function ChannelsPage() {
                                     placeholder="Ej. VERSION Shorts"
                                 />
                             </div>
-
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 block">Logo del Canal</label>
-                                    <div className="relative h-24 bg-white/5 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center overflow-hidden">
-                                        {newChannel.logo_url ? (
-                                            <img src={getApiUrl(newChannel.logo_url)} alt="Logo Preview" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <span className="text-xs text-zinc-600">No Image</span>
-                                        )}
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => handleFileUpload(e, 'logo')}
-                                            className="absolute inset-0 opacity-0 cursor-pointer"
-                                        />
-                                        {uploadingType === 'logo' && <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-[10px]">Subiendo...</div>}
+                                {(['logo', 'banner'] as const).map(type => (
+                                    <div key={type}>
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 block">{type === 'logo' ? 'Logo' : 'Banner'}</label>
+                                        <div className="relative h-24 bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center overflow-hidden hover:border-primary/40 transition-colors">
+                                            {(type === 'logo' ? newChannel.logo_url : newChannel.banner_url) ? (
+                                                <img src={getApiUrl(type === 'logo' ? newChannel.logo_url : newChannel.banner_url)} alt="Preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="text-center">
+                                                    <div className="text-2xl mb-1">{type === 'logo' ? '🖼️' : '🎨'}</div>
+                                                    <span className="text-[10px] text-zinc-600">Clic para subir</span>
+                                                </div>
+                                            )}
+                                            <input
+                                                type="file" accept="image/*"
+                                                onChange={e => handleFileUpload(e, type)}
+                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                            />
+                                            {uploadingType === type && (
+                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-[10px] font-bold animate-pulse">Subiendo...</div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 block">Banner del Canal</label>
-                                    <div className="relative h-24 bg-white/5 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center overflow-hidden">
-                                        {newChannel.banner_url ? (
-                                            <img src={getApiUrl(newChannel.banner_url)} alt="Banner Preview" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <span className="text-xs text-zinc-600">No Image</span>
-                                        )}
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => handleFileUpload(e, 'banner')}
-                                            className="absolute inset-0 opacity-0 cursor-pointer"
-                                        />
-                                        {uploadingType === 'banner' && <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-[10px]">Subiendo...</div>}
-                                    </div>
-                                </div>
+                                ))}
                             </div>
                         </div>
                         <div className="flex gap-4">
                             <EliteButton variant="outline" fullWidth onClick={() => setShowAddModal(false)}>CANCELAR</EliteButton>
                             <EliteButton variant="primary" fullWidth onClick={handleSaveChannel} disabled={isSaving}>
-                                {isSaving ? 'GUARDANDO...' : 'GUARDAR CANAL'}
+                                {isSaving ? 'GUARDANDO...' : 'CREAR CANAL'}
                             </EliteButton>
                         </div>
                     </EliteCard>
