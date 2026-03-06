@@ -54,9 +54,14 @@ export default function AIChat() {
     };
 
     return (
-        <div className="flex h-screen bg-black text-white selection:bg-primary/30">
+        <div className="flex h-screen text-white selection:bg-primary/30 relative" style={{ background: 'var(--background)' }}>
+            {/* Glass Orbs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-1/4 left-1/2 w-[400px] h-[400px] bg-primary/5 blur-[150px] rounded-full animate-orb-float" />
+                <div className="absolute bottom-1/3 right-1/4 w-[300px] h-[300px] bg-blue-500/5 blur-[130px] rounded-full animate-orb-float" style={{ animationDelay: '-12s' }} />
+            </div>
             {/* Sidebar */}
-            <aside className="w-20 hidden md:flex flex-col items-center py-12 border-r border-white/[0.04] bg-zinc-950/20 backdrop-blur-xl shrink-0">
+            <aside className="w-20 hidden md:flex flex-col items-center py-12 shrink-0 relative z-10" style={{ borderRight: '1px solid var(--glass-border)', background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur-heavy))', WebkitBackdropFilter: 'blur(var(--glass-blur-heavy))' }}>
                 <Link href="/dashboard" className="text-2xl font-black text-primary mb-12 hover:scale-110 transition-transform">V.</Link>
                 <div className="flex flex-col gap-6">
                     <Link href="/dashboard" title="Dashboard" className="w-10 h-10 rounded-xl flex items-center justify-center text-lg opacity-40 hover:opacity-100 hover:bg-white/[0.04] transition-all">📊</Link>
@@ -68,7 +73,7 @@ export default function AIChat() {
 
             {/* Chat Container */}
             <main className="flex-1 flex flex-col h-full relative overflow-hidden">
-                <header className="p-6 md:px-12 border-b border-white/[0.04] flex justify-between items-center bg-black/40 backdrop-blur-md z-10">
+                <header className="p-6 md:px-12 flex justify-between items-center z-10" style={{ borderBottom: '1px solid var(--glass-border)', background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur))', WebkitBackdropFilter: 'blur(var(--glass-blur))' }}>
                     <div className="flex items-center gap-6">
                         <div>
                             <h1 className="text-sm font-black tracking-[0.3em] uppercase">VERSION <span className="text-primary">AI</span></h1>
@@ -91,9 +96,11 @@ export default function AIChat() {
                     {messages.map((m: Message, i: number) => (
                         <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} max-w-4xl mx-auto w-full group/msg`}>
                             <div className={`${m.role === 'ai'
-                                ? 'bg-zinc-950/60 backdrop-blur-xl border border-white/[0.06] p-8 rounded-3xl rounded-tl-lg shadow-2xl relative overflow-hidden'
-                                : 'bg-primary text-white p-6 rounded-3xl rounded-tr-lg shadow-[0_10px_40px_rgba(220,38,38,0.25)]'
-                                } max-w-[90%] md:max-w-[85%] text-sm font-medium leading-relaxed`}>
+                                ? 'p-8 rounded-3xl rounded-tl-lg relative overflow-hidden'
+                                : 'p-6 rounded-3xl rounded-tr-lg shadow-[0_10px_40px_rgba(220,38,38,0.25)]'
+                                } max-w-[90%] md:max-w-[85%] text-sm font-medium leading-relaxed`}
+                                style={m.role === 'ai' ? { background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur))', WebkitBackdropFilter: 'blur(var(--glass-blur))', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-glass)' } : { background: 'var(--primary)' }}
+                            >
 
                                 {m.role === 'ai' && (
                                     <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 blur-[50px] rounded-full pointer-events-none" />
@@ -135,7 +142,7 @@ export default function AIChat() {
                     )}
                 </div>
 
-                <footer className="p-6 md:p-12 bg-gradient-to-t from-black via-black/95 to-transparent">
+                <footer className="p-6 md:p-12" style={{ background: 'linear-gradient(to top, var(--background), transparent)' }}>
                     <div className="max-w-4xl mx-auto relative group">
                         <input
                             type="text"

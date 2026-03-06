@@ -22,6 +22,9 @@ export interface Metadata {
     subtitle_styles: string[];
     subtitle_colors: string[];
     subtitle_positions: string[];
+    default_voice_rate: string;
+    default_voice_pitch: string;
+    available_models: string[];
     success: boolean;
 }
 
@@ -32,6 +35,7 @@ interface EditorState {
         url: string;
         titulo: string;
         miniatura: string;
+        thumbnailPath: string;
         backgroundVideo: File | null;
         backgroundVideoPath: string;
         music: File | null;
@@ -44,6 +48,10 @@ interface EditorState {
     selectedSubtitleStyle: string;
     selectedSubtitleColor: string;
     selectedSubtitlePosition: string;
+    voiceRate: string;
+    voicePitch: string;
+    selectedModel: string;
+    videoFormat: 'horizontal' | 'vertical' | 'both';
     targetLength: 'short' | 'medium' | 'long';
     isProcessing: boolean;
     progress: number;
@@ -68,6 +76,10 @@ interface EditorContextType extends EditorState {
     setSelectedSubtitleStyle: (style: string) => void;
     setSelectedSubtitleColor: (color: string) => void;
     setSelectedSubtitlePosition: (position: string) => void;
+    setVoiceRate: (rate: string) => void;
+    setVoicePitch: (pitch: string) => void;
+    setSelectedModel: (model: string) => void;
+    setVideoFormat: (format: EditorState['videoFormat']) => void;
     setTargetLength: (length: EditorState['targetLength']) => void;
     setIsProcessing: (isProcessing: boolean) => void;
     setProgress: (progress: number) => void;
@@ -81,6 +93,7 @@ interface EditorContextType extends EditorState {
 
     // Logic Methods
     handleUploadBackground: (file: File) => Promise<void>;
+    handleUploadThumbnail: (file: File) => Promise<void>;
     handleUploadMusic: (file: File) => Promise<void>;
     handleSubmit: (userEmail: string, isAdmin: boolean, credits: number) => Promise<void>;
     handleCancel: () => Promise<void>;
@@ -102,6 +115,7 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
         url: '',
         titulo: '',
         miniatura: '',
+        thumbnailPath: '',
         backgroundVideo: null,
         backgroundVideoPath: '',
         music: null,
@@ -114,6 +128,10 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
     const [selectedSubtitleStyle, setSelectedSubtitleStyle] = useState('Clásico');
     const [selectedSubtitleColor, setSelectedSubtitleColor] = useState('Blanco');
     const [selectedSubtitlePosition, setSelectedSubtitlePosition] = useState('Abajo');
+    const [voiceRate, setVoiceRate] = useState('+0%');
+    const [voicePitch, setVoicePitch] = useState('+0Hz');
+    const [selectedModel, setSelectedModel] = useState('');
+    const [videoFormat, setVideoFormat] = useState<EditorState['videoFormat']>('horizontal');
     const [targetLength, setTargetLength] = useState<EditorState['targetLength']>('medium');
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -145,6 +163,9 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
                     setSelectedIdioma(initialLang);
                     if (data.voices?.[initialLang]) setSelectedVoice(data.voices[initialLang][0].id);
                     if (data.prompts?.[initialLang]) setSelectedPrompt(data.prompts[initialLang][0].name);
+                    if (data.default_voice_rate) setVoiceRate(data.default_voice_rate);
+                    if (data.default_voice_pitch) setVoicePitch(data.default_voice_pitch);
+                    if (data.available_models?.length) setSelectedModel(data.available_models[0]);
                 } else {
                     setConfigError('Error al obtener la configuración del servidor.');
                 }
@@ -187,16 +208,20 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
                     params: overrideParams || {
                         url: formData.url,
                         titulo: formData.titulo,
-                        miniatura: formData.miniatura,
+                        miniatura: formData.thumbnailPath || formData.miniatura,
                         idioma: selectedIdioma,
                         voz: selectedVoice,
                         prompt_name: selectedPrompt,
                         background_video_path: formData.backgroundVideoPath,
+                        thumbnail_path: formData.thumbnailPath,
                         bg_music: formData.musicPath,
                         bg_music_vol: formData.musicVolume,
                         subtitle_style: selectedSubtitleStyle,
                         subtitle_color: selectedSubtitleColor,
                         subtitle_position: selectedSubtitlePosition,
+                        voice_rate: voiceRate,
+                        voice_pitch: voicePitch,
+                        model: selectedModel,
                         target_length: targetLength,
                     }
                 })
@@ -268,6 +293,32 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
         } finally {
             setUploadingBg(false);
             setUploadProgress(0);
+        }
+    };
+
+    const handleUploadThumbnail = async (file: File) => {
+        try {
+            setUploadingBg(true);
+            setStatusMessage('Subiendo miniatura...');
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+
+            const data = await apiFetch<any>('/upload-channel-thumbnail', {
+                method: 'POST',
+                body: uploadFormData
+            });
+
+            if (data.success) {
+                setFormData({ thumbnailPath: data.path });
+                showToast('Miniatura subida correctamente', 'success');
+            } else {
+                throw new Error(data.error || 'Error al subir miniatura');
+            }
+        } catch (err) {
+            showToast('Error: ' + (err instanceof Error ? err.message : 'Error desconocido'), 'error');
+        } finally {
+            setUploadingBg(false);
+            setStatusMessage('');
         }
     };
 
@@ -372,14 +423,19 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
                 body: JSON.stringify({
                     url: formData.url, idioma: selectedIdioma, voz: selectedVoice,
                     prompt_name: selectedPrompt, titulo: formData.titulo,
-                    miniatura: formData.miniatura || formData.titulo, add_subtitles: true,
+                    miniatura: formData.thumbnailPath || formData.miniatura || formData.titulo, add_subtitles: true,
                     background_video: formData.backgroundVideoPath, request_id: requestId,
                     user_id: userEmail, subtitle_style: selectedSubtitleStyle,
                     subtitle_color: selectedSubtitleColor, subtitle_position: selectedSubtitlePosition,
+                    voice_rate: voiceRate,
+                    voice_pitch: voicePitch,
+                    model: selectedModel,
+                    video_format: videoFormat,
                     pause_at_script: true,
                     target_length: targetLength,
                     bg_music: formData.musicPath || null,
-                    bg_music_vol: formData.musicVolume
+                    bg_music_vol: formData.musicVolume,
+                    thumbnail_custom: formData.thumbnailPath
                 })
             });
             if (!data.success) {
@@ -431,7 +487,7 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
         setCurrentStep(1);
         setCurrentTaskId(null);
         setFormData({
-            url: '', titulo: '', miniatura: '',
+            url: '', titulo: '', miniatura: '', thumbnailPath: '',
             backgroundVideo: null, backgroundVideoPath: '',
             music: null, musicPath: '', musicVolume: 0.15
         });
@@ -451,6 +507,10 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
         selectedSubtitleStyle, setSelectedSubtitleStyle,
         selectedSubtitleColor, setSelectedSubtitleColor,
         selectedSubtitlePosition, setSelectedSubtitlePosition,
+        voiceRate, setVoiceRate,
+        voicePitch, setVoicePitch,
+        selectedModel, setSelectedModel,
+        videoFormat, setVideoFormat,
         targetLength, setTargetLength,
         isProcessing, setIsProcessing,
         progress, setProgress,
@@ -464,6 +524,7 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
         isLoadingConfig, configError,
 
         handleUploadBackground,
+        handleUploadThumbnail,
         handleUploadMusic,
         handleSubmit,
         handleCancel,

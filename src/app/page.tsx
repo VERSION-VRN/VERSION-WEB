@@ -40,6 +40,13 @@ export default function Home() {
       <section className="container py-32 md:py-48 text-center relative min-h-[90vh] flex flex-col justify-center items-center">
         <HeroBackground />
 
+        {/* Floating Orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[150px] animate-orb-float" />
+          <div className="absolute bottom-1/3 right-1/4 w-[350px] h-[350px] bg-indigo-500/10 rounded-full blur-[130px] animate-orb-float" style={{ animationDelay: '-7s' }} />
+          <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-purple-500/8 rounded-full blur-[120px] animate-orb-float" style={{ animationDelay: '-14s' }} />
+        </div>
+
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -130,7 +137,7 @@ export default function Home() {
       </section>
 
       {/* Academy Section */}
-      <section id="cursos" className="bg-zinc-950/50 py-32 border-y border-white/[0.04]">
+      <section id="cursos" className="bg-white/[0.02] backdrop-blur-3xl py-32 border-y border-white/[0.04]">
         <div className="container grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <motion.div
             initial={{ opacity: 0, x: -30 }}

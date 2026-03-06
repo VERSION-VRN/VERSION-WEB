@@ -103,7 +103,7 @@ export default function DashboardPage() {
 
             {/* Mobile Bottom Navigation */}
             <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md">
-                <div className="bg-zinc-950/80 backdrop-blur-2xl border border-white/10 rounded-2xl p-2 flex justify-around items-center shadow-2xl">
+                <div className="p-2 flex justify-around items-center" style={{ background: 'var(--glass-bg-heavy)', backdropFilter: 'blur(40px) saturate(1.5)', WebkitBackdropFilter: 'blur(40px) saturate(1.5)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-glass)' }}>
                     {SIDEBAR_NAV.slice(0, 4).map((item) => {
                         const isActive = pathname === item.href;
                         return (
@@ -142,7 +142,7 @@ export default function DashboardPage() {
             )}
 
             {/* Desktop Sidebar */}
-            <aside className="w-[280px] hidden lg:flex flex-col border-r border-white/[0.04] p-8 fixed h-full bg-zinc-950/20 backdrop-blur-xl z-50">
+            <aside className="w-[280px] hidden lg:flex flex-col p-8 fixed h-full z-50" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur-heavy)) saturate(1.3)', WebkitBackdropFilter: 'blur(var(--glass-blur-heavy)) saturate(1.3)', borderRight: '1px solid var(--glass-border)', boxShadow: 'inset -1px 0 0 rgba(255,255,255,0.04)' }}>
                 <Link href="/" className="text-xl font-black tracking-tighter uppercase mb-12 flex items-center gap-1 group">
                     <span className="group-hover:text-primary transition-colors">VERSION</span><span className="text-primary text-3xl">.</span>
                 </Link>
@@ -347,8 +347,7 @@ export default function DashboardPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/[0.02]">
-                                        {history.map((item: { id: string, task_type: string, filename: string, created_at: string, status: string, result_url: string, thumbnail_url?: string }) => {
-
+                                        {history.map((item: { id: string, task_type: string, filename: string, created_at: string, status: string, result_url: string, thumbnail_url?: string, script_url?: string, zip_url?: string }) => {
                                             const meta = TASK_TYPE_META[item.task_type] || { icon: '📦', label: 'Proceso' };
                                             return (
                                                 <tr key={item.id} className="hover:bg-white/[0.01] transition-colors group">
@@ -372,34 +371,47 @@ export default function DashboardPage() {
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <div className="flex justify-end gap-2 text-[10px]">
-                                                            {item.result_url && (
-                                                                <a href={getApiUrl(item.result_url)} target="_blank" rel="noopener noreferrer" download className="p-2.5 bg-primary/10 border border-primary/20 text-primary rounded-lg transition-all hover:bg-primary/20">
-                                                                    DESCARGAR
-                                                                </a>
-                                                            )}
-                                                            {item.thumbnail_url && (
-
-                                                                <a href={getApiUrl(item.thumbnail_url)} target="_blank" rel="noopener noreferrer" download className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg transition-all hover:bg-emerald-500/20" title="Descargar Miniatura">
-                                                                    🖼️
-                                                                </a>
+                                                        <div className="flex justify-end gap-1.5 items-center">
+                                                            {item.status === 'completed' && (
+                                                                <div className="flex gap-1.5 bg-white/[0.03] p-1 rounded-xl border border-white/5 mr-2">
+                                                                    {item.thumbnail_url && (
+                                                                        <a href={getApiUrl(item.thumbnail_url)} target="_blank" rel="noopener noreferrer" download className="w-8 h-8 flex items-center justify-center bg-zinc-800 text-[10px] font-black rounded-lg hover:bg-primary hover:text-white transition-all border border-white/10" title="Descargar Miniatura">
+                                                                            M
+                                                                        </a>
+                                                                    )}
+                                                                    {item.script_url && (
+                                                                        <a href={getApiUrl(item.script_url)} target="_blank" rel="noopener noreferrer" download className="w-8 h-8 flex items-center justify-center bg-zinc-800 text-[10px] font-black rounded-lg hover:bg-primary hover:text-white transition-all border border-white/10" title="Descargar Guion">
+                                                                            G
+                                                                        </a>
+                                                                    )}
+                                                                    {item.result_url && (
+                                                                        <a href={getApiUrl(item.result_url)} target="_blank" rel="noopener noreferrer" download className="w-8 h-8 flex items-center justify-center bg-zinc-800 text-[10px] font-black rounded-lg hover:bg-primary hover:text-white transition-all border border-white/10" title="Descargar Video">
+                                                                            V
+                                                                        </a>
+                                                                    )}
+                                                                    {item.zip_url && (
+                                                                        <a href={getApiUrl(item.zip_url)} target="_blank" rel="noopener noreferrer" download className="px-2 h-8 flex items-center justify-center bg-primary text-[9px] font-black rounded-lg hover:bg-primary/80 text-white transition-all border border-primary/20" title="Descargar Todo (ZIP)">
+                                                                            TODO
+                                                                        </a>
+                                                                    )}
+                                                                </div>
                                                             )}
 
                                                             <Link
                                                                 href={`/editor?task_id=${item.id}`}
-                                                                className="p-2.5 bg-white/5 border border-white/10 rounded-lg transition-all hover:bg-white/10 flex items-center gap-1.5"
+                                                                className="h-8 px-3 flex items-center text-[9px] font-black uppercase tracking-widest bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all text-zinc-400 hover:text-white"
                                                             >
                                                                 REANUDAR
                                                             </Link>
+
                                                             <button
                                                                 onClick={() => handleDeleteTask(item.id)}
-                                                                className="p-2.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg transition-all hover:bg-red-500/20"
+                                                                className="w-8 h-8 flex items-center justify-center bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg transition-all hover:bg-red-500/20"
                                                                 title="Eliminar de la lista y la PC"
                                                             >
-                                                                🗑️
+                                                                <span className="text-xs">🗑️</span>
                                                             </button>
                                                         </div>
-
                                                     </td>
                                                 </tr>
                                             );

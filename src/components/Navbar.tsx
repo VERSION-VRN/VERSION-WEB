@@ -22,20 +22,37 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
     const isDark = theme === 'dark';
 
     return (
-        <nav className="w-full border-b sticky top-0 z-50 backdrop-blur-2xl transition-colors duration-300"
-            style={{ borderColor: 'var(--border)', background: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(248,248,249,0.85)' }}>
-            <div className="container flex justify-between items-center py-4">
+        <nav
+            className="w-full border-b sticky top-0 z-50 transition-colors duration-300"
+            style={{
+                borderColor: 'var(--glass-border)',
+                background: 'var(--glass-bg-heavy)',
+                backdropFilter: 'blur(40px) saturate(1.5)',
+                WebkitBackdropFilter: 'blur(40px) saturate(1.5)',
+                boxShadow: '0 1px 0 rgba(255,255,255,0.04), 0 4px 30px rgba(0,0,0,0.2)',
+            }}
+        >
+            {/* Subtle bottom light border */}
+            <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+
+            <div className="container flex justify-between items-center py-4 relative z-10">
                 <Link href="/" className="text-xl font-black tracking-tighter uppercase group flex items-center gap-2">
-                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white text-md group-hover:rotate-12 transition-transform duration-300 shadow-[0_0_20px_rgba(220,38,38,0.3)]">V</div>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-md group-hover:rotate-12 transition-transform duration-300"
+                        style={{
+                            background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
+                            boxShadow: '0 0 20px rgba(220,38,38,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+                        }}
+                    >V</div>
                     <span className="hidden sm:block" style={{ color: 'var(--foreground)' }}>VERSION</span>
                 </Link>
 
                 <div className="hidden md:flex gap-6 items-center">
                     {variant === 'public' && TOOL_NAV.map(item => (
-                        <Link key={item.href} href={item.href} className="nav-link">{item.label}</Link>
+                        <Link key={item.href} href={item.href} className="nav-link relative group/link">
+                            {item.label}
+                            <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-gradient-to-r from-primary to-primary/50 group-hover/link:w-full transition-all duration-300" />
+                        </Link>
                     ))}
-
-                    {/* Theme Toggle Removed */}
 
                     {user ? (
                         <div className="flex items-center gap-4">
@@ -48,7 +65,11 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
                                         logout();
                                     }
                                 }}
-                                className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-zinc-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-zinc-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                style={{
+                                    border: '1px solid var(--glass-border)',
+                                    backdropFilter: 'blur(8px)',
+                                }}
                                 title="Cerrar Sesión"
                             >
                                 <LogOut size={16} />
@@ -70,7 +91,6 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
 
                 {/* Mobile */}
                 <div className="flex md:hidden items-center gap-3">
-                    {/* Theme Toggle Removed */}
                     {user ? (
                         <Link href="/dashboard" className="text-primary text-[10px] font-bold">Dashboard</Link>
                     ) : (

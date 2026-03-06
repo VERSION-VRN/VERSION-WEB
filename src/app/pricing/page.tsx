@@ -80,9 +80,14 @@ export default function Pricing() {
 
     return (
         <PayPalScriptProvider options={{ clientId: PAYPAL_CLIENT_ID, currency: "USD" }}>
-            <div className="min-h-screen bg-black text-white selection:bg-primary/30">
+            <div className="min-h-screen text-white selection:bg-primary/30 relative" style={{ background: 'var(--background)' }}>
+                {/* Glass Orbs */}
+                <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                    <div className="absolute top-1/3 left-1/3 w-[450px] h-[450px] bg-primary/5 blur-[160px] rounded-full animate-orb-float" />
+                    <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-indigo-500/5 blur-[140px] rounded-full animate-orb-float" style={{ animationDelay: '-9s' }} />
+                </div>
                 {/* Navbar */}
-                <nav className="container flex justify-between items-center py-8 border-b border-white/[0.04]">
+                <nav className="container flex justify-between items-center py-8 relative z-10" style={{ borderBottom: '1px solid var(--glass-border)' }}>
                     <Link href="/" className="text-2xl font-black tracking-tighter uppercase">
                         VERSION<span className="text-primary">.</span>
                     </Link>

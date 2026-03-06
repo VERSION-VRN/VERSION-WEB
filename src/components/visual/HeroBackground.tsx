@@ -59,10 +59,10 @@ function ParticleGrid() {
 
 export function HeroBackground() {
     return (
-        <div className="absolute inset-0 -z-20 bg-black pointer-events-none overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/50 to-black" />
+        <div className="absolute inset-0 -z-20 pointer-events-none overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-transparent" />
             <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>
-                <fog attach="fog" args={['#000', 5, 15]} />
+                <fog attach="fog" args={['#050510', 5, 20]} />
                 <ambientLight intensity={0.5} />
                 <ParticleGrid />
             </Canvas>

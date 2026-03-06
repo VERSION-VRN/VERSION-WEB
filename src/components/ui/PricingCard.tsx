@@ -30,11 +30,17 @@ export function PricingCard({
         <EliteCard
             title={title}
             subtitle={subtitle}
-            glowColor={glowColor}
-            className={`flex flex-col items-center text-center py-12 ${isPopular ? 'scale-105' : ''}`}
+            glowColor={glowColor || (isPopular ? '#6366f1' : undefined)}
+            className={`flex flex-col items-center text-center py-12 ${isPopular ? 'scale-105 liquid-holographic' : ''}`}
         >
             {badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-[8px] font-bold px-5 py-1.5 tracking-[0.3em] uppercase rounded-full shadow-[0_4px_15px_rgba(220,38,38,0.3)]">
+                <div
+                    className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-white font-bold px-5 py-1.5 tracking-[0.3em] uppercase rounded-full z-20"
+                    style={{
+                        background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
+                        boxShadow: '0 4px 15px rgba(220,38,38,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+                    }}
+                >
                     {badge}
                 </div>
             )}
@@ -45,7 +51,7 @@ export function PricingCard({
             <ul className={`space-y-4 text-xs mb-12 text-left w-full ${!isPopular ? 'text-zinc-400' : ''}`}>
                 {features.map((feature, index) => (
                     <li key={index} className={`flex items-center gap-3 ${isPopular ? 'text-white' : ''}`}>
-                        ✓{' '}
+                        <span className="text-emerald-500">✓</span>
                         <span className={`uppercase tracking-widest ${feature.highlighted ? 'text-primary font-bold' : ''}`}>
                             {feature.text}
                         </span>

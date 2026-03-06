@@ -57,10 +57,14 @@ export function Step3Style({
         metadata,
         selectedIdioma,
         selectedVoice, setSelectedVoice,
+        voiceRate, setVoiceRate,
+        voicePitch, setVoicePitch,
+        selectedModel, setSelectedModel,
         selectedPrompt, setSelectedPrompt,
         selectedSubtitleStyle, setSelectedSubtitleStyle,
         selectedSubtitleColor, setSelectedSubtitleColor,
         selectedSubtitlePosition, setSelectedSubtitlePosition,
+        videoFormat, setVideoFormat,
         targetLength, setTargetLength
     } = useEditor();
 
@@ -96,6 +100,66 @@ export function Step3Style({
                                 <OptionPillAlt key={v.id} selected={selectedVoice === v.id} onClick={() => setSelectedVoice(v.id)}>
                                     {v.name}
                                 </OptionPillAlt>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Controles Avanzados de Voz */}
+                <div className="grid grid-cols-2 gap-5 border-t border-white/[0.04] pt-6">
+                    <div className="space-y-2.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Velocidad</label>
+                        <select
+                            value={voiceRate}
+                            onChange={(e) => setVoiceRate(e.target.value)}
+                            className="w-full bg-white/[0.03] text-white border border-white/[0.06] rounded-xl px-4 py-2 text-xs font-bold focus:outline-none focus:border-primary/50"
+                        >
+                            {["-50%", "-25%", "+0%", "+25%", "+50%"].map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                    </div>
+                    <div className="space-y-2.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Tono (Pitch)</label>
+                        <select
+                            value={voicePitch}
+                            onChange={(e) => setVoicePitch(e.target.value)}
+                            className="w-full bg-white/[0.03] text-white border border-white/[0.06] rounded-xl px-4 py-2 text-xs font-bold focus:outline-none focus:border-primary/50"
+                        >
+                            {["-20Hz", "-10Hz", "+0Hz", "+10Hz", "+20Hz"].map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                    </div>
+                </div>
+
+                {/* Modelo AI & Estrategia */}
+                <div className="border-t border-white/[0.04] pt-6 space-y-6">
+                    {metadata.available_models?.length > 0 && (
+                        <div className="space-y-2.5">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Modelo de Inteligencia</label>
+                            <div className="flex flex-wrap gap-2">
+                                {metadata.available_models.map(model => (
+                                    <button
+                                        key={model}
+                                        onClick={() => setSelectedModel(model)}
+                                        className={`px-4 py-2 rounded-lg text-[10px] font-black tracking-tight transition-all border ${selectedModel === model ? 'bg-white text-black border-white' : 'bg-white/5 border-white/10 text-zinc-500 hover:bg-white/10'}`}
+                                    >
+                                        {model.toUpperCase()}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="space-y-2.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Estrategia de Guion</label>
+                        <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                            {metadata.prompts[selectedIdioma]?.map(p => (
+                                <button key={p.name} onClick={() => setSelectedPrompt(p.name)}
+                                    className={`px-4 py-3 text-left transition-all rounded-xl border ${selectedPrompt === p.name
+                                        ? 'bg-primary/10 border-primary/25'
+                                        : 'bg-white/[0.02] border-white/[0.06] hover:border-white/15'
+                                        }`}>
+                                    <div className={`text-[10px] font-bold uppercase tracking-wider ${selectedPrompt === p.name ? 'text-primary' : 'text-white'}`}>{p.name}</div>
+                                    <div className="text-[9px] text-zinc-600 line-clamp-1 mt-0.5">{p.prompt}</div>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -173,18 +237,26 @@ export function Step3Style({
                     </div>
                 </div>
 
-                {/* Estrategia */}
-                <div className="border-t border-white/[0.04] pt-6 space-y-2.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Estrategia de Guion</label>
-                    <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-1">
-                        {metadata.prompts[selectedIdioma]?.map(p => (
-                            <button key={p.name} onClick={() => setSelectedPrompt(p.name)}
-                                className={`px-4 py-3 text-left transition-all rounded-xl border ${selectedPrompt === p.name
-                                    ? 'bg-primary/10 border-primary/25'
-                                    : 'bg-white/[0.02] border-white/[0.06] hover:border-white/15'
-                                    }`}>
-                                <div className={`text-[10px] font-bold uppercase tracking-wider ${selectedPrompt === p.name ? 'text-primary' : 'text-white'}`}>{p.name}</div>
-                                <div className="text-[9px] text-zinc-600 line-clamp-1 mt-0.5">{p.prompt}</div>
+                {/* Formato de Video */}
+                <div className="border-t border-white/[0.04] pt-6 space-y-3">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-primary/70 ml-1">Formato de Video</label>
+                    <div className="grid grid-cols-3 gap-2">
+                        {[
+                            { id: 'horizontal', label: 'Horizontal', icon: '🖥️', detail: '16:9 • YouTube' },
+                            { id: 'vertical', label: 'Vertical', icon: '📱', detail: '9:16 • Shorts' },
+                            { id: 'both', label: 'Ambos', icon: '🔄', detail: '16:9 + 9:16' }
+                        ].map(opt => (
+                            <button
+                                key={opt.id}
+                                onClick={() => setVideoFormat(opt.id as any)}
+                                className={`p-3 flex flex-col items-center justify-center gap-1 transition-all rounded-xl border ${videoFormat === opt.id
+                                    ? 'bg-blue-500/10 border-blue-500 text-blue-400 shadow-[0_4_12px_rgba(59,130,246,0.1)]'
+                                    : 'bg-white/[0.03] text-zinc-500 border-white/[0.06] hover:border-white/20'
+                                    }`}
+                            >
+                                <span className="text-lg">{opt.icon}</span>
+                                <span className="text-[10px] font-black uppercase tracking-tight">{opt.label}</span>
+                                <span className="text-[8px] font-medium opacity-60 tracking-wider whitespace-nowrap">{opt.detail}</span>
                             </button>
                         ))}
                     </div>

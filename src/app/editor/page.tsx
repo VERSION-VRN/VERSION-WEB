@@ -71,12 +71,17 @@ function VideoEditorContent() {
 
     const handlePrevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
-    if (!user) return <div className="min-h-screen bg-black" />;
+    if (!user) return <div className="min-h-screen" style={{ background: 'var(--background)' }} />;
 
     return (
-        <div className="min-h-screen bg-black text-white selection:bg-primary/30">
+        <div className="min-h-screen text-white selection:bg-primary/30 relative" style={{ background: 'var(--background)' }}>
+            {/* Glass Orbs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-1/4 right-1/3 w-[400px] h-[400px] bg-primary/5 blur-[150px] rounded-full animate-orb-float" />
+                <div className="absolute bottom-1/4 left-1/4 w-[350px] h-[350px] bg-indigo-500/5 blur-[130px] rounded-full animate-orb-float" style={{ animationDelay: '-8s' }} />
+            </div>
             {/* ─── Navbar ─── */}
-            <nav className="fixed top-0 inset-x-0 z-50 bg-black/70 backdrop-blur-2xl border-b border-white/[0.04]">
+            <nav className="fixed top-0 inset-x-0 z-50" style={{ background: 'var(--glass-bg-heavy)', backdropFilter: 'blur(40px) saturate(1.5)', WebkitBackdropFilter: 'blur(40px) saturate(1.5)', borderBottom: '1px solid var(--glass-border)' }}>
                 <div className="max-w-2xl mx-auto px-6 h-16 flex items-center justify-between">
                     <Link href="/dashboard" className="text-sm font-black tracking-tight uppercase hover:text-primary transition-colors">
                         VERSION<span className="text-primary">.ED</span>

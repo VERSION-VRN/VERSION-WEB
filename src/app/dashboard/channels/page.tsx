@@ -116,6 +116,7 @@ export default function ChannelsPage() {
     };
 
     const fetchMetadata = async () => {
+        if (Object.keys(voicesByLang).length > 0) return; // Ya tenemos voces
         try {
             const meta = await apiFetch<{ voices: Record<string, MetaVoice[]> }>('/metadata');
             if (meta?.voices) setVoicesByLang(meta.voices);
@@ -287,7 +288,7 @@ export default function ChannelsPage() {
 
     // ─── Panel de canal ───────────────────────────────────────────────
     if (selectedChannel) return (
-        <div className="min-h-screen p-6 md:p-10 pb-32" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+        <div className="min-h-screen p-6 md:p-10 pb-32" style={{ background: 'var(--background)', color: 'var(--foreground)', '--glass-blur': '8px' } as any}>
             <button onClick={() => setSelectedChannel(null)} className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-primary transition-colors mb-6 block">
                 ← Volver a Mis Canales
             </button>
@@ -478,7 +479,7 @@ export default function ChannelsPage() {
 
     // ─── Vista principal: lista de canales ────────────────────────────
     return (
-        <div className="min-h-screen p-8 md:p-12 pb-32" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+        <div className="min-h-screen p-8 md:p-12 pb-32" style={{ background: 'var(--background)', color: 'var(--foreground)', '--glass-blur': '8px' } as any}>
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
                 <div>
                     <Link href="/dashboard" className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-primary transition-colors mb-4 block">
@@ -502,7 +503,7 @@ export default function ChannelsPage() {
                         key={channel.id}
                         onClick={() => openChannel(channel)}
                         className="group overflow-hidden cursor-pointer rounded-3xl border transition-all duration-300 hover:ring-1 hover:ring-primary/50 hover:border-white/20"
-                        style={{ background: 'var(--glass)', borderColor: 'var(--border)', backdropFilter: 'blur(12px)' }}
+                        style={{ background: 'var(--glass)', borderColor: 'var(--border)', backdropFilter: 'blur(8px)' }}
                     >
                         <div className="h-28 bg-zinc-900 overflow-hidden relative">
                             {channel.banner_url ? (

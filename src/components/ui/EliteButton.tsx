@@ -39,39 +39,49 @@ export const EliteButton = ({
         switch (variant) {
             case 'primary':
                 return {
-                    backgroundColor: 'var(--foreground)',
+                    background: 'linear-gradient(135deg, var(--foreground), rgba(255,255,255,0.85))',
                     color: 'var(--background)',
-                    borderColor: 'var(--foreground)',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 0 20px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.3)',
                 };
             case 'secondary':
                 return {
-                    backgroundColor: 'var(--surface-2)',
+                    background: 'var(--glass-bg-heavy)',
                     color: 'var(--foreground)',
-                    borderColor: 'var(--border)'
+                    borderColor: 'var(--glass-border)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    boxShadow: 'var(--shadow-glass)',
                 };
             case 'outline':
                 return {
-                    backgroundColor: 'transparent',
+                    background: 'var(--glass-bg)',
                     color: 'var(--foreground)',
-                    borderColor: 'var(--border)'
+                    borderColor: 'var(--glass-border)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
                 };
             case 'ghost':
                 return {
-                    backgroundColor: 'transparent',
+                    background: 'transparent',
                     color: 'var(--muted)',
                     borderColor: 'transparent'
                 };
             case 'danger':
                 return {
-                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                    background: 'rgba(220, 38, 38, 0.08)',
                     color: '#ef4444',
-                    borderColor: 'rgba(220, 38, 38, 0.2)'
+                    borderColor: 'rgba(220, 38, 38, 0.15)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
                 };
             case 'success':
                 return {
-                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    background: 'rgba(34, 197, 94, 0.08)',
                     color: '#22c55e',
-                    borderColor: 'rgba(34, 197, 94, 0.2)'
+                    borderColor: 'rgba(34, 197, 94, 0.15)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
                 };
             default:
                 return {};
@@ -99,8 +109,8 @@ export const EliteButton = ({
                 </div>
             )}
 
-            {/* Hover Glow effect */}
-            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            {/* Liquid shine sweep */}
+            <div className="absolute top-[-50%] left-[-100%] w-[60%] h-[200%] bg-gradient-to-r from-transparent via-white/10 to-transparent rotate-[25deg] transition-all duration-700 group-hover:left-[150%] pointer-events-none z-[2]" />
         </>
     );
 
@@ -115,7 +125,7 @@ export const EliteButton = ({
             <motion.div {...animationProps} className={widthStyle}>
                 <Link
                     href={href}
-                    className={`${baseStyles} ${sizeStyles[size]} ${widthStyle} ${className} ${variant === 'outline' ? 'hover:bg-foreground hover:text-background border-zinc-800' : ''}`}
+                    className={`${baseStyles} ${sizeStyles[size]} ${widthStyle} ${className}`}
                     style={variantStyle}
                     aria-disabled={disabled || isLoading}
                     {...(props as any)}

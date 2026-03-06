@@ -485,7 +485,12 @@ export default function ThumbnailPage() {
     };
 
     return (
-        <div className="min-h-screen bg-black text-white p-6 pb-20">
+        <div className="min-h-screen text-white p-6 pb-20 relative" style={{ background: 'var(--background)' }}>
+            {/* Glass Orbs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-1/4 left-1/3 w-[400px] h-[400px] bg-purple-500/5 blur-[150px] rounded-full animate-orb-float" />
+                <div className="absolute bottom-1/3 right-1/4 w-[350px] h-[350px] bg-indigo-500/5 blur-[130px] rounded-full animate-orb-float" style={{ animationDelay: '-10s' }} />
+            </div>
             {/* Google Fonts Pre-load */}
             <style dangerouslySetInnerHTML={{
                 __html: `
@@ -529,7 +534,7 @@ export default function ThumbnailPage() {
 
             <div className="flex gap-6 h-[75vh]">
                 {/* Layers Panel (Left Sidebar) */}
-                <div className="w-[240px] bg-zinc-950 border border-white/5 rounded-2xl flex flex-col overflow-hidden">
+                <div className="w-[240px] rounded-2xl flex flex-col overflow-hidden relative z-10" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur))', border: '1px solid var(--glass-border)' }}>
                     <div className="p-4 border-b border-white/5">
                         <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Capas</h3>
                         <p className="text-[9px] text-zinc-600 mt-1">Navega o reordena los elementos</p>
@@ -570,7 +575,7 @@ export default function ThumbnailPage() {
                 </div>
 
                 {/* Canvas Area */}
-                <div className="flex-1 bg-zinc-900/50 rounded-2xl border border-white/5 overflow-hidden flex items-center justify-center relative shadow-2xl">
+                <div className="flex-1 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-2xl" style={{ background: 'var(--glass-bg-light)', border: '1px solid var(--glass-border)' }}>
                     <div className="border border-white/10 shadow-xl w-full max-w-[80%] aspect-video">
                         <canvas
                             ref={canvasRef}
@@ -586,7 +591,7 @@ export default function ThumbnailPage() {
                 </div>
 
                 {/* Sidebar Controls */}
-                <div className="w-[320px] bg-zinc-950 border border-white/5 rounded-2xl p-6 flex flex-col gap-6 overflow-y-auto">
+                <div className="w-[320px] rounded-2xl p-6 flex flex-col gap-6 overflow-y-auto relative z-10" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur))', border: '1px solid var(--glass-border)' }}>
                     {selectedLayerId ? (() => {
                         const layer = layers.find(l => l.id === selectedLayerId);
                         if (!layer) return null;

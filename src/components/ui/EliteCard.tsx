@@ -28,19 +28,15 @@ export const EliteCard = ({
     glowColor,
     hoverGlow = true
 }: EliteCardProps) => {
-    // 3D Tilt state
     const x = useMotionValue(0);
     const y = useMotionValue(0);
     const mouseX = useSpring(x, { stiffness: 100, damping: 30 });
     const mouseY = useSpring(y, { stiffness: 100, damping: 30 });
-    const rotateX = useTransform(mouseY, [-0.5, 0.5], ["5deg", "-5deg"]);
-    const rotateY = useTransform(mouseX, [-0.5, 0.5], ["-5deg", "5deg"]);
+    const rotateX = useTransform(mouseY, [-0.5, 0.5], ["3deg", "-3deg"]);
+    const rotateY = useTransform(mouseX, [-0.5, 0.5], ["-3deg", "3deg"]);
 
     const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
         const rect = event.currentTarget.getBoundingClientRect();
-        x.set(event.clientX - rect.left - rect.width / 2);
-        y.set(event.clientY - rect.top - rect.height / 2);
-        // Normalización para 0..1
         x.set((event.clientX - rect.left) / rect.width - 0.5);
         y.set((event.clientY - rect.top) / rect.height - 0.5);
     };
@@ -50,24 +46,32 @@ export const EliteCard = ({
         y.set(0);
     };
 
-    const variantStyles = {
-        glass: 'backdrop-blur-xl border',
-        solid: 'border',
-        borderless: ''
-    };
-
-    const variantColors = {
-        glass: {
-            background: 'var(--glass)',
-            borderColor: 'var(--border)'
-        },
-        solid: {
-            background: 'var(--surface)',
-            borderColor: 'var(--border)'
-        },
-        borderless: {
-            background: 'transparent',
-            borderColor: 'transparent'
+    const getVariantStyles = () => {
+        switch (variant) {
+            case 'glass':
+                return {
+                    background: 'var(--glass-bg)',
+                    borderColor: 'var(--glass-border)',
+                    backdropFilter: 'blur(var(--glass-blur))',
+                    WebkitBackdropFilter: 'blur(var(--glass-blur))',
+                    boxShadow: glowColor
+                        ? `0 0 40px ${glowColor}20, var(--shadow-glass)`
+                        : 'var(--shadow-glass)',
+                };
+            case 'solid':
+                return {
+                    background: 'var(--glass-bg-heavy)',
+                    borderColor: 'var(--glass-border)',
+                    backdropFilter: 'blur(var(--glass-blur-heavy))',
+                    WebkitBackdropFilter: 'blur(var(--glass-blur-heavy))',
+                    boxShadow: 'var(--shadow-glass)',
+                };
+            case 'borderless':
+                return {
+                    background: 'transparent',
+                    borderColor: 'transparent',
+                    boxShadow: 'none',
+                };
         }
     };
 
@@ -77,22 +81,33 @@ export const EliteCard = ({
                 rotateX,
                 rotateY,
                 transformStyle: "preserve-3d",
-                backgroundColor: variantColors[variant].background,
-                borderColor: variantColors[variant].borderColor,
                 color: 'var(--foreground)',
-                boxShadow: glowColor ? `0 0 40px ${glowColor}${glowColor.length === 7 ? '15' : ''}` : undefined
+                ...getVariantStyles()
             }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className={`group/card rounded-3xl p-6 ${variantStyles[variant]} ${className} relative overflow-hidden transition-all duration-500 hover:border-white/20`}
+            className={`group/card rounded-3xl p-6 border ${className} relative overflow-hidden transition-all duration-500 hover:border-white/15 liquid-shine`}
         >
-            {/* Perspective Overlay Glow */}
+            {/* Glass shine overlay */}
+            <div
+                className="absolute inset-0 pointer-events-none z-[1]"
+                style={{ background: 'var(--glass-shine)' }}
+            />
+
+            {/* Colored glow orb */}
             <motion.div
                 style={{
                     transform: "translateZ(50px)",
-                    background: glowColor || 'rgba(255,255,255,0.05)'
+                    background: glowColor || 'rgba(99, 102, 241, 0.15)'
                 }}
-                className={`absolute -top-24 -right-24 w-64 h-64 blur-[100px] rounded-full pointer-events-none transition-opacity duration-500 ${hoverGlow ? 'opacity-20 group-hover/card:opacity-40' : 'opacity-10'}`}
+                className={`absolute -top-24 -right-24 w-64 h-64 blur-[120px] rounded-full pointer-events-none transition-opacity duration-700 ${hoverGlow ? 'opacity-15 group-hover/card:opacity-30' : 'opacity-10'}`}
+            />
+
+            {/* Holographic border accent */}
+            <div className="absolute inset-0 rounded-3xl pointer-events-none opacity-0 group-hover/card:opacity-100 transition-opacity duration-700"
+                style={{
+                    background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.06), transparent 50%)',
+                }}
             />
 
             <div style={{ transform: "translateZ(20px)" }} className="relative z-10">
@@ -106,13 +121,9 @@ export const EliteCard = ({
                         {headerAction && <div className="mt-1">{headerAction}</div>}
                     </div>
                 )}
-
-                <div>
-                    {children}
-                </div>
-
+                <div>{children}</div>
                 {footer && (
-                    <div className="mt-8 pt-6 border-t flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
+                    <div className="mt-8 pt-6 border-t flex items-center justify-between" style={{ borderColor: 'var(--glass-border)' }}>
                         {footer}
                     </div>
                 )}

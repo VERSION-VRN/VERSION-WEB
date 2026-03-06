@@ -71,7 +71,12 @@ export default function SeoPage() {
     };
 
     return (
-        <div className="min-h-screen bg-black text-white p-6 md:p-12 selection:bg-green-500/30">
+        <div className="min-h-screen text-white p-6 md:p-12 selection:bg-green-500/30 relative" style={{ background: 'var(--background)' }}>
+            {/* Glass Orbs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-emerald-500/5 blur-[150px] rounded-full animate-orb-float" />
+                <div className="absolute bottom-1/3 right-1/3 w-[350px] h-[350px] bg-indigo-500/5 blur-[130px] rounded-full animate-orb-float" style={{ animationDelay: '-10s' }} />
+            </div>
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
             <div className="max-w-5xl mx-auto">
@@ -88,7 +93,7 @@ export default function SeoPage() {
                         </p>
                     </div>
 
-                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl px-6 py-4 backdrop-blur-xl">
+                    <div className="liquid-glass rounded-2xl px-6 py-4">
                         <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Costo Operativo</div>
                         <div className="flex items-center gap-2">
                             <span className="text-green-500 text-xl font-black">⚡ {COST}</span>
@@ -109,7 +114,8 @@ export default function SeoPage() {
                                         value={keyword}
                                         onChange={(e) => setKeyword(e.target.value)}
                                         placeholder="Ej: Cómo ganar en YouTube en 2026..."
-                                        className="w-full p-4 bg-white/[0.02] border border-white/10 rounded-xl text-white focus:outline-none focus:border-green-500/40 transition-all placeholder:text-zinc-800 text-sm font-medium"
+                                        className="w-full p-4 rounded-xl text-white focus:outline-none focus:border-green-500/40 transition-all placeholder:text-zinc-800 text-sm font-medium"
+                                        style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', backdropFilter: 'blur(12px)' }}
                                     />
                                 </div>
 
@@ -161,7 +167,7 @@ export default function SeoPage() {
                             </div>
                         </EliteCard>
 
-                        <div className="p-6 border border-white/[0.04] bg-white/[0.01] rounded-3xl">
+                        <div className="liquid-glass rounded-3xl p-6">
                             <h4 className="text-[10px] font-black uppercase text-zinc-600 tracking-widest mb-4">¿Qué incluye este reporte?</h4>
                             <ul className="space-y-3">
                                 {[
@@ -183,7 +189,7 @@ export default function SeoPage() {
                         {loading && <SkeletonEditorConfig />}
 
                         {!loading && !results && (
-                            <div className="h-full flex flex-col items-center justify-center p-20 border border-dashed border-white/10 rounded-[2.5rem] text-center bg-white/[0.01]">
+                            <div className="h-full flex flex-col items-center justify-center p-20 border border-dashed rounded-[2.5rem] text-center" style={{ borderColor: 'var(--glass-border)', background: 'var(--glass-bg-light)' }}>
                                 <div className="text-6xl mb-6 opacity-20">📊</div>
                                 <h3 className="text-zinc-600 font-bold uppercase tracking-widest text-xs">Esperando Entrada de Datos</h3>
                                 <p className="text-zinc-800 text-[10px] mt-2 max-w-[200px]">Define tu tema y parámetros para que el Oráculo genere tu estrategia.</p>
