@@ -20,13 +20,13 @@ const TASK_TYPE_META: Record<string, { icon: string, label: string }> = {
 
 // Navegación centralizada para evitar duplicados
 const SIDEBAR_NAV = [
-    { label: 'Vista General', href: '/dashboard', icon: '📊' },
-    { label: 'VERSION AI Chat', href: '/ai', icon: '🤖' },
-    { label: 'VERSION Editor', href: '/editor', icon: '🎬' },
-    { label: 'Thumbnails', href: '/thumbnails', icon: '🖼️' },
-    { label: 'Script Writer', href: '/writer', icon: '📝' },
+    { label: 'VISTA GENERAL', href: '/dashboard', icon: '📊' },
+    { label: 'VERSION AI CHAT', href: '/ai', icon: '🤖' },
+    { label: 'VERSION EDITOR', href: '/editor', icon: '🎬' },
+    { label: 'THUMBNAILS', href: '/thumbnails', icon: '🖼️' },
+    { label: 'SCRIPT WRITER', href: '/writer', icon: '📝' },
     { label: 'VERSION SEO', href: '/seo', icon: '🚀' },
-    { label: 'Mis Canales', href: '/dashboard/channels', icon: '📺' },
+    { label: 'MIS CANALES', href: '/dashboard/channels', icon: '📺' },
 ];
 
 export default function DashboardPage() {
@@ -231,7 +231,7 @@ export default function DashboardPage() {
                         {/* VERSION EDITOR */}
                         <EliteCard
                             variant="glass"
-                            title="VERSION Editor"
+                            title="VERSION EDITOR"
                             subtitle="Pro Ready"
                             description="Automatización de clips de YouTube con IA y edición profesional integrada."
                             headerAction={<span className="text-3xl">🎬</span>}
@@ -244,7 +244,7 @@ export default function DashboardPage() {
                         {/* VERSION THUMBNAILS */}
                         <EliteCard
                             variant="glass"
-                            title="Thumbnails"
+                            title="THUMBNAILS"
                             subtitle="Visual Core"
                             description="Diseño de miniaturas y análisis CTR avanzado con redes neuronales."
                             headerAction={<span className="text-3xl">🖼️</span>}
@@ -257,7 +257,7 @@ export default function DashboardPage() {
                         {/* VERSION WRITER */}
                         <EliteCard
                             variant="glass"
-                            title="Writer"
+                            title="WRITER"
                             subtitle="Script Engine"
                             description="Ingeniería de guiones virales con estructuras de alta retención."
                             headerAction={<span className="text-3xl">📝</span>}
@@ -270,7 +270,7 @@ export default function DashboardPage() {
                         {/* VERSION SEO */}
                         <EliteCard
                             variant="glass"
-                            title="SEO Growth"
+                            title="SEO GROWTH"
                             subtitle="Growth Engine"
                             description="Dominación de motores de búsqueda y análisis de competencia viral."
                             headerAction={<span className="text-3xl">🚀</span>}
@@ -287,10 +287,22 @@ export default function DashboardPage() {
                             subtitle="Neural System"
                             description="Consultor estratégico 24/7 basado en el Master de YouTube."
                             headerAction={<span className="text-3xl">🤖</span>}
-                            className="md:col-span-2 lg:col-span-1"
                         >
                             <EliteButton variant="secondary" size="md" fullWidth onClick={() => router.push('/ai')}>
                                 Hablar con Oráculo
+                            </EliteButton>
+                        </EliteCard>
+
+                        {/* MIS CANALES */}
+                        <EliteCard
+                            variant="glass"
+                            title="MIS CANALES"
+                            subtitle="Channel Manager"
+                            description="Gestiona tu flota de canales, logos, banners y videos próximos en cola."
+                            headerAction={<span className="text-3xl">📺</span>}
+                        >
+                            <EliteButton variant="outline" size="md" fullWidth className="hover:!bg-blue-500 hover:!text-white hover:!border-blue-500" onClick={() => router.push('/dashboard/channels')}>
+                                Gestionar Flota
                             </EliteButton>
                         </EliteCard>
                     </div>
