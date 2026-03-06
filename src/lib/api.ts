@@ -22,7 +22,7 @@ export const getToken = (): string | null => {
 
 export const getHeaders = (json = true): Record<string, string> => {
     const headers: Record<string, string> = {
-        'bypass-tunnel-reminder': 'true',
+        'Bypass-Tunnel-Reminder': 'true',
         'ngrok-skip-browser-warning': 'true',
     };
     if (json) headers['Content-Type'] = 'application/json';
