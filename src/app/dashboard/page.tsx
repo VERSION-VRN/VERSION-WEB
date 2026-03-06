@@ -347,7 +347,8 @@ export default function DashboardPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/[0.02]">
-                                        {history.map((item: { id: string, task_type: string, filename: string, created_at: string, status: string, result_url: string }) => {
+                                        {history.map((item: { id: string, task_type: string, filename: string, created_at: string, status: string, result_url: string, thumbnail_url?: string }) => {
+
                                             const meta = TASK_TYPE_META[item.task_type] || { icon: '📦', label: 'Proceso' };
                                             return (
                                                 <tr key={item.id} className="hover:bg-white/[0.01] transition-colors group">
@@ -377,6 +378,13 @@ export default function DashboardPage() {
                                                                     DESCARGAR
                                                                 </a>
                                                             )}
+                                                            {/* @ts-ignore */}
+                                                            {item.thumbnail_url && (
+                                                                <a href={getApiUrl(item.thumbnail_url)} target="_blank" rel="noopener noreferrer" download className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg transition-all hover:bg-emerald-500/20" title="Descargar Miniatura">
+                                                                    🖼️
+                                                                </a>
+                                                            )}
+
                                                             <Link
                                                                 href={`/editor?task_id=${item.id}`}
                                                                 className="p-2.5 bg-white/5 border border-white/10 rounded-lg transition-all hover:bg-white/10 flex items-center gap-1.5"

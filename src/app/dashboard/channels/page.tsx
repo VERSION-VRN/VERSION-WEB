@@ -16,9 +16,11 @@ interface UpcomingVideo {
     voz?: string;
     prompt_name?: string;
     miniatura?: string;
+    thumbnail_path?: string;         // local path
     background_video?: string;       // display name
     background_video_path?: string;  // local path for worker
 }
+
 
 interface Channel {
     id: string;
@@ -32,8 +34,9 @@ interface MetaVoice { id: string; name: string; }
 
 const LANGS = ['Español', 'English', 'Português', 'Français'];
 const emptyVideo = (): UpcomingVideo => ({
-    titulo: '', url: '', idioma: 'Español', voz: '', prompt_name: '', miniatura: '', background_video: '', background_video_path: ''
+    titulo: '', url: '', idioma: 'Español', voz: '', prompt_name: '', miniatura: '', thumbnail_path: '', background_video: '', background_video_path: ''
 });
+
 
 export default function ChannelsPage() {
     const { user } = useAuth();
@@ -125,6 +128,25 @@ export default function ChannelsPage() {
         finally { setUploadingVideoIdx(null); }
     };
 
+    const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadingVideoIdx(idx);
+        const fd = new FormData();
+        fd.append('file', file);
+        try {
+            const res = await apiFetch<{ success: boolean; path: string; url: string }>('/upload-channel-thumbnail', { method: 'POST', body: fd });
+            if (res.success) {
+                setEditingVideos(prev => prev.map((v, i) => i === idx ? {
+                    ...v,
+                    miniatura: res.url,
+                    thumbnail_path: res.path
+                } : v));
+            }
+        } catch { alert('Error al subir la miniatura'); }
+        finally { setUploadingVideoIdx(null); }
+    };
+
     // ─── Canal: guardar ───────────────────────────────────────────────
     const handleSaveChannel = async () => {
         if (!newChannel.name.trim()) return;
@@ -201,7 +223,10 @@ export default function ChannelsPage() {
                         voz: video.voz || null,
                         prompt_name: video.prompt_name || null,
                         miniatura: video.miniatura || '',
+                        thumbnail_url: video.miniatura || '',
+                        thumbnail_path: video.thumbnail_path || '',
                         background_video: video.background_video_path || '',
+
                         pause_at_script: false,
                     }),
                 });
@@ -283,55 +308,93 @@ export default function ChannelsPage() {
                             </div>
 
                             {/* Grid de campos */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pl-9">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pl-9 mb-4">
                                 {/* URL */}
-                                <input
-                                    value={video.url}
-                                    onChange={e => updateVideo(idx, 'url', e.target.value)}
-                                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-primary outline-none"
-                                    placeholder="🔗 URL YouTube fuente"
-                                />
-                                {/* Idioma */}
-                                <select
-                                    value={video.idioma}
-                                    onChange={e => { updateVideo(idx, 'idioma', e.target.value); updateVideo(idx, 'voz', ''); }}
-                                    className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-primary outline-none"
-                                >
-                                    {LANGS.map(l => <option key={l} value={l}>{l}</option>)}
-                                </select>
-                                {/* Voz */}
-                                <select
-                                    value={video.voz || ''}
-                                    onChange={e => updateVideo(idx, 'voz', e.target.value)}
-                                    className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-primary outline-none"
-                                >
-                                    <option value="">🎙️ Voz por defecto</option>
-                                    {voicesForLang.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                                </select>
-                                {/* Estilo de guion */}
-                                <input
-                                    value={video.prompt_name || ''}
-                                    onChange={e => updateVideo(idx, 'prompt_name', e.target.value)}
-                                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-primary outline-none"
-                                    placeholder="🎭 Estilo de guion (opcional)"
-                                />
-                                {/* Video de fondo — upload */}
-                                <label className="relative flex items-center gap-2 bg-white/5 border border-dashed border-white/10 rounded-lg px-3 py-2 text-xs cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
-                                    {uploadingVideoIdx === idx ? (
-                                        <span className="text-primary animate-pulse">📤 Subiendo...</span>
-                                    ) : video.background_video ? (
-                                        <span className="text-green-400 truncate">✅ {video.background_video}</span>
-                                    ) : (
-                                        <span className="text-zinc-500">📹 Subir video de fondo</span>
-                                    )}
+                                <div className="flex flex-col gap-1.5 flex-1">
+                                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest ml-1">URL / FUENTE YOUTUBE</label>
                                     <input
-                                        type="file"
-                                        accept="video/*"
-                                        className="absolute inset-0 opacity-0 cursor-pointer"
-                                        onChange={e => handleVideoUpload(e, idx)}
+                                        value={video.url}
+                                        onChange={e => updateVideo(idx, 'url', e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-primary outline-none"
+                                        placeholder="https://youtube.com/..."
                                     />
-                                </label>
+                                </div>
+                                {/* Idioma */}
+                                <div className="flex flex-col gap-1.5 flex-1">
+                                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest ml-1">IDIOMA</label>
+                                    <select
+                                        value={video.idioma}
+                                        onChange={e => { updateVideo(idx, 'idioma', e.target.value); updateVideo(idx, 'voz', ''); }}
+                                        className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-primary outline-none"
+                                    >
+                                        {LANGS.map(l => <option key={l} value={l}>{l}</option>)}
+                                    </select>
+                                </div>
+                                {/* Voz */}
+                                <div className="flex flex-col gap-1.5 flex-1">
+                                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest ml-1">VOZ NARRATIVA</label>
+                                    <select
+                                        value={video.voz || ''}
+                                        onChange={e => updateVideo(idx, 'voz', e.target.value)}
+                                        className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-primary outline-none"
+                                    >
+                                        <option value="">🎙️ Voz por defecto</option>
+                                        {voicesForLang.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                                    </select>
+                                </div>
+                                {/* Estilo de guion */}
+                                <div className="flex flex-col gap-1.5 flex-1">
+                                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest ml-1">ESTILO DE GUION</label>
+                                    <input
+                                        value={video.prompt_name || ''}
+                                        onChange={e => updateVideo(idx, 'prompt_name', e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-primary outline-none"
+                                        placeholder="🎭 Opcional: Estilo de guion"
+                                    />
+                                </div>
+                                {/* Video de fondo — upload */}
+                                <div className="flex flex-col gap-1.5 flex-1">
+                                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest ml-1">VIDEO DE FONDO</label>
+                                    <label className="relative flex items-center gap-2 bg-white/5 border border-dashed border-white/10 rounded-lg px-3 py-2 text-xs cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
+                                        {uploadingVideoIdx === idx ? (
+                                            <span className="text-primary animate-pulse">📤 Subiendo...</span>
+                                        ) : video.background_video ? (
+                                            <span className="text-green-400 truncate">✅ {video.background_video}</span>
+                                        ) : (
+                                            <span className="text-zinc-500">📹 Subir video de fondo</span>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="video/*"
+                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                            onChange={e => handleVideoUpload(e, idx)}
+                                        />
+                                    </label>
+                                </div>
+                                {/* Miniatura — upload */}
+                                <div className="flex flex-col gap-1.5 flex-1">
+                                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest ml-1">MINIATURA (OPCIONAL)</label>
+                                    <label className="relative flex items-center gap-2 bg-white/5 border border-dashed border-white/10 rounded-lg px-3 py-2 text-xs cursor-pointer hover:border-primary/50 transition-colors overflow-hidden">
+                                        {uploadingVideoIdx === idx ? (
+                                            <span className="text-primary animate-pulse">📤 Subiendo...</span>
+                                        ) : video.miniatura ? (
+                                            <div className="flex items-center gap-2 truncate">
+                                                <img src={getApiUrl(video.miniatura)} className="w-4 h-4 rounded object-cover" />
+                                                <span className="text-green-400 truncate tracking-tighter">✅ Miniatura Personalizada</span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-zinc-500">🖼️ Subir Miniatura</span>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                            onChange={e => handleThumbnailUpload(e, idx)}
+                                        />
+                                    </label>
+                                </div>
                             </div>
+
 
                             {/* Indicador generando */}
                             {isGenerating && generatingIdx === idx && (
