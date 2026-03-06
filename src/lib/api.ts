@@ -24,6 +24,7 @@ export const getHeaders = (json = true): Record<string, string> => {
     const headers: Record<string, string> = {
         'Bypass-Tunnel-Reminder': 'true',
         'ngrok-skip-browser-warning': 'true',
+        'X-Requested-With': 'XMLHttpRequest', // A veces ayuda con CORS en túneles
     };
     if (json) headers['Content-Type'] = 'application/json';
     const token = getToken();

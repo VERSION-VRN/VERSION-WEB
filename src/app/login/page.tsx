@@ -1,444 +1,231 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import { motion, AnimatePresence } from 'framer-motion';
 import '../globals.css';
 
-// ─── Constantes ─────────────────────────────────────────────────────
-const COUNTRIES = [
-    "Argentina", "Bolivia", "Chile", "Colombia", "Costa Rica", "Cuba",
-    "Ecuador", "El Salvador", "España", "Estados Unidos", "Guatemala",
-    "Honduras", "México", "Nicaragua", "Panamá", "Paraguay", "Perú",
-    "Puerto Rico", "Rep. Dominicana", "Uruguay", "Venezuela", "Otro"
-];
+// ─── Estáticos ──────────────────────────────────────────────────────
+const COUNTRIES = ["Argentina", "Bolivia", "Chile", "Colombia", "España", "México", "Perú", "Uruguay", "Venezuela", "Otro"];
+const SOURCES = ["YouTube", "TikTok", "Instagram", "Amigo", "Google", "Otro"];
 
-const REFERRAL_SOURCES = [
-    { value: "youtube", label: "YouTube" },
-    { value: "tiktok", label: "TikTok" },
-    { value: "instagram", label: "Instagram" },
-    { value: "amigo", label: "Un Amigo" },
-    { value: "busqueda", label: "Búsqueda en Google" },
-    { value: "otro", label: "Otro" },
-];
-
-// ─── Utilidades ─────────────────────────────────────────────────────
-function getPasswordStrength(pw: string): { level: number; label: string; color: string } {
-    if (!pw) return { level: 0, label: '', color: '' };
-    let score = 0;
-    if (pw.length >= 8) score++;
-    if (pw.length >= 12) score++;
-    if (/[A-Z]/.test(pw)) score++;
-    if (/[0-9]/.test(pw)) score++;
-    if (/[^a-zA-Z0-9]/.test(pw)) score++;
-
-    if (score <= 1) return { level: 1, label: 'Débil', color: '#ef4444' };
-    if (score <= 3) return { level: 2, label: 'Media', color: '#f59e0b' };
-    return { level: 3, label: 'Fuerte', color: '#22c55e' };
-}
+// ─── Componentes Auxiliares (Fuera para evitar re-mounts) ────────────
+const Label = ({ text }: { text: string }) => (
+    <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5 ml-1">
+        {text}
+    </label>
+);
 
 // ─── Componente Principal ───────────────────────────────────────────
 export default function Login() {
     const [isLogin, setIsLogin] = useState(true);
-    const [credentials, setCredentials] = useState({
-        email: '', password: '', confirmPassword: '',
-        name: '', country: '', referralSource: ''
-    });
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [error, setError] = useState('');
-    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [country, setCountry] = useState('');
+    const [source, setSource] = useState('');
+
+    const [showPw, setShowPw] = useState(false);
     const [success, setSuccess] = useState('');
+    const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showBackendConfig, setShowBackendConfig] = useState(false);
+    const [backendUrl, setBackendUrl] = useState('');
+
     const router = useRouter();
     const { login } = useAuth();
 
-    const passwordStrength = useMemo(() => getPasswordStrength(credentials.password), [credentials.password]);
-
-    // ─── Validación en tiempo real ───
-    const validateField = (field: string, value: string) => {
-        const errors = { ...fieldErrors };
-        switch (field) {
-            case 'email':
-                if (value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value))
-                    errors.email = 'Formato de email inválido';
-                else delete errors.email;
-                break;
-            case 'password':
-                if (value && value.length < 8)
-                    errors.password = 'Mínimo 8 caracteres';
-                else delete errors.password;
-                if (credentials.confirmPassword && value !== credentials.confirmPassword)
-                    errors.confirmPassword = 'Las contraseñas no coinciden';
-                else delete errors.confirmPassword;
-                break;
-            case 'confirmPassword':
-                if (value && value !== credentials.password)
-                    errors.confirmPassword = 'Las contraseñas no coinciden';
-                else delete errors.confirmPassword;
-                break;
-            case 'name':
-                if (!isLogin && value && value.trim().length < 2)
-                    errors.name = 'Nombre muy corto';
-                else delete errors.name;
-                break;
+    // Cargar URL inicial de localStorage
+    useMemo(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('backend_url') || process.env.NEXT_PUBLIC_API_URL || '';
+            setBackendUrl(saved);
         }
-        setFieldErrors(errors);
+    }, []);
+
+    const saveBackendUrl = () => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('backend_url', backendUrl.trim());
+            setError('URL del servidor actualizada. Intenta de nuevo.');
+            setShowBackendConfig(false);
+        }
     };
 
-    const updateField = (field: string, value: string) => {
-        setCredentials(prev => ({ ...prev, [field]: value }));
-        validateField(field, value);
-    };
+    const pwStrength = useMemo(() => {
+        if (!password) return { label: '', color: 'transparent' };
+        if (password.length < 6) return { label: 'Muy corta', color: '#ef4444' };
+        if (password.length < 10) return { label: 'Media', color: '#f59e0b' };
+        return { label: 'Fuerte', color: '#22c55e' };
+    }, [password]);
 
-    // ─── Acción Submit ───
     const handleAction = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        setSuccess('');
         setIsLoading(true);
 
         try {
             if (isLogin) {
-                const data = await apiFetch<{
-                    success: boolean; token: string; name: string;
-                    role: string; credits: number; message?: string;
-                }>('/login', {
+                const data = await apiFetch<any>('/login', {
                     method: 'POST',
-                    body: JSON.stringify({ email: credentials.email, password: credentials.password })
+                    body: JSON.stringify({ email, password })
                 });
                 if (data.success) {
-                    login(data.token, {
-                        email: credentials.email, name: data.name,
-                        role: data.role, credits: data.credits
-                    });
+                    login(data.token, { email, name: data.name, role: data.role, credits: data.credits });
                     router.push('/dashboard');
                 } else {
-                    setError(data.message || 'Credenciales inválidas.');
+                    setError(data.message || 'Error al iniciar sesión');
                 }
             } else {
-                // Validaciones de registro
-                if (!credentials.email || !credentials.password || !credentials.name) {
-                    setIsLoading(false);
-                    return setError('Por favor, completa todos los campos obligatorios.');
-                }
-                if (credentials.password !== credentials.confirmPassword) {
-                    setIsLoading(false);
-                    return setError('Las contraseñas no coinciden.');
-                }
-                if (credentials.password.length < 8) {
-                    setIsLoading(false);
-                    return setError('La contraseña debe tener al menos 8 caracteres.');
-                }
-                if (Object.keys(fieldErrors).length > 0) {
-                    setIsLoading(false);
-                    return setError('Corrige los errores antes de continuar.');
-                }
+                if (password !== confirmPassword) throw new Error("Las contraseñas no coinciden");
+                if (password.length < 8) throw new Error("La contraseña debe tener 8+ caracteres");
 
-                const data = await apiFetch<{
-                    success: boolean; token: string; name: string;
-                    role: string; credits: number; message: string;
-                }>('/register', {
+                const data = await apiFetch<any>('/register', {
                     method: 'POST',
-                    body: JSON.stringify({
-                        email: credentials.email,
-                        password: credentials.password,
-                        name: credentials.name.toUpperCase(),
-                        country: credentials.country,
-                        referral_source: credentials.referralSource,
-                    })
+                    body: JSON.stringify({ email, password, name, country, referral_source: source })
                 });
-
                 if (data.success) {
-                    login(data.token, {
-                        email: credentials.email, name: data.name,
-                        role: data.role, credits: data.credits
-                    });
-                    setSuccess('✅ Cuenta creada. Revisa tu email de bienvenida.');
-                    setTimeout(() => router.push('/dashboard'), 2000);
+                    login(data.token, { email, name: data.name, role: data.role, credits: data.credits });
+                    window.location.href = '/dashboard';
                 } else {
-                    setError(data.message || 'Error al crear cuenta.');
+                    setError(data.message || 'Error al registrarse');
                 }
             }
         } catch (err: any) {
-            const backendUrl = typeof window !== 'undefined' ? (localStorage.getItem('backend_url') || process.env.NEXT_PUBLIC_API_URL || 'localhost') : 'servidor';
-            setError(`No se pudo conectar con el servidor VERSION en ${backendUrl}. Verifica tu conexión o el estado del túnel.`);
+            setError(err.message || 'No se pudo conectar con el servidor.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    // ─── Componente de Input Reutilizable ───
-    const InputField = ({
-        label, type = 'text', placeholder, field, required = false,
-        isPassword = false, showPw, togglePw
-    }: {
-        label: string; type?: string; placeholder: string; field: string;
-        required?: boolean; isPassword?: boolean; showPw?: boolean;
-        togglePw?: () => void;
-    }) => (
-        <div className="space-y-1.5">
-            <label className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 ml-1 flex items-center gap-1.5">
-                {label}
-                {required && <span className="text-primary text-[8px]">*</span>}
-            </label>
-            <div className="relative">
-                <input
-                    type={isPassword ? (showPw ? 'text' : 'password') : type}
-                    placeholder={placeholder}
-                    required={required}
-                    value={(credentials as any)[field]}
-                    onChange={(e) => updateField(field, e.target.value)}
-                    className={`input-field pr-${isPassword ? '12' : '5'} ${fieldErrors[field] ? '!border-red-500/50 !ring-1 !ring-red-500/20' : ''}`}
-                />
-                {isPassword && (
-                    <button
-                        type="button"
-                        onClick={togglePw}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-lg cursor-pointer select-none"
-                        tabIndex={-1}
-                    >
-                        {showPw ? '👁️' : '👁️‍🗨️'}
-                    </button>
-                )}
-            </div>
-            {fieldErrors[field] && (
-                <p className="text-[9px] text-red-400 font-bold ml-1 animate-fade">{fieldErrors[field]}</p>
-            )}
-        </div>
-    );
-
-    // ─── Componente Select Reutilizable ───
-    const SelectField = ({ label, field, options, placeholder }: {
-        label: string; field: string; placeholder: string;
-        options: { value: string; label: string }[] | string[];
-    }) => (
-        <div className="space-y-1.5">
-            <label className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 ml-1">{label}</label>
-            <select
-                value={(credentials as any)[field]}
-                onChange={(e) => updateField(field, e.target.value)}
-                className="input-field appearance-none cursor-pointer"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 16px center' }}
-            >
-                <option value="" className="bg-zinc-900">{placeholder}</option>
-                {options.map(opt => {
-                    const val = typeof opt === 'string' ? opt : opt.value;
-                    const lab = typeof opt === 'string' ? opt : opt.label;
-                    return <option key={val} value={val} className="bg-zinc-900">{lab}</option>;
-                })}
-            </select>
-        </div>
-    );
-
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden" style={{ background: 'var(--background)' }}>
-            {/* Liquid Glass Background Orbs */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-primary/8 blur-[180px] rounded-full animate-orb-float" />
-                <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-indigo-500/8 blur-[160px] rounded-full animate-orb-float" style={{ animationDelay: '-10s' }} />
-                <div className="absolute top-1/2 left-1/4 w-[350px] h-[350px] bg-purple-500/6 blur-[140px] rounded-full animate-orb-float" style={{ animationDelay: '-5s' }} />
+        <div className="min-h-screen flex items-center justify-center p-6 bg-[#050510] relative overflow-hidden">
+            {/* Orbes de Fondo */}
+            <div className="absolute inset-0 pointer-events-none opacity-20">
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/20 blur-[150px] rounded-full" />
+                <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-500/10 blur-[150px] rounded-full" />
             </div>
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full max-w-md relative liquid-shine"
-                style={{
-                    background: 'var(--glass-bg-heavy)',
-                    backdropFilter: 'blur(var(--glass-blur-heavy))',
-                    WebkitBackdropFilter: 'blur(var(--glass-blur-heavy))',
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: 'var(--radius-lg)',
-                    boxShadow: 'var(--shadow-glass)',
-                    padding: '2.5rem',
-                }}
-            >
-                {/* Glass shine overlay */}
-                <div className="absolute inset-0 pointer-events-none z-[1] rounded-3xl" style={{ background: 'var(--glass-shine)' }} />
-
-                {/* Header */}
-                <div className="text-center mb-8 relative z-10">
-                    <Link href="/" className="text-3xl font-black tracking-tighter uppercase inline-block hover:scale-105 transition-transform">
+            <div className="w-full max-w-md bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] p-10 rounded-3xl shadow-2xl relative z-10">
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl font-black tracking-tighter uppercase text-white">
                         VERSION<span className="text-primary">.</span>
-                    </Link>
-                    <AnimatePresence mode="wait">
-                        <motion.p
-                            key={isLogin ? 'login' : 'register'}
-                            initial={{ opacity: 0, y: -8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 8 }}
-                            className="text-[10px] text-zinc-500 font-bold tracking-[0.3em] uppercase mt-4"
-                        >
-                            {isLogin ? 'Acceso al Ecosistema' : 'Crear Nueva Identidad'}
-                        </motion.p>
-                    </AnimatePresence>
+                    </h1>
+                    <p className="text-[10px] text-zinc-500 font-bold tracking-[0.3em] uppercase mt-4">
+                        {isLogin ? 'Acceso al Ecosistema' : 'Registrar nueva identidad'}
+                    </p>
                 </div>
 
-                {/* Form */}
-                <form onSubmit={handleAction} className="flex flex-col gap-4 relative z-10">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={isLogin ? 'login-form' : 'register-form'}
-                            initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: isLogin ? 20 : -20 }}
-                            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                            className="flex flex-col gap-4"
-                        >
-                            {/* ─── Campos de Registro ─── */}
-                            {!isLogin && (
-                                <>
-                                    <InputField label="Nombre Completo" placeholder="Tu nombre" field="name" required />
+                <form onSubmit={handleAction} className="space-y-4">
+                    {!isLogin && (
+                        <>
+                            <div>
+                                <Label text="Nombre Completo" />
+                                <input type="text" value={name} onChange={e => setName(e.target.value)} className="input-field" placeholder="Tu nombre" required />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label text="País" />
+                                    <select value={country} onChange={e => setCountry(e.target.value)} className="input-field">
+                                        <option value="">País...</option>
+                                        {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <Label text="Referencia" />
+                                    <select value={source} onChange={e => setSource(e.target.value)} className="input-field">
+                                        <option value="">Vengo de...</option>
+                                        {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                        </>
+                    )}
 
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <SelectField
-                                            label="País / Región"
-                                            field="country"
-                                            placeholder="Seleccionar..."
-                                            options={COUNTRIES}
-                                        />
-                                        <SelectField
-                                            label="¿Cómo nos conociste?"
-                                            field="referralSource"
-                                            placeholder="Seleccionar..."
-                                            options={REFERRAL_SOURCES}
-                                        />
-                                    </div>
-                                </>
-                            )}
+                    <div>
+                        <Label text="Email" />
+                        <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="input-field" placeholder="tú@ejemplo.com" required />
+                    </div>
 
-                            {/* ─── Email ─── */}
-                            <InputField
-                                label="Email"
-                                type="email"
-                                placeholder="email@ejemplo.com"
-                                field="email"
-                                required
-                            />
-
-                            {/* ─── Contraseña ─── */}
-                            <InputField
-                                label="Contraseña"
+                    <div>
+                        <Label text="Contraseña" />
+                        <div className="relative">
+                            <input
+                                type={showPw ? 'text' : 'password'}
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                className="input-field pr-10"
                                 placeholder="••••••••"
-                                field="password"
                                 required
-                                isPassword
-                                showPw={showPassword}
-                                togglePw={() => setShowPassword(!showPassword)}
                             />
-
-                            {/* ─── Barra de Fuerza (solo registro) ─── */}
-                            {!isLogin && credentials.password && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    className="flex items-center gap-3 px-1"
-                                >
-                                    <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                        <motion.div
-                                            className="h-full rounded-full"
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${(passwordStrength.level / 3) * 100}%` }}
-                                            style={{ background: passwordStrength.color }}
-                                            transition={{ duration: 0.4 }}
-                                        />
-                                    </div>
-                                    <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: passwordStrength.color }}>
-                                        {passwordStrength.label}
-                                    </span>
-                                </motion.div>
-                            )}
-
-                            {/* ─── Confirmar Contraseña (solo registro) ─── */}
-                            {!isLogin && (
-                                <InputField
-                                    label="Confirmar Contraseña"
-                                    placeholder="••••••••"
-                                    field="confirmPassword"
-                                    required
-                                    isPassword
-                                    showPw={showConfirmPassword}
-                                    togglePw={() => setShowConfirmPassword(!showConfirmPassword)}
-                                />
-                            )}
-                        </motion.div>
-                    </AnimatePresence>
-
-                    {/* ─── Mensajes de Error/Éxito ─── */}
-                    <AnimatePresence>
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
-                                className="p-3.5 bg-red-500/5 border border-red-500/15 text-red-400 text-[10px] font-bold uppercase tracking-widest text-center rounded-xl"
-                            >
-                                {error}
-                            </motion.div>
+                            <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
+                                {showPw ? '👁️' : '👁️‍🗨️'}
+                            </button>
+                        </div>
+                        {!isLogin && password && (
+                            <div className="mt-2 flex items-center gap-2">
+                                <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-full" style={{ width: password.length > 10 ? '100%' : '50%', background: pwStrength.color }} />
+                                </div>
+                                <span className="text-[9px] font-bold" style={{ color: pwStrength.color }}>{pwStrength.label}</span>
+                            </div>
                         )}
-                        {success && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
-                                className="p-3.5 bg-green-500/5 border border-green-500/15 text-green-400 text-[10px] font-bold uppercase tracking-widest text-center rounded-xl"
-                            >
-                                {success}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    </div>
 
-                    {/* ─── Botón Submit ─── */}
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="btn-primary w-full mt-1 !py-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        {isLoading ? (
-                            <>
-                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Procesando...
-                            </>
-                        ) : (
-                            isLogin ? 'Iniciar Conexión' : 'Unirse a la Élite'
-                        )}
+                    {!isLogin && (
+                        <div>
+                            <Label text="Confirmar Contraseña" />
+                            <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="input-field" placeholder="••••••••" required />
+                        </div>
+                    )}
+
+                    {error && <div className="text-red-400 text-[10px] font-bold bg-red-400/10 p-3 rounded-xl border border-red-400/20 text-center uppercase tracking-wider">{error}</div>}
+
+                    <button disabled={isLoading} className="btn-primary w-full py-4 relative overflow-hidden group">
+                        {isLoading ? 'Cargando...' : (isLogin ? 'Iniciar Conexión' : 'Crear Cuenta')}
                     </button>
 
-                    {/* ─── Toggle Login/Register ─── */}
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setIsLogin(!isLogin);
-                            setError('');
-                            setSuccess('');
-                            setFieldErrors({});
-                        }}
-                        className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors cursor-pointer"
-                    >
-                        {isLogin ? '¿No tienes cuenta? Regístrate y obtén 30 tokens' : '¿Ya eres miembro? Inicia Sesión'}
+                    <button type="button" onClick={() => setIsLogin(!isLogin)} className="w-full text-[10px] font-bold text-zinc-500 hover:text-white uppercase tracking-widest text-center mt-2">
+                        {isLogin ? '¿No tienes cuenta? Registrate' : '¿Ya tienes cuenta? Ingresa'}
                     </button>
+
+                    <div className="pt-6 mt-6 border-t border-white/5">
+                        <button
+                            type="button"
+                            onClick={() => setShowBackendConfig(!showBackendConfig)}
+                            className="w-full text-[9px] font-bold text-zinc-600 hover:text-primary uppercase tracking-[0.2em] transition-colors"
+                        >
+                            {showBackendConfig ? '✕ Cerrar Configuración' : '⚙️ Configurar Servidor'}
+                        </button>
+
+                        {showBackendConfig && (
+                            <div className="mt-4 space-y-3 p-4 bg-white/[0.02] rounded-2xl border border-white/5 animate-fade-in">
+                                <Label text="URL del Backend (Túnel)" />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={backendUrl}
+                                        onChange={e => setBackendUrl(e.target.value)}
+                                        className="input-field !text-[11px] !py-2"
+                                        placeholder="https://...loca.lt"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={saveBackendUrl}
+                                        className="bg-primary text-black px-3 rounded-xl font-bold text-[10px] hover:brightness-110 active:scale-95 transition-all"
+                                    >
+                                        OK
+                                    </button>
+                                </div>
+                                <p className="text-[8px] text-zinc-600 leading-relaxed italic">
+                                    * Cambia esto si el túnel de Localtunnel ha expirado o se ha reiniciado.
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </form>
-
-                {/* ─── Footer ─── */}
-                <div className="text-center mt-8 space-y-3 relative z-10">
-                    <Link href="/" className="text-[9px] text-zinc-600 hover:text-white font-bold uppercase tracking-[0.2em] transition-colors block">
-                        Al ingresar aceptas los términos de la red VERSION
-                    </Link>
-                    <div className="h-[1px] w-12 bg-white/[0.04] mx-auto"></div>
-                    <Link href="/" className="text-[9px] text-zinc-600 hover:text-primary font-bold uppercase tracking-[0.2em] transition-colors block">
-                        ← Regresar a la red pública
-                    </Link>
-                </div>
-            </motion.div>
-
-            {/* Footer Tag */}
-            <div className="absolute bottom-8 text-[8px] font-bold tracking-[0.5em] text-white/10 uppercase italic">
-                Secure Neural Link v2.0.26
             </div>
         </div>
     );
