@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getApiUrl } from '@/lib/api';
 import { useRouter, usePathname } from 'next/navigation';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteButton } from '@/components/ui/EliteButton';
@@ -345,7 +345,7 @@ export default function DashboardPage() {
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex justify-end gap-2 text-[10px]">
                                                             {item.result_url && (
-                                                                <a href={item.result_url} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-primary/10 border border-primary/20 text-primary rounded-lg transition-all hover:bg-primary/20">
+                                                                <a href={getApiUrl(item.result_url)} target="_blank" rel="noopener noreferrer" download className="p-2.5 bg-primary/10 border border-primary/20 text-primary rounded-lg transition-all hover:bg-primary/20">
                                                                     DESCARGAR
                                                                 </a>
                                                             )}
