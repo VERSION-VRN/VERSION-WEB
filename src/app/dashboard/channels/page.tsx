@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getApiUrl } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { EliteCard } from '@/components/ui/EliteCard';
 import { EliteButton } from '@/components/ui/EliteButton';
@@ -31,6 +31,8 @@ export default function ChannelsPage() {
         upcoming_videos: [] as string[]
     });
 
+    const [uploadingType, setUploadingType] = useState<string | null>(null);
+
     useEffect(() => {
         if (!user && !isLoading) {
             router.push('/login');
@@ -51,6 +53,35 @@ export default function ChannelsPage() {
     useEffect(() => {
         if (user) fetchChannels();
     }, [user]);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'banner') => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadingType(type);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', type);
+
+        try {
+            const res = await apiFetch<{ success: boolean, url: string }>('/upload-channel-asset', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.success) {
+                setNewChannel(prev => ({
+                    ...prev,
+                    [type === 'logo' ? 'logo_url' : 'banner_url']: res.url
+                }));
+            }
+        } catch (err) {
+            console.error(`Error uploading ${type}:`, err);
+            alert(`Error al subir ${type}. Revisa el log.`);
+        } finally {
+            setUploadingType(null);
+        }
+    };
 
     const handleSaveChannel = async () => {
         if (!newChannel.name) return;
@@ -107,14 +138,14 @@ export default function ChannelsPage() {
                         {/* Banner Preview */}
                         <div className="h-24 bg-zinc-900 overflow-hidden relative">
                             {channel.banner_url ? (
-                                <img src={channel.banner_url} alt="Banner" className="w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-opacity" />
+                                <img src={getApiUrl(channel.banner_url)} alt="Banner" className="w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-opacity" />
                             ) : (
                                 <div className="w-full h-full bg-gradient-to-r from-primary/10 to-transparent" />
                             )}
                             {/* Logo Overlay */}
                             <div className="absolute -bottom-6 left-6 w-16 h-16 rounded-2xl border-4 border-black bg-zinc-800 overflow-hidden shadow-2xl">
                                 {channel.logo_url ? (
-                                    <img src={channel.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                                    <img src={getApiUrl(channel.logo_url)} alt="Logo" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-xl">📺</div>
                                 )}
@@ -167,7 +198,7 @@ export default function ChannelsPage() {
                 <div className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
                     <EliteCard variant="glass" className="w-full max-w-lg p-8">
                         <h2 className="text-2xl font-black uppercase tracking-tighter mb-6">Nuevo Canal</h2>
-                        <div className="space-y-4 mb-8">
+                        <div className="space-y-6 mb-8">
                             <div>
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 block">Nombre del Canal</label>
                                 <input
@@ -178,25 +209,42 @@ export default function ChannelsPage() {
                                     placeholder="Ej. VERSION Shorts"
                                 />
                             </div>
-                            <div>
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 block">URL del Logo (Opcional)</label>
-                                <input
-                                    type="text"
-                                    value={newChannel.logo_url}
-                                    onChange={e => setNewChannel({ ...newChannel, logo_url: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:border-primary outline-none transition-all"
-                                    placeholder="https://..."
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 block">URL del Banner (Opcional)</label>
-                                <input
-                                    type="text"
-                                    value={newChannel.banner_url}
-                                    onChange={e => setNewChannel({ ...newChannel, banner_url: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:border-primary outline-none transition-all"
-                                    placeholder="https://..."
-                                />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 block">Logo del Canal</label>
+                                    <div className="relative h-24 bg-white/5 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center overflow-hidden">
+                                        {newChannel.logo_url ? (
+                                            <img src={getApiUrl(newChannel.logo_url)} alt="Logo Preview" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-xs text-zinc-600">No Image</span>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => handleFileUpload(e, 'logo')}
+                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                        />
+                                        {uploadingType === 'logo' && <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-[10px]">Subiendo...</div>}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 block">Banner del Canal</label>
+                                    <div className="relative h-24 bg-white/5 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center overflow-hidden">
+                                        {newChannel.banner_url ? (
+                                            <img src={getApiUrl(newChannel.banner_url)} alt="Banner Preview" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-xs text-zinc-600">No Image</span>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => handleFileUpload(e, 'banner')}
+                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                        />
+                                        {uploadingType === 'banner' && <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-[10px]">Subiendo...</div>}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="flex gap-4">
