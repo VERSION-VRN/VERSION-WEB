@@ -35,26 +35,7 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
                         <Link key={item.href} href={item.href} className="nav-link">{item.label}</Link>
                     ))}
 
-                    {/* Theme Toggle */}
-                    <button
-                        type="button"
-                        onClick={toggleTheme}
-                        aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-                        className="relative w-12 h-6 rounded-full border transition-all duration-300 flex items-center px-0.5 hover:scale-110 active:scale-95"
-                        style={{
-                            borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.15)',
-                            background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)',
-                        }}>
-                        <span className="absolute left-1 text-[11px] select-none">{isDark ? '🌙' : ''}</span>
-                        <span className="absolute right-1 text-[11px] select-none">{!isDark ? '☀️' : ''}</span>
-                        <span
-                            className="w-5 h-5 rounded-full transition-transform duration-300 shadow-sm flex-shrink-0"
-                            style={{
-                                background: isDark ? '#fff' : '#000',
-                                transform: isDark ? 'translateX(0)' : 'translateX(24px)',
-                            }}
-                        />
-                    </button>
+                    {/* Theme Toggle Removed */}
 
                     {user ? (
                         <div className="flex items-center gap-4">
@@ -89,11 +70,7 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
 
                 {/* Mobile */}
                 <div className="flex md:hidden items-center gap-3">
-                    <button type="button" onClick={toggleTheme}
-                        className="text-lg hover:scale-110 transition-transform"
-                        aria-label="Toggle theme">
-                        {isDark ? '🌙' : '☀️'}
-                    </button>
+                    {/* Theme Toggle Removed */}
                     {user ? (
                         <Link href="/dashboard" className="text-primary text-[10px] font-bold">Dashboard</Link>
                     ) : (

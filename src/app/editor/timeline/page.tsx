@@ -135,7 +135,7 @@ function TimelineEditorContent() {
 
         let url = videoUrl;
         if (window.location.hostname === 'localhost' && url.includes('.loca.lt')) {
-            url = `http://localhost:8000${url.split('.loca.lt')[1]}`;
+            url = getApiUrl(url.split('.loca.lt')[1]);
         }
         video.src = url;
         video.load();
@@ -288,7 +288,7 @@ function TimelineEditorContent() {
     // ─── Overlays ────────────────────────────────────────
     const addOverlay = (media: MediaFile) => {
         if (!isVideoLoaded) { showToast('Carga un video primero', 'error'); return; }
-        const base = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+        const base = getApiUrl('');
         const o: OverlayItem = {
             id: generateId(), mediaId: media.id,
             mediaUrl: `${base}${media.url}`, mediaName: media.name,
@@ -373,7 +373,7 @@ function TimelineEditorContent() {
             const composition = {
                 clips: trimmedPaths,
                 overlays: overlays.map(o => ({
-                    media_path: o.mediaUrl.replace(process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000', ''),
+                    media_path: o.mediaUrl.replace(getApiUrl(''), ''),
                     start_time: o.startTime, end_time: o.endTime,
                     x: o.x, y: o.y, width: o.width, opacity: o.opacity,
                 })),
@@ -609,7 +609,7 @@ function TimelineEditorContent() {
                                                         <div key={file.id} className="relative group rounded-xl overflow-hidden border border-white/[0.06] bg-white/[0.02] aspect-video cursor-pointer hover:border-primary/40 transition-all"
                                                             onClick={() => addOverlay(file)}>
                                                             {file.type === 'image' ? (
-                                                                <img src={`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}${file.url}`}
+                                                                <img src={getApiUrl(file.url)}
                                                                     alt={file.name} className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="w-full h-full flex items-center justify-center bg-zinc-900">

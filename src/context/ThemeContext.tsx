@@ -17,38 +17,18 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-    const [theme, setThemeState] = useState<Theme>('dark');
+    const [theme] = useState<Theme>('dark');
     const [mounted, setMounted] = useState(false);
 
-    const applyTheme = (t: Theme) => {
-        const html = document.documentElement;
-        if (t === 'light') {
-            html.classList.add('light');
-        } else {
-            html.classList.remove('light');
-        }
-        localStorage.setItem('version_theme', t);
-    };
-
     useEffect(() => {
-        // Read from localStorage or fall back to system preference
-        const stored = localStorage.getItem('version_theme') as Theme | null;
-        let resolved: Theme = stored || 'dark';
-        if (!stored) {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            resolved = prefersDark ? 'dark' : 'light';
-        }
-        applyTheme(resolved);
-        setThemeState(resolved);
+        // Force dark theme on mount
+        const html = document.documentElement;
+        html.classList.remove('light');
         setMounted(true);
     }, []);
 
-    const setTheme = (t: Theme) => {
-        applyTheme(t);
-        setThemeState(t);
-    };
-
-    const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+    const setTheme = () => { /* No-op: Only dark allowed */ };
+    const toggleTheme = () => { /* No-op: Only dark allowed */ };
 
     // Prevent flash: inject theme class on first render via inline script
     if (!mounted) return (

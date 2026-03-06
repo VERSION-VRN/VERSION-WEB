@@ -378,8 +378,8 @@ export default function DashboardPage() {
                                                                     DESCARGAR
                                                                 </a>
                                                             )}
-                                                            {/* @ts-ignore */}
                                                             {item.thumbnail_url && (
+
                                                                 <a href={getApiUrl(item.thumbnail_url)} target="_blank" rel="noopener noreferrer" download className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg transition-all hover:bg-emerald-500/20" title="Descargar Miniatura">
                                                                     🖼️
                                                                 </a>

@@ -3,7 +3,7 @@ import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
-import dynamic from "next/dynamic";
+
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { VERSIONErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { SmoothScroll } from "@/components/SmoothScroll";

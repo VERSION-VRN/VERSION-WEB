@@ -186,7 +186,7 @@ export default function Home() {
           <p className="text-muted-custom">Desbloquea el poder total de la automatización.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           <PricingCard
             title="Access Free"
             subtitle="Nivel 1"
@@ -201,18 +201,47 @@ export default function Home() {
           />
 
           <PricingCard
-            title="Elite Access"
+            title="Starter Pack"
+            subtitle="Depósito de Recursos"
+            price="25"
+            period=".USD"
+            features={[
+              { text: '250 Tokens (~25 Videos)', highlighted: true },
+              { text: 'VERSION Editor Desbloqueado' },
+              { text: 'Generador Estándar' }
+            ]}
+            buttonText="Adquirir Starter"
+            buttonHref="/pricing"
+          />
+
+          <PricingCard
+            title="Pro Creator"
             subtitle="Nivel Master"
-            price="29"
+            price="49"
             period=".USD"
             glowColor="#dc2626"
             isPopular={true}
-            badge="Pack Elite"
+            badge="Recomendado"
             features={[
-              { text: '1.000 Tokens (100 Videos)', highlighted: true },
+              { text: '500 Tokens (~50 Videos)', highlighted: true },
+              { text: 'Soporte Prioritario' },
               { text: 'VERSION Editor Desbloqueado' }
             ]}
-            buttonText="Adquirir Tokens Ahora"
+            buttonText="Adquirir Pro"
+            buttonHref="/pricing"
+          />
+
+          <PricingCard
+            title="Agency Elite"
+            subtitle="Producción Masiva"
+            price="99"
+            period=".USD"
+            features={[
+              { text: '1.000 Tokens (100 Videos)', highlighted: true },
+              { text: 'Soporte VIP 24/7' },
+              { text: 'VERSION Editor Desbloqueado' }
+            ]}
+            buttonText="Adquirir Agency"
             buttonHref="/pricing"
           />
         </div>

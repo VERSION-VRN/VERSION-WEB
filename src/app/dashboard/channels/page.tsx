@@ -37,6 +37,35 @@ const emptyVideo = (): UpcomingVideo => ({
     titulo: '', url: '', idioma: 'Español', voz: '', prompt_name: '', miniatura: '', thumbnail_path: '', background_video: '', background_video_path: ''
 });
 
+function ChannelSkeleton() {
+    return (
+        <div className="overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] animate-pulse">
+            <div className="h-28 bg-zinc-900/50" />
+            <div className="p-6 pt-9">
+                <div className="h-6 w-3/4 bg-zinc-800 rounded-md mb-4" />
+                <div className="h-8 w-1/4 bg-zinc-800 rounded-md mb-4" />
+                <div className="h-10 w-full bg-zinc-800/50 rounded-xl" />
+            </div>
+        </div>
+    );
+}
+
+function VideoSkeleton() {
+    return (
+        <div className="p-4 rounded-xl border border-white/5 bg-white/[0.01] animate-pulse">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="w-6 h-6 bg-zinc-800 rounded-full" />
+                <div className="h-9 flex-1 bg-zinc-800 rounded-lg" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pl-9">
+                <div className="h-12 bg-zinc-900 rounded-lg" />
+                <div className="h-12 bg-zinc-900 rounded-lg" />
+                <div className="h-12 bg-zinc-900 rounded-lg" />
+            </div>
+        </div>
+    );
+}
+
 
 export default function ChannelsPage() {
     const { user } = useAuth();
@@ -244,7 +273,17 @@ export default function ChannelsPage() {
         setGeneratingIdx(-1);
     };
 
-    if (isLoading) return <div className="min-h-screen bg-black" />;
+    if (isLoading && channels.length === 0) {
+        return (
+            <div className="min-h-screen p-8 md:p-12" style={{ background: 'var(--background)' }}>
+                <div className="w-48 h-4 bg-zinc-800 rounded-full mb-6 opacity-20" />
+                <div className="h-12 w-64 bg-zinc-800 rounded-xl mb-12" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {[1, 2, 3, 4, 5, 6].map(i => <ChannelSkeleton key={i} />)}
+                </div>
+            </div>
+        );
+    }
 
     // ─── Panel de canal ───────────────────────────────────────────────
     if (selectedChannel) return (
@@ -404,10 +443,16 @@ export default function ChannelsPage() {
                     );
                 })}
 
-                {editingVideos.length === 0 && (
+                {editingVideos.length === 0 && !isLoading && (
                     <div className="text-center py-10 text-zinc-600">
                         <p className="text-3xl mb-2">🎬</p>
                         <p className="text-sm">No hay videos. Haz clic en "+ Agregar".</p>
+                    </div>
+                )}
+
+                {isLoading && editingVideos.length === 0 && (
+                    <div className="space-y-4">
+                        {[1, 2, 3].map(i => <VideoSkeleton key={i} />)}
                     </div>
                 )}
             </div>
