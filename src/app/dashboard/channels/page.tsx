@@ -321,7 +321,12 @@ export default function ChannelsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {channels.map(channel => (
-                    <EliteCard key={channel.id} variant="glass" className="group overflow-hidden !p-0 cursor-pointer hover:ring-1 hover:ring-primary/50 transition-all" onClick={() => openChannel(channel)}>
+                    <div
+                        key={channel.id}
+                        onClick={() => openChannel(channel)}
+                        className="group overflow-hidden cursor-pointer rounded-3xl border transition-all duration-300 hover:ring-1 hover:ring-primary/50 hover:border-white/20"
+                        style={{ background: 'var(--glass)', borderColor: 'var(--border)', backdropFilter: 'blur(12px)' }}
+                    >
                         <div className="h-28 bg-zinc-900 overflow-hidden relative">
                             {channel.banner_url ? (
                                 <img
@@ -366,7 +371,7 @@ export default function ChannelsPage() {
                                 Gestionar Canal →
                             </div>
                         </div>
-                    </EliteCard>
+                    </div>
                 ))}
 
                 {channels.length === 0 && (
