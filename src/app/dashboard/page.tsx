@@ -78,6 +78,22 @@ export default function DashboardPage() {
         logout();
     };
 
+    const handleDeleteTask = async (taskId: string) => {
+        if (!confirm('¿ESTÁS SEGURO DE ELIMINAR ESTE VIDEO Y SUS ARCHIVOS? ESTA ACCIÓN ES IRREVERSIBLE.')) return;
+
+        try {
+            const res = await apiFetch<any>(`/tasks/${taskId}`, { method: 'DELETE' });
+            if (res?.success) {
+                setHistory(prev => prev.filter(item => item.id !== taskId));
+            } else {
+                alert('Error al eliminar la tarea');
+            }
+        } catch (err) {
+            console.error("Error deleting task:", err);
+            alert('Error de conexión con el servidor');
+        }
+    };
+
     const userName = user?.name || user?.email || 'Usuario';
 
     if (isLoading) return <div className="min-h-screen" style={{ background: 'var(--background)' }} />;
@@ -367,7 +383,15 @@ export default function DashboardPage() {
                                                             >
                                                                 REANUDAR
                                                             </Link>
+                                                            <button
+                                                                onClick={() => handleDeleteTask(item.id)}
+                                                                className="p-2.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg transition-all hover:bg-red-500/20"
+                                                                title="Eliminar de la lista y la PC"
+                                                            >
+                                                                🗑️
+                                                            </button>
                                                         </div>
+
                                                     </td>
                                                 </tr>
                                             );
