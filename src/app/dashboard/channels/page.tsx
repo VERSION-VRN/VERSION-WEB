@@ -32,7 +32,7 @@ interface Channel {
 
 interface MetaVoice { id: string; name: string; }
 
-const LANGS = ['Español', 'English', 'Português', 'Français'];
+const LANGS = ['Español', 'English', 'Русский', 'Deutsch', 'Français', 'Italiano', 'Português', '日本語'];
 const emptyVideo = (): UpcomingVideo => ({
     titulo: '', url: '', idioma: 'Español', voz: '', prompt_name: '', miniatura: '', thumbnail_path: '', background_video: '', background_video_path: ''
 });

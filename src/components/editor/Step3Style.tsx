@@ -69,7 +69,18 @@ export function Step3Style({
     } = useEditor();
 
     if (isLoadingConfig) return <SkeletonEditorConfig />;
-    if (configError) return <div className="p-10 text-center border border-red-500/20 bg-red-500/5 rounded-2xl text-red-500 text-xs font-bold uppercase tracking-widest">{configError}</div>;
+    if (configError) return (
+        <div className="p-10 text-center border border-red-500/20 bg-red-500/5 rounded-2xl space-y-4">
+            <p className="text-red-400 text-xs font-bold uppercase tracking-widest">{configError}</p>
+            <button
+                onClick={() => window.location.reload()}
+                className="btn-primary !py-2.5 !px-6 !text-[10px]"
+            >
+                🔄 Reintentar Conexión
+            </button>
+            <p className="text-[9px] text-zinc-600">Verifica que el backend esté corriendo y el túnel activo.</p>
+        </div>
+    );
     if (!metadata) return null;
 
     return (

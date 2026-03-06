@@ -42,13 +42,20 @@ export const apiFetch = async <T = unknown>(
     const isFormData = options.body instanceof FormData;
 
     try {
+        // Timeout de 10 segundos para evitar peticiones colgadas
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
         const res = await fetch(url, {
             ...options,
+            signal: controller.signal,
             headers: {
                 ...getHeaders(!isFormData), // Solo poner application/json si NO es FormData
                 ...(options.headers || {}),
             },
         });
+
+        clearTimeout(timeoutId);
 
         if (!res.ok) {
             let errorDetail: any = `Error ${res.status}`;
@@ -86,7 +93,14 @@ export const apiFetch = async <T = unknown>(
         }
         return {} as T;
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "No se pudo conectar con el servidor.";
+        let errorMessage: string;
+        if (error instanceof DOMException && error.name === 'AbortError') {
+            errorMessage = "Timeout: El servidor no respondió en 10 segundos. Verifica el túnel o la conexión.";
+        } else if (error instanceof Error) {
+            errorMessage = error.message;
+        } else {
+            errorMessage = "No se pudo conectar con el servidor.";
+        }
         console.error(`❌ API Error [${url}]:`, error);
         throw new Error(errorMessage);
     }
