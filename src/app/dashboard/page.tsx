@@ -26,6 +26,7 @@ const SIDEBAR_NAV = [
     { label: 'Thumbnails', href: '/thumbnails', icon: '🖼️' },
     { label: 'Script Writer', href: '/writer', icon: '📝' },
     { label: 'VERSION SEO', href: '/seo', icon: '🚀' },
+    { label: 'Mis Canales', href: '/dashboard/channels', icon: '📺' },
 ];
 
 export default function DashboardPage() {
