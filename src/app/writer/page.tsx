@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { aiVersionClient } from '@/services/aiVersionClient';
+import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { EliteCard } from '@/components/ui/EliteCard';
@@ -24,7 +24,7 @@ export default function WriterPage() {
 
         if (taskId && loading) {
             intervalId = setInterval(async () => {
-                const taskStatus = await aiVersionClient.getTaskStatus(taskId);
+                const taskStatus = await apiFetch<{ progress: number; message: string; status: string; result?: { script?: string } }>(`/tasks/${taskId}/status`);
 
                 if (taskStatus) {
                     setProgress(taskStatus.progress);
@@ -54,13 +54,12 @@ export default function WriterPage() {
         return () => clearInterval(intervalId);
     }, [taskId, loading]);
 
-    const COST = isMegaMode ? 50 : 10;
+    const COST = isMegaMode ? 10 : 5;
 
     const handleGenerate = async () => {
-        if (!topic) return;
-
-        if (!user || user.credits < COST) {
-            setStatus(`❌ Saldo insuficiente. Necesitas ${COST} tokens.`);
+        const currentCost = isMegaMode ? 10 : 5;
+        if (!user || user.credits < currentCost) {
+            setStatus(`❌ Saldo insuficiente. Necesitas ${currentCost} tokens.`);
             return;
         }
 
@@ -69,7 +68,10 @@ export default function WriterPage() {
         setProgress(0);
         setStatus('Debitando tokens e iniciando sistema...');
 
-        const response = await aiVersionClient.startScriptGeneration(topic, tone, isMegaMode);
+        const response = await apiFetch<{ success: boolean; task_id?: string; message?: string; error?: string }>('/ai/script/start', {
+            method: 'POST',
+            body: JSON.stringify({ topic, tone, is_mega: isMegaMode })
+        });
 
         if (response.success && response.task_id) {
             deductCredits(COST); // Optimistic UI update
@@ -77,7 +79,11 @@ export default function WriterPage() {
             setStatus(response.message || 'Encolado...');
         } else {
             setLoading(false);
-            setStatus(`❌ Error: ${response.message || response.error}`);
+            if ((response as any).status === 402) {
+                setStatus(`❌ Saldo insuficiente. Esta operación requiere ${COST} tokens.`);
+            } else {
+                setStatus(`❌ Error: ${response.message || response.error || 'Fallo en la comunicación con el servidor'}`);
+            }
             refreshCredits();
         }
     };

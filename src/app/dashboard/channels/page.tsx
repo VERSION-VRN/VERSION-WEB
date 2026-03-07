@@ -227,6 +227,16 @@ export default function ChannelsPage() {
         const videos = editingVideos.filter(v => v.titulo.trim() && v.url.trim());
         if (videos.length === 0) { alert('Necesitas al menos un video con título y URL.'); return; }
 
+        // Confirmación de costo de tokens
+        const totalCost = videos.length;
+        if (!confirm(`🚀 Estás por generar ${totalCost} video(s). \n\nEsto consumirá un total de ${totalCost} tokens (${totalCost} x 1 token). \n\n¿Deseas continuar?`)) return;
+
+        // Validar fondos (opcional, el backend lo hará igual)
+        if (user && user.credits < totalCost) {
+            alert(`❌ Saldo insuficiente. Necesitas ${totalCost} tokens y tienes ${user.credits}.`);
+            return;
+        }
+
         // Validar fondos
         const sinFondo = videos.filter(v => !v.background_video_path?.trim());
         if (sinFondo.length > 0) {
@@ -323,8 +333,15 @@ export default function ChannelsPage() {
                     <EliteButton variant="outline" size="sm" onClick={saveVideos} disabled={savingVideos}>
                         {savingVideos ? 'Guardando...' : '💾 Guardar Lista'}
                     </EliteButton>
-                    <EliteButton variant="primary" size="sm" onClick={handleGenerateAll} disabled={isGenerating}>
-                        {isGenerating ? `⏳ Generando ${generatingIdx + 1}/${editingVideos.filter(v => v.titulo).length}...` : '🎬 GENERAR TODOS'}
+                    <EliteButton variant="primary" size="sm" onClick={handleGenerateAll} disabled={isGenerating} className="flex items-center gap-2">
+                        {isGenerating ? `⏳ Generando ${generatingIdx + 1}/${editingVideos.filter(v => v.titulo).length}...` : (
+                            <>
+                                🎬 GENERAR TODOS
+                                <span className="px-1.5 py-0.5 bg-black/30 rounded text-[9px] border border-white/10">
+                                    ⚡ 10-20
+                                </span>
+                            </>
+                        )}
                     </EliteButton>
                 </div>
             </div>

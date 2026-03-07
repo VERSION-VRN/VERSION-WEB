@@ -15,17 +15,16 @@ const TASK_TYPE_META: Record<string, { icon: string, label: string }> = {
     'thumbnails': { icon: '🖼️', label: 'Diseño' },
     'writer': { icon: '📝', label: 'Writer' },
     'seo': { icon: '🚀', label: 'SEO' },
-    'ai': { icon: '🤖', label: 'VERSION AI' }
 };
 
 // Navegación centralizada para evitar duplicados
 const SIDEBAR_NAV = [
     { label: 'VISTA GENERAL', href: '/dashboard', icon: '📊' },
-    { label: 'VERSION AI CHAT', href: '/ai', icon: '🤖' },
     { label: 'VERSION EDITOR', href: '/editor', icon: '🎬' },
     { label: 'THUMBNAILS', href: '/thumbnails', icon: '🖼️' },
     { label: 'SCRIPT WRITER', href: '/writer', icon: '📝' },
     { label: 'VERSION SEO', href: '/seo', icon: '🚀' },
+    { label: 'EXPLORER', href: '/explorer', icon: '🔍' },
     { label: 'MIS CANALES', href: '/dashboard/channels', icon: '📺' },
 ];
 
@@ -296,18 +295,6 @@ export default function DashboardPage() {
                             </EliteButton>
                         </EliteCard>
 
-                        {/* VERSION AI */}
-                        <EliteCard
-                            variant="glass"
-                            title="VERSION AI"
-                            subtitle="Neural System"
-                            description="Consultor estratégico 24/7 basado en el Master de YouTube."
-                            headerAction={<span className="text-3xl">🤖</span>}
-                        >
-                            <EliteButton variant="secondary" size="md" fullWidth onClick={() => router.push('/ai')}>
-                                Hablar con Oráculo
-                            </EliteButton>
-                        </EliteCard>
 
                         {/* MIS CANALES */}
                         <EliteCard
@@ -319,6 +306,19 @@ export default function DashboardPage() {
                         >
                             <EliteButton variant="outline" size="md" fullWidth className="hover:!bg-blue-500 hover:!text-white hover:!border-blue-500" onClick={() => router.push('/dashboard/channels')}>
                                 Gestionar Flota
+                            </EliteButton>
+                        </EliteCard>
+
+                        {/* VERSION EXPLORER */}
+                        <EliteCard
+                            variant="glass"
+                            title="EXPLORER"
+                            subtitle="Search Engine"
+                            description="Analiza la competencia y encuentra los mejores videos de YouTube con filtros avanzados."
+                            headerAction={<span className="text-3xl">🔍</span>}
+                        >
+                            <EliteButton variant="outline" size="md" fullWidth className="hover:!bg-amber-500 hover:!text-white hover:!border-amber-500" onClick={() => router.push('/explorer')}>
+                                Explorar Videos
                             </EliteButton>
                         </EliteCard>
                     </div>

@@ -12,19 +12,14 @@ import { EliteButton } from '@/components/ui/EliteButton';
 import { PricingCard } from '@/components/ui/PricingCard';
 import './globals.css';
 
-const STATS = [
-  { value: '5', label: 'Herramientas AI' },
-  { value: '100%', label: 'En la nube' },
-  { value: '24/7', label: 'Disponible' },
-  { value: '2026', label: 'En producción' },
-];
 
 const APPS = [
   { icon: '🎬', badge: 'Video Engine', badgeColor: 'border-primary text-primary', title: 'VERSION Editor', desc: 'Generación de guion, voz y edición en segundos.', href: '/editor', linkColor: 'text-primary', linkLabel: 'Abrir Terminal' },
   { icon: '🖼️', badge: 'Visual Core', badgeColor: 'border-purple-500 text-purple-500', title: 'VERSION Thumbnails', desc: 'Diseño de miniaturas con análisis de CTR por IA y borrado de fondo.', href: '/thumbnails', linkColor: 'text-purple-500', linkLabel: 'Diseñar Ahora' },
   { icon: '📝', badge: 'Script Engine', badgeColor: 'border-red-500 text-red-500', title: 'VERSION Writer', desc: 'Guiones virales con estructura de retención y Modo Deep.', href: '/writer', linkColor: 'text-red-500', linkLabel: 'Escribir Guion' },
   { icon: '🚀', badge: 'Growth Engine', badgeColor: 'border-green-500 text-green-500', title: 'VERSION SEO', desc: 'Dominación de palabras clave y optimización de metadatos.', href: '/seo', linkColor: 'text-green-500', linkLabel: 'Optimizar' },
-  { icon: '🤖', badge: 'Neural System', badgeColor: 'border-primary text-primary', title: 'VERSION AI', desc: 'Tu cerebro digital residente. Consultoría estratégica total.', href: '/ai', linkColor: 'text-primary', linkLabel: 'Iniciar Conexión', wide: true },
+  { icon: '📺', badge: 'Channel Manager', badgeColor: 'border-blue-500 text-blue-500', title: 'Mis Canales', desc: 'Gestiona tu flota de canales, logos, banners y videos próximos en cola.', href: '/dashboard/channels', linkColor: 'text-blue-500', linkLabel: 'Gestionar Flota' },
+  { icon: '🔍', badge: 'Research Engine', badgeColor: 'border-amber-500 text-amber-500', title: 'VERSION Explorer', desc: 'Explora tendencias y videos virales para potenciar tu canal.', href: '/explorer', linkColor: 'text-amber-500', linkLabel: 'Explorar' },
 ];
 
 export default function Home() {
@@ -64,7 +59,7 @@ export default function Home() {
           transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="text-muted-custom text-lg md:text-xl max-w-2xl mx-auto mb-12 font-medium"
         >
-          La plataforma definitiva de IA y automatización diseñada para la nueva élite de creadores digitales.
+          El poder total de la automatización.
         </motion.p>
 
         <motion.div
@@ -79,20 +74,6 @@ export default function Home() {
           </EliteButton>
         </motion.div>
 
-        {/* Stats bar */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 1 }}
-          className="flex flex-wrap justify-center gap-8 mt-20 border-t border-white/[0.04] pt-12"
-        >
-          {STATS.map(s => (
-            <div key={s.label} className="text-center">
-              <div className="text-2xl font-black text-white">{s.value}</div>
-              <div className="text-[9px] font-bold uppercase tracking-widest text-zinc-600 mt-1">{s.label}</div>
-            </div>
-          ))}
-        </motion.div>
       </section>
 
       {/* Apps Section */}
@@ -113,7 +94,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className={app.wide ? 'md:col-span-2 lg:col-span-1' : ''}
+              className=""
             >
               <EliteCard
                 title={app.title}
@@ -136,55 +117,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Academy Section */}
-      <section id="cursos" className="bg-white/[0.02] backdrop-blur-3xl py-32 border-y border-white/[0.04]">
-        <div className="container grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-          >
-            <span className="text-primary font-bold tracking-widest text-[10px] uppercase mb-4 block">Formación de Élite</span>
-            <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-none mb-8 uppercase">
-              DEJA DE <br /> <span className="text-primary">CONSUMIR</span>, <br /> EMPIEZA A <br /> CREAR.
-            </h2>
-            <p className="text-muted-custom text-lg mb-10 max-w-md italic">
-              &quot;En la era de la IA, la única moneda real es la capacidad de orquestar máquinas.&quot;
-            </p>
-            <div className="space-y-3">
-              <div className="flex items-center gap-6 p-5 border border-primary/20 hover:border-primary/40 transition-all bg-primary/[0.03] rounded-2xl group">
-                <span className="text-primary font-black text-lg">01</span>
-                <div>
-                  <h4 className="text-sm font-black uppercase">Master en IA Generativa</h4>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Contenido viral y escalado masivo</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-6 p-5 border border-white/[0.04] hover:border-white/15 transition-all bg-black/40 rounded-2xl">
-                <span className="font-black text-lg">02</span>
-                <div>
-                  <h4 className="text-sm font-black uppercase">Automatización No-Code</h4>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Sistemas autónomos de ingresos</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="relative aspect-square md:aspect-video lg:aspect-square bg-gradient-to-tr from-zinc-900 to-black border border-white/[0.06] flex items-center justify-center overflow-hidden rounded-3xl"
-          >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--primary-glow)_0%,transparent_70%)]" />
-            <div className="z-10 text-center">
-              <div className="text-[10vw] font-black text-white/5 select-none mb-4">REBEL</div>
-              <EliteButton href={user ? '/dashboard' : '/login'} variant="outline">
-                Acceder a la Academia
-              </EliteButton>
-            </div>
-          </motion.div>
-        </div>
-      </section>
 
       {/* Pricing Section */}
       <section id="precios" className="container py-32">
@@ -200,8 +132,8 @@ export default function Home() {
             price="0"
             period="/mes"
             features={[
-              { text: 'VERSION AI Chat Acceso' },
-              { text: 'Creación de Cuenta Gratis' }
+              { text: 'Creación de Cuenta Gratis' },
+              { text: 'Acceso al Explorer' }
             ]}
             buttonText="Crear Cuenta Gratis"
             buttonHref="/login"
@@ -275,7 +207,6 @@ export default function Home() {
         <div className="text-[10px] font-bold uppercase tracking-widest">© {new Date().getFullYear()} VERSION. — Tech Rebel Architecture Systems.</div>
         <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest">
           <a href="/#apps" className="hover:text-primary transition-colors">Aplicaciones</a>
-          <a href="/#cursos" className="hover:text-primary transition-colors">Academia</a>
           <a href="/pricing" className="hover:text-primary transition-colors">Precios</a>
         </div>
       </footer>

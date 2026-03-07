@@ -12,7 +12,6 @@ interface NavbarProps {
 
 const TOOL_NAV = [
     { label: 'Aplicaciones', href: '/#apps' },
-    { label: 'Cursos', href: '/#cursos' },
     { label: 'Precios', href: '/pricing' },
 ];
 
