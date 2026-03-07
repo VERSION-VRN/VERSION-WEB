@@ -2,9 +2,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { aiVersionClient } from '../../../services/aiVersionClient';
-import { useAuth } from '../../../context/AuthContext';
-import Toast, { ToastType } from '../../../components/Toast';
+import { aiVersionClient } from '@/services/aiVersionClient';
+import { useAuth } from '@/context/AuthContext';
+import Toast, { ToastType } from '@/components/Toast';
 import ReactMarkdown from 'react-markdown';
 
 export default function ScriptGeneratorPage() {
