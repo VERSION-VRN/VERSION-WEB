@@ -42,9 +42,10 @@ export const apiFetch = async <T = unknown>(
     const isFormData = options.body instanceof FormData;
 
     try {
-        // Timeout de 10 segundos para evitar peticiones colgadas
+        // Timeout de 60 segundos para evitar peticiones colgadas (necesario para video)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
+
 
         const res = await fetch(url, {
             ...options,

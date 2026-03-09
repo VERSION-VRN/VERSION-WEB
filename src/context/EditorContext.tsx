@@ -287,9 +287,12 @@ export function EditorProvider({ children, initialTaskId, showToast }: {
             } else {
                 throw new Error(data.error || 'Error desconocido');
             }
-        } catch (err) {
-            showToast('Error al subir el video: ' + (err instanceof Error ? err.message : 'Error desconocido'), 'error');
+        } catch (err: any) {
+            const isTimeout = err?.name === 'AbortError' || err?.message?.includes('aborted');
+            const errorMsg = isTimeout ? 'Tiempo de espera agotado. El archivo es muy grande o la conexión es lenta.' : (err instanceof Error ? err.message : 'Error desconocido');
+            showToast('Error al subir el video: ' + errorMsg, 'error');
             setStatusMessage('');
+
         } finally {
             setUploadingBg(false);
             setUploadProgress(0);
