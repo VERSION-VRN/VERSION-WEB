@@ -22,8 +22,16 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
     // Show nothing while loading to prevent unauthenticated content flash
     if (loading) {
-        return <div className="min-h-screen bg-black flex items-center justify-center text-zinc-500 text-sm font-bold tracking-widest uppercase">Cargando VERSION...</div>;
+        return (
+            <div
+                suppressHydrationWarning={true}
+                className="min-h-screen bg-black flex items-center justify-center text-zinc-500 text-sm font-bold tracking-widest uppercase"
+            >
+                Cargando VERSION...
+            </div>
+        );
     }
+
 
     // If not authenticated and trying to access a private route, show nothing until redirect
     if (!isAuthenticated && !PUBLIC_ROUTES.includes(pathname)) {

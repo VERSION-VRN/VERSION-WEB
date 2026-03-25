@@ -195,12 +195,16 @@ export default function Home() {
           viewport={{ once: true }}
           className="container relative z-10"
         >
-          <h2 className="text-4xl md:text-7xl font-black tracking-tighter mb-12 uppercase italic leading-none">¿VAS A SER EL ARQUITECTO<br />O EL QUE ES REEMPLAZADO?</h2>
-          <EliteButton href={user ? '/dashboard' : '/login'} variant="secondary" size="xl">
-            {user ? 'Ir al Dashboard' : 'Unirse a VERSION Ahora'}
+          <h2 className="text-4xl md:text-7xl font-black tracking-tighter mb-4 uppercase italic leading-none">REGÍSTRATE Y RECLAMA<br />TU ARSENAL</h2>
+          <p className="text-white/80 text-lg md:text-xl font-bold uppercase tracking-widest mb-12">
+            TE REGALAMOS <span className="text-white underline decoration-2 underline-offset-4">50 TOKENS</span> CON TU REGISTRO
+          </p>
+          <EliteButton href="/login?mode=register" variant="secondary" size="xl">
+            {user ? 'Ir al Dashboard' : 'Crear Cuenta Gratis'}
           </EliteButton>
         </motion.div>
       </section>
+
 
       {/* Footer */}
       <footer className="container py-12 flex flex-col md:flex-row justify-between items-center gap-8 border-t border-white/[0.04] opacity-50">

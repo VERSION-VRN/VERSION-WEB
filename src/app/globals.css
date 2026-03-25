@@ -9,9 +9,10 @@
   --background: #050510;
   --background-rgb: 5, 5, 16;
   --foreground: #ffffff;
-  --primary: #DC2626;
-  --primary-hover: #ef4444;
-  --primary-glow: #dc262666;
+  --primary: #B53E3A;
+  --primary-hover: #963330;
+  --primary-glow: #b53e3a66;
+
   --accent: #ffffff;
   --muted: #8a8a9a;
   --border: rgba(255, 255, 255, 0.08);

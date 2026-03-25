@@ -24,7 +24,7 @@ export const getHeaders = (json = true): Record<string, string> => {
     const headers: Record<string, string> = {
         'Bypass-Tunnel-Reminder': 'true',
         'ngrok-skip-browser-warning': 'true',
-        'X-Requested-With': 'XMLHttpRequest', // A veces ayuda con CORS en túneles
+        'X-Requested-With': 'XMLHttpRequest',
     };
     if (json) headers['Content-Type'] = 'application/json';
     const token = getToken();
@@ -36,25 +36,43 @@ export const apiFetch = async <T = unknown>(
     path: string,
     options: RequestInit = {}
 ): Promise<T> => {
-    const url = getApiUrl(path.startsWith('/') ? path : `/${path}`);
+    let url = getApiUrl(path.startsWith('/') ? path : `/${path}`);
 
-    // Detectar si el cuerpo es FormData para dejar que el navegador ponga el boundary
+    // Detectar si el cuerpo es FormData
     const isFormData = options.body instanceof FormData;
 
     try {
-        // Timeout de 60 segundos para evitar peticiones colgadas (necesario para video)
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-
-        const res = await fetch(url, {
-            ...options,
-            signal: controller.signal,
-            headers: {
-                ...getHeaders(!isFormData), // Solo poner application/json si NO es FormData
-                ...(options.headers || {}),
-            },
-        });
+        let res: Response;
+        try {
+            res = await fetch(url, {
+                ...options,
+                signal: controller.signal,
+                headers: {
+                    ...getHeaders(!isFormData),
+                    ...(options.headers || {}),
+                },
+            });
+        } catch (fetchError: any) {
+            // Fallback: Si falla el fetch y estamos en localhost, intentar con el backend local directamente
+            if (typeof window !== 'undefined' && window.location.hostname === 'localhost' && !url.includes('127.0.0.1')) {
+                const localUrl = `http://127.0.0.1:8000${path.startsWith('/') ? path : `/${path}`}`;
+                console.warn(`[API] Fallo en túnel (${url}). Intentando fallback a backend local: ${localUrl}`);
+                res = await fetch(localUrl, {
+                    ...options,
+                    signal: controller.signal,
+                    headers: {
+                        ...getHeaders(!isFormData),
+                        ...(options.headers || {}),
+                    },
+                });
+                url = localUrl; // Actualizar para el log si falla después
+            } else {
+                throw fetchError;
+            }
+        }
 
         clearTimeout(timeoutId);
 
@@ -62,12 +80,9 @@ export const apiFetch = async <T = unknown>(
             let errorDetail: any = `Error ${res.status}`;
             try {
                 const errJson = await res.json();
-                // Manejar errores de validación de FastAPI o formatos {detail: ...} / {error: ...}
                 errorDetail = errJson.detail || errJson.error || errJson.message || errJson;
-
-                // Si el detalle es un array (FastAPI validation), extraer mensajes
                 if (Array.isArray(errorDetail)) {
-                    errorDetail = errorDetail.map(d => `${d.loc?.join('.') || 'field'}: ${d.msg}`).join(', ');
+                    errorDetail = errorDetail.map((d: any) => `${d.loc?.join('.') || 'field'}: ${d.msg}`).join(', ');
                 } else if (typeof errorDetail === 'object') {
                     errorDetail = JSON.stringify(errorDetail);
                 }
@@ -78,7 +93,6 @@ export const apiFetch = async <T = unknown>(
                 if (typeof window !== 'undefined') {
                     const currentPath = window.location.pathname;
                     if (currentPath !== '/login' && currentPath !== '/register') {
-                        console.warn(`[API] Sesión inválida o insuficiente (${res.status}). Limpiando y redirigiendo.`);
                         localStorage.removeItem('token');
                         localStorage.removeItem('user_profile');
                         window.location.href = '/login';
@@ -96,11 +110,13 @@ export const apiFetch = async <T = unknown>(
     } catch (error) {
         let errorMessage: string;
         if (error instanceof DOMException && error.name === 'AbortError') {
-            errorMessage = "Timeout: El servidor no respondió en 10 segundos. Verifica el túnel o la conexión.";
+            errorMessage = "Tiempo de espera agotado (60s). Verifica si el servidor está procesando una tarea pesada.";
+        } else if (error instanceof TypeError && error.message === 'Failed to fetch') {
+            errorMessage = "No se pudo conectar con el servidor (Failed to fetch). Probablemente el túnel ha expirado o el backend está apagado. Revisa la consola o configura la URL manualmente.";
         } else if (error instanceof Error) {
             errorMessage = error.message;
         } else {
-            errorMessage = "No se pudo conectar con el servidor.";
+            errorMessage = "Error de conexión desconocido.";
         }
         console.error(`❌ API Error [${url}]:`, error);
         throw new Error(errorMessage);

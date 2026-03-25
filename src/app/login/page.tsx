@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
@@ -36,7 +37,17 @@ export default function Login() {
     const [backendUrl, setBackendUrl] = useState('');
 
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { login } = useAuth();
+
+    // Detectar modo registro desde la URL
+    useEffect(() => {
+        const mode = searchParams.get('mode');
+        if (mode === 'register') {
+            setIsLogin(false);
+        }
+    }, [searchParams]);
+
 
     // Cargar URL inicial de localStorage
     useMemo(() => {
@@ -51,6 +62,14 @@ export default function Login() {
             localStorage.setItem('backend_url', backendUrl.trim());
             setError('URL del servidor actualizada. Intenta de nuevo.');
             setShowBackendConfig(false);
+        }
+    };
+
+    const resetBackendUrl = () => {
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('backend_url');
+            setBackendUrl(process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000');
+            setError('Configuración reseteada a los valores predeterminados.');
         }
     };
 
@@ -219,9 +238,18 @@ export default function Login() {
                                         OK
                                     </button>
                                 </div>
-                                <p className="text-[8px] text-zinc-600 leading-relaxed italic">
-                                    * Cambia esto si el túnel de Localtunnel ha expirado o se ha reiniciado.
-                                </p>
+                                <div className="flex justify-between items-center px-1">
+                                    <p className="text-[8px] text-zinc-600 leading-relaxed italic">
+                                        * Cambia esto si el túnel ha expirado o se ha reiniciado.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={resetBackendUrl}
+                                        className="text-[8px] font-bold text-primary/60 hover:text-primary transition-colors underline underline-offset-2"
+                                    >
+                                        Resetear a Default
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
